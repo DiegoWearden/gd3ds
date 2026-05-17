@@ -89,7 +89,7 @@ float expected_slope_y(int obj, Player *player) {
     int mult = (player->upside_down ^ flipping) ? -1 : 1;
     
     float angle = slope_angle(obj, player);
-    float ydist = mult * player->height * sqrtf(powf(tanf(angle), 2) + 1) / 2;
+    float ydist = mult * (player->height / 2) / cosf(angle);
     float pos_relative = ((float) objects.height[obj] / objects.width[obj]) * (player->x - obj_getLeft(obj));
 
     float y;
@@ -97,7 +97,7 @@ float expected_slope_y(int obj, Player *player) {
     if ((angle > 0) ^ player->upside_down ^ flipping) {
         y = obj_getBottom(obj) + MIN(pos_relative + ydist, objects.height[obj] + player->height / 2);
     } else {
-        y = obj_getTop(obj) - MAX(pos_relative - ydist, -player->height / 2);
+        y = obj_getTop(obj) - MIN(pos_relative - ydist, objects.height[obj] + player->height / 2);
     }
 
     // Spike slope has bigger hitbox
@@ -176,9 +176,16 @@ void slope_snap_y(int obj, Player *player) {
     }
 }
 
+#define SHIP_UFO_EXITING_VEL (508.248f / 4)
+
 void slope_calc(int obj, Player *player) {
     int orientation = grav_slope_orient(obj, player);
     if (orientation == ORIENT_NORMAL_UP) { // Normal - up
+        // Make the player start with higher velocity 
+        if ((player->gamemode == GAMEMODE_BIRD || player->gamemode == GAMEMODE_SHIP) && player->vel_y < SHIP_UFO_EXITING_VEL && state.input.holdJump) {
+            player->vel_y = SHIP_UFO_EXITING_VEL; // 2 in gd
+        }
+        
         // Handle leaving slope
         if (!slope_touching(obj, player)) {
             push_player_action(clear_slope_data);
@@ -235,6 +242,11 @@ void slope_calc(int obj, Player *player) {
             push_player_action(clear_slope_data);
         }
     } else if (orientation == ORIENT_UD_UP) { // Upside down - up
+        // Make the player start with higher velocity 
+        if ((player->gamemode == GAMEMODE_BIRD || player->gamemode == GAMEMODE_SHIP) && player->vel_y > -SHIP_UFO_EXITING_VEL && !state.input.holdJump) {
+            player->vel_y = -SHIP_UFO_EXITING_VEL; // 2 in gd
+        }
+
         // Handle leaving slope
         if (!slope_touching(obj, player)) {
             push_player_action(clear_slope_data);
@@ -588,7 +600,7 @@ bool slope_touching(int obj, Player *player) {
 
     // If player is on slope, add a bit of hitbox
     if (hasSlope) {
-        int mult = grav_slope_orient(player->slope_data.slope_id, player) >= 2 ? -1 : 1;
+        int mult = grav_slope_orient(player->slope_data.slope_id, player) >= ORIENT_UD_DOWN ? -1 : 1;
         hasSlope = hasSlope && player->vel_y * mult <= 0;
     }
     

@@ -1249,12 +1249,6 @@ void collide_with_slope(Player *player, int obj, bool has_slope) {
         player->x, player->y, player->width, player->height, 0, 
         objects.x[obj], objects.y[obj], width, height, objects.rotation[obj]
     )) {
-        // Idk what this does
-        if (has_slope) {
-            float bottom = gravBottom(player) + sinf(slope_angle(player->slope_data.slope_id, player)) * player->height / 2;
-            if (obj_gravTop(player, obj) - bottom < 2)
-                return;
-        }
         slope_collide(obj, player);
     }
 }

@@ -752,6 +752,12 @@ void game_loop() {
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   66,  DEBUG_TEXT_SCALE, 0, " - Creating: %6.2f%%", (object_creating_time) * 6);
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   78,  DEBUG_TEXT_SCALE, 0, " - Sorting:  %6.2f%%", (object_sorting_time) * 6);
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   102,  DEBUG_TEXT_SCALE, 0, "Drawing:  %6.2f%%", (object_drawing_time) * 6);
+
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   138,  DEBUG_TEXT_SCALE, 0, "Player");
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   150,  DEBUG_TEXT_SCALE, 0, "- X: %.2f", state.player.x);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   162,  DEBUG_TEXT_SCALE, 0, "- Y: %.2f", state.player.y);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   174,  DEBUG_TEXT_SCALE, 0, "- VX: %.2f", state.player.vel_x * STEPS_DT);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   186,  DEBUG_TEXT_SCALE, 0, "- VY: %.2f", state.player.vel_y * STEPS_DT);
             }
 
             if (state.noclip) {

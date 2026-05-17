@@ -346,13 +346,13 @@ void ball_gamemode(Player *player) {
     drag_particles[state.current_player].scale = (player->mini ? 0.6f : 1.0f);
     // If on ground (block or slope) and its buffering, do a jump
     if ((player->slope_data.slope_id >= 0 || player->on_ground || player->on_ceiling) && player->buffering_state == BUFFER_READY) {        
-        float delta_y = player->vel_y;
-
         player->upside_down ^= 1;
 
         set_p_velocity(player, ballJumpHeights[state.speed], state.old_player.buffering_state == BUFFER_READY);
 
-        player->vel_y -= (delta_y < 0) ? 0 : delta_y;
+        if (player->slope_data.slope_id >= 0 && grav_slope_orient(player->slope_data.slope_id, player) == ORIENT_NORMAL_UP)
+            player->vel_y -= player->gravity * STEPS_DT;
+
         player->buffering_state = BUFFER_END;
         
         player->ball_rotation_speed = -BALL_SLOW_ROTATION;
@@ -641,7 +641,7 @@ void run_player(Player *player) {
 		float newVel = player->vel_y + player->gravity * STEPS_DT;
 
 		// Player will fall off blocks a frame faster than expected
-		if (!player->on_ground && state.old_player.on_ground && ((!state.input.holdJump && (state.old_input.pressedJump || state.input.pressedJump)) || player->buffering_state == BUFFER_READY) && gravBottom(&state.old_player) > gravFloor(&state.old_player) && player->mini == state.old_player.mini) {
+		if (!(player->on_ground || player->on_ceiling) && (state.old_player.on_ground || state.old_player.on_ceiling) && ((!state.input.holdJump && (state.old_input.pressedJump || state.input.pressedJump)) || player->buffering_state == BUFFER_READY) && gravBottom(&state.old_player) > gravFloor(&state.old_player) && player->mini == state.old_player.mini) {
 			player->y += grav(&state.old_player, state.old_player.gravity) * STEPS_DT * STEPS_DT;
 
 			if (player->vel_y == 0)
