@@ -42,6 +42,7 @@ bool in_info_card = false;
 static float bg_scroll = 0;
 
 void action_open_level_select(UIElement* e) {
+    curr_level_id = 0;
     new_state = STATE_LEVEL_SELECT;
     set_fade_status(FADE_STATUS_OUT);
 }
