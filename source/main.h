@@ -14,6 +14,10 @@
 #define CAMERA_X_WALL_OFFSET (2 * 30.F)
 #define CAMERA_WALL_ANIM_DURATION 1.f
 
+#define LEVEL_Y_OFFSET 90.f
+#define CAM_Y_MTX_OFFSET ((SCREEN_HEIGHT / SCALE - SCREEN_HEIGHT) - LEVEL_Y_OFFSET)
+
+
 #define LIKELY(x)   __builtin_expect(!!(x), 1)
 #define UNLIKELY(x) __builtin_expect(!!(x), 0)
 

@@ -717,6 +717,7 @@ void game_loop() {
             draw_background(state.background_x / 8, -(state.camera_y / 8) + 200);
 
             C2D_ViewScale(SCALE, SCALE);
+            C2D_ViewTranslate(0, CAM_Y_MTX_OFFSET);
 
             draw_objects();
 
@@ -727,9 +728,10 @@ void game_loop() {
             draw_ground(state.ground_x, state.camera_y, 0, false, SCREEN_WIDTH);
             
             if (state.ground_y_gfx > 2) {
-                if (state.camera_y - CAMERA_Y_OFFSET + state.ground_y_gfx > 0) draw_ground(state.ground_x, state.camera_y, state.camera_y + state.ground_y_gfx - CAMERA_Y_OFFSET, false, SCREEN_WIDTH);
-                draw_ground(state.ground_x, state.camera_y, state.camera_y - CAMERA_Y_OFFSET + SCREEN_HEIGHT_AREA - state.ground_y_gfx, true, SCREEN_WIDTH);
+                if (state.camera_y - LEVEL_Y_OFFSET + state.ground_y_gfx > 0) draw_ground(state.ground_x, state.camera_y, state.camera_y + state.ground_y_gfx - LEVEL_Y_OFFSET, false, SCREEN_WIDTH);
+                draw_ground(state.ground_x, state.camera_y, state.camera_y - LEVEL_Y_OFFSET + SCREEN_HEIGHT_AREA - state.ground_y_gfx, true, SCREEN_WIDTH);
             }
+            C2D_ViewTranslate(0, -CAM_Y_MTX_OFFSET);
             C2D_ViewScale(1/SCALE, 1/SCALE);
             gameplay_screen_top_loop();
 
@@ -778,6 +780,12 @@ void game_loop() {
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   174,  DEBUG_TEXT_SCALE, 0, "- Y: %.2f", state.player.y);
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   186,  DEBUG_TEXT_SCALE, 0, "- VX: %.2f", state.player.vel_x * STEPS_DT);
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   198,  DEBUG_TEXT_SCALE, 0, "- VY: %.2f", state.player.vel_y * STEPS_DT);
+
+                
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 80,   138,  DEBUG_TEXT_SCALE, 0, "Camera");
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 80,   150,  DEBUG_TEXT_SCALE, 0, "- X: %.2f", state.camera_x);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 80,   162,  DEBUG_TEXT_SCALE, 0, "- Y: %.2f", state.camera_y);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 80,   174,  DEBUG_TEXT_SCALE, 0, "- IntY: %.2f", state.camera_intended_y);
             }
 
             if (state.noclip) {

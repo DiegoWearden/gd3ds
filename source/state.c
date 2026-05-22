@@ -26,7 +26,7 @@ void run_camera() {
 
     if (level_info.wall_y == 0) {
         if (state.camera_x + SCREEN_WIDTH_AREA >= level_info.wall_x - (4.5f * 30.f)) {
-            level_info.wall_y = MAX(state.camera_y_middle, 60 + ((SCREEN_HEIGHT_AREA / 2) - CAMERA_Y_OFFSET));
+            level_info.wall_y = MAX(state.camera_y_middle, 60 + ((SCREEN_HEIGHT_AREA / 2) - LEVEL_Y_OFFSET));
         }
     }
 
@@ -48,7 +48,7 @@ void run_camera() {
         }
 
         float final_camera_x_wall = level_info.wall_x - (SCREEN_WIDTH_AREA);
-        float final_camera_y_wall = level_info.wall_y - ((SCREEN_HEIGHT_AREA / 2) - CAMERA_Y_OFFSET);   
+        float final_camera_y_wall = level_info.wall_y - ((SCREEN_HEIGHT_AREA / 2) - LEVEL_Y_OFFSET);   
 
         state.camera_x = easeValue(EASE_IN_OUT, final_camera_x_wall - CAMERA_X_WALL_OFFSET, final_camera_x_wall, state.camera_wall_timer, CAMERA_WALL_ANIM_DURATION, 2.0f);
         state.camera_y = easeValue(EASE_IN_OUT, state.camera_wall_initial_y, final_camera_y_wall, state.camera_wall_timer, CAMERA_WALL_ANIM_DURATION, 2.0f);
@@ -58,23 +58,22 @@ void run_camera() {
             state.camera_y = final_camera_y_wall + 3.f * random_float(-1, 1);
         }
     } else { 
-        float cam_y = state.camera_y_lerp;
-        float target_y = cam_y;
+        float cam_y = state.camera_y;
 
-        #define CAM_Y_MAGIC (320 / 2)
-        #define CAM_Y_MAGIC_2 (180 / 2)
+        float target_y = cam_y;
 
         if (player->gamemode == GAMEMODE_PLAYER && !state.dual) {
             float player_y = player->y;
-            float anchor_y = cam_y - CAM_Y_MAGIC_2 + CAM_Y_MAGIC;
-            
-            const float margin_above = 140 / 2;
-            const float margin_below = 80 / 2;
 
-            if (player_y > anchor_y + margin_above) {
-                target_y = player_y - CAM_Y_MAGIC - margin_above + CAM_Y_MAGIC_2;
-            } else if (player_y < anchor_y - margin_below) {
-                target_y = player_y - CAM_Y_MAGIC + margin_below + CAM_Y_MAGIC_2;
+            const float half_view = (SCREEN_HEIGHT_AREA / 2);
+            const float bgparallaxdrop = LEVEL_Y_OFFSET;
+
+            float anchor_y = cam_y - bgparallaxdrop + half_view;
+
+            if (player_y > anchor_y + 70.0f) {
+                target_y = player_y - half_view - 70.0f + bgparallaxdrop;
+            } else if (player_y < anchor_y - 40.0f) {
+                target_y = player_y - half_view + 40.0f + bgparallaxdrop;
             }
         } else {
             target_y = state.camera_intended_y;
@@ -90,12 +89,11 @@ void run_camera() {
             cam_y = 0;
         }
         
-        if (cam_y > MAX_LEVEL_HEIGHT) {
-            cam_y = MAX_LEVEL_HEIGHT;
+        if (cam_y > MAX_LEVEL_HEIGHT - SCREEN_HEIGHT_AREA) {
+            cam_y = MAX_LEVEL_HEIGHT - SCREEN_HEIGHT_AREA;
         }
 
-        state.camera_y_lerp = cam_y;
-        state.camera_y = state.camera_y_lerp;
+        state.camera_y = cam_y;
 
         state.camera_x = player->x - 125.0f/SCALE;
         
@@ -112,7 +110,7 @@ void run_camera() {
     }
     
     state.camera_x_middle = state.camera_x + (SCREEN_WIDTH_AREA / 2);
-    state.camera_y_middle = state.camera_y + ((SCREEN_HEIGHT_AREA / 2) - CAMERA_Y_OFFSET);
+    state.camera_y_middle = state.camera_y + (SCREEN_HEIGHT_AREA / 2) - LEVEL_Y_OFFSET;
 }
 
 void set_hitbox_size(Player *player, int gamemode) {
@@ -134,7 +132,7 @@ void set_hitbox_size(Player *player, int gamemode) {
 
 void set_intended_ceiling() {
     float mid_point = (state.ground_y + state.ceiling_y) / 2;
-    state.camera_intended_y = mid_point - ((SCREEN_HEIGHT_AREA / 2) - CAMERA_Y_OFFSET);
+    state.camera_intended_y = mid_point - ((SCREEN_HEIGHT_AREA / 2) - LEVEL_Y_OFFSET);
 }
 
 void set_gamemode(Player *player, int gamemode) {
@@ -243,9 +241,8 @@ void init_level_bounds() {
     run_camera();
 
     // Set camera vertical pos
-    state.camera_y_lerp = state.camera_intended_y;
-    state.camera_y = state.camera_y_lerp;
-    state.camera_y_middle = state.camera_y + ((SCREEN_HEIGHT_AREA / 2) - CAMERA_Y_OFFSET);
+    state.camera_y = state.camera_intended_y;
+    state.camera_y_middle = state.camera_y + ((SCREEN_HEIGHT_AREA / 2) - LEVEL_Y_OFFSET);
 
     float playable_height = state.ceiling_y - state.ground_y;
     float calc_height = 0;

@@ -1172,7 +1172,7 @@ void create_objects() {
     int width = ceilf((SCREEN_WIDTH_AREA) / SECTION_SIZE);
     int height = ceilf((SCREEN_HEIGHT_AREA) / SECTION_SIZE);
     int cam_sx = (int)((state.camera_x) / SECTION_SIZE);
-    int cam_sy = (int)((state.camera_y - CAMERA_Y_OFFSET) / SECTION_SIZE);
+    int cam_sy = (int)((state.camera_y - LEVEL_Y_OFFSET) / SECTION_SIZE);
     u64 start = svcGetSystemTick();
     // Create sprites
     for (int x = -1; x <= width; x++) {
