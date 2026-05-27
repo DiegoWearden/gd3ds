@@ -16,7 +16,6 @@ int grav_slope_orient(int obj, Player *player);
 void clear_slope_data(Player *player);
 void clear_coyote_slope_data(Player *player);
 void slope_calc(int obj, Player *player);
-void snap_player_to_slope(int obj, Player *player);
 bool slope_touching(int obj, Player *player);
 float slope_snap_angle(int obj, Player *player);
 

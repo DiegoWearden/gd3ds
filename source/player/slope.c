@@ -188,7 +188,6 @@ void slope_snap_y(int obj, Player *player) {
 
             player->time_since_ground = 0;
             player->on_ground = true;
-            snap_player_to_slope(obj, player);
             
             if (player->vel_y < 0) {
                 player->vel_y = 0;
@@ -203,7 +202,6 @@ void slope_snap_y(int obj, Player *player) {
             
             player->time_since_ground = 0;
             player->on_ground = true;
-            snap_player_to_slope(obj, player);
             
             if (player->vel_y < 0) {
                 player->vel_y = 0;
@@ -218,7 +216,6 @@ void slope_snap_y(int obj, Player *player) {
             
             player->time_since_ground = 0;
             player->on_ceiling = true;
-            snap_player_to_slope(obj, player);
 
             if (player->vel_y > 0) {
                 player->vel_y = 0;
@@ -233,7 +230,6 @@ void slope_snap_y(int obj, Player *player) {
 
             player->time_since_ground = 0;
             player->on_ceiling = true;
-            snap_player_to_slope(obj, player);
             
             if (player->vel_y > 0) {
                 player->vel_y = 0;
@@ -627,7 +623,6 @@ void slope_collide(int obj, Player *player) {
             player->inverse_rotation = false;
             player->slope_data.slope_id = obj;
             //slope_snap_y(obj, player);
-            //snap_player_to_slope(obj, player);
 
             if (is_spike_slope(obj)) {
                 state.dead = true;
@@ -694,12 +689,5 @@ bool slope_touching(int obj, Player *player) {
             return diff_ud >= min && diff_ud <= snap_height;
         default:
             return false;
-    }
-}
-
-void snap_player_to_slope(int obj, Player *player) {
-    if (player->gamemode == GAMEMODE_PLAYER) {
-        float base = RadToDeg(slope_snap_angle(obj, player));
-        player->rotation = convert_to_closest_rotation(player->rotation, base);
     }
 }

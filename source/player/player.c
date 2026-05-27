@@ -204,6 +204,15 @@ void cube_gamemode(Player *player) {
     if (player->on_ground && player->slope_data.slope_id < 0) {
         player->cube_target_rotation = convert_to_closest_rotation(player->rotation, 0);
     }
+
+    if (player->slope_data.slope_id >= 0) {
+        float base = RadToDeg(slope_snap_angle(player->slope_data.slope_id, player));
+        player->cube_target_rotation = convert_to_closest_rotation(player->cube_target_rotation, base);
+    }
+    if (player->slope_slide_coyote_time) {
+        float base = RadToDeg(slope_snap_angle(player->coyote_slope.slope_id, player));
+        player->cube_target_rotation = convert_to_closest_rotation(player->cube_target_rotation, base);
+    }
 }
 
 void rotate_fly(Player *player, float mult) {
@@ -685,8 +694,6 @@ void run_player(Player *player) {
     // Coyote time for slopes, so you can jump if you only touch the slope for a single frame (and fixes some visual bugs)
     if (player->slope_slide_coyote_time) {
         player->slope_slide_coyote_time--;
-
-        snap_player_to_slope(player->coyote_slope.slope_id, player);
 
         if (!player->slope_slide_coyote_time) {
             player->coyote_slope.slope_id = -1;
