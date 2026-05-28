@@ -65,13 +65,13 @@ static void run_start_animation(float delta) {
 
     ui_set_pos_on_tag(&screen, SCREEN_BOT_WIDTH / 2, window_y_pos, "window");
     ui_set_pos_on_tag(&screen_top, SCREEN_WIDTH / 2, window_y_pos, "window");
-    anim_time += delta;
 
     // Animation end
     if (anim_time >= ANIM_DURATION) {
         animating_down = false;
         anim_time = 0;
     }
+    anim_time += delta;
 }
 
 // This runs the animation that happens when you press "restart"
@@ -81,7 +81,7 @@ static void run_restart_animation(float delta) {
 
     ui_set_pos_on_tag(&screen, SCREEN_BOT_WIDTH / 2, window_y_pos, "window");
     ui_set_pos_on_tag(&screen_top, SCREEN_WIDTH / 2, window_y_pos, "window");
-    anim_time += delta;
+    
 
     // Animation end
     if (anim_time >= RESTART_ANIM_DURATION) {
@@ -89,6 +89,7 @@ static void run_restart_animation(float delta) {
         restart = true;
         anim_time = 0;
     }
+    anim_time += delta;
 }
 
 
