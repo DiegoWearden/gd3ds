@@ -182,6 +182,30 @@ float get_line_length(const Charset *font, const float zoom_x, const char *text,
     return text_length;
 }
 
+float get_text_length(const Charset *font, const float zoom_x, const char *text) {
+    float text_length = 0;
+    int size = strlen(text);
+    for (int i = 0; i < size; i++) {
+        const Glyph *character = get_glyph(font, text[i]);
+        
+        // Skip tags
+        if (text[i] == '<') {
+            char tag[64];
+
+            if (read_tag(text, &i, tag, sizeof(tag))) {
+                continue;
+            }
+        }
+
+        if (character != NULL) {
+            float xadvance = character->xAdvance * zoom_x;
+
+            text_length += xadvance;
+        }
+    }
+    return text_length;
+}
+
 void draw_text(const Charset *font, C2D_SpriteSheet *sheet, const float x, const float y, const float scale, float alignment, const char *text, ...) {
     if (!text || !sheet) {
         return;
