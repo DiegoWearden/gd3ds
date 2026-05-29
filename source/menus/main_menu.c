@@ -1,4 +1,4 @@
-    #include <3ds.h>
+#include <3ds.h>
 #include <citro2d.h>
 
 #include <stdlib.h>
@@ -45,6 +45,7 @@ static int saved_ship;
 static int saved_ball;
 static int saved_ufo;
 static int saved_wave;
+static bool saved_glow;
 
 static bool pressing = false;
 static bool old_pressing = false;
@@ -177,7 +178,7 @@ void handle_title_screen_player(Player *player) {
     } else {
         player->buffering_state = BUFFER_NONE;
     }
-    
+
     player->on_ground = false;
     player->on_ceiling = false;
 
@@ -215,6 +216,7 @@ void reset_players() {
     selected_ball = random_int(1, ICON_COUNT_PLAYER_BALL - 1);
     selected_ufo  = random_int(1, ICON_COUNT_BIRD - 1);
     selected_wave = random_int(1, ICON_COUNT_DART - 1);
+    player_glow_enabled = false;
 
     init_particles();
     init_trails();
@@ -345,6 +347,7 @@ void main_menu_loop() {
     saved_ball = selected_ball;
     saved_ufo = selected_ufo;
     saved_wave = selected_wave;
+    saved_glow = player_glow_enabled;
 
     get_buffer(CHANNEL_BG)->active = false;
     get_buffer(CHANNEL_GROUND)->active = false;
@@ -547,12 +550,14 @@ void main_menu_loop() {
                     selected_ball = saved_ball;
                     selected_ufo = saved_ufo;
                     selected_wave = saved_wave;
+                    player_glow_enabled = saved_glow;
                     cfg_save();
                     selected_cube = temp_cube;
                     selected_ship = temp_ship;
                     selected_ball = temp_ball;
                     selected_ufo  = temp_ufo;
                     selected_wave = temp_wave;
+                    player_glow_enabled = false;
                     
                     in_settings = false;
                 }
@@ -602,6 +607,7 @@ void main_menu_loop() {
             selected_ball = saved_ball;
             selected_ufo = saved_ufo;
             selected_wave = saved_wave;
+            player_glow_enabled = saved_glow;
 
             game_state = new_state;
             free_particles();
