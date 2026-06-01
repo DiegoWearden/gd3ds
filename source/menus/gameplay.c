@@ -27,6 +27,8 @@
 #include "save/config.h"
 #include "info_card.h"
 
+#include "practice.h"
+
 bool game_paused = false;
 static bool in_disclaimer = false;
 static bool in_settings = false;
@@ -86,14 +88,13 @@ static void exit_level() {
 
 static void restart_level() {
     init_variables();
-    reload_level(); 
-    if (song_loaded) seek_mp3(level_info.song_offset);
+    reload_level();
+    if (state.practice_mode) {
+        if (checkpoint_count > 0) {
+            restore_checkpoint();
+        }
+    } else if (song_loaded) seek_mp3(level_info.song_offset);
     unpause_game();
-}
-
-void open_disclaimer() {
-    in_disclaimer = true;
-    disclaimer_init();
 }
 
 void open_settings() {
@@ -121,8 +122,23 @@ static void action_open_settings(UIElement *e) {
     open_settings();
 }
 
-static void action_open_disclaimer(UIElement *e) {
-    open_disclaimer();
+static void action_practice_mode(UIElement *e) {
+    if (!state.practice_mode) {
+        start_practice_mode();
+        ui_run_func_on_tag(&screen, "practice_buttons", ui_enable_element);
+    } else {
+        exit_practice_mode();
+        ui_run_func_on_tag(&screen, "practice_buttons", ui_disable_element);
+    }
+
+    action_unpause(e);
+}
+
+static void action_add_checkpoint(UIElement *e) {
+    new_checkpoint();
+}
+static void action_remove_checkpoint(UIElement *e) {
+    delete_last_checkpoint();
 }
 
 static UIAction actions[] = {
@@ -131,7 +147,9 @@ static UIAction actions[] = {
     {"exit", action_exit },
     {"restart", action_restart },
     {"settings", action_open_settings },
-    {"disclaimer", action_open_disclaimer },
+    {"practice", action_practice_mode },
+    {"add_check", action_add_checkpoint },
+    {"remove_check", action_remove_checkpoint },
 };
 
 void gameplay_screen_init() {
@@ -164,6 +182,7 @@ void gameplay_screen_init() {
     ui_run_func_on_tag(&screen_top, "coin_3", ui_disable_element);
     ui_run_func_on_tag(&screen_top, "pause_menu", ui_disable_element);
     ui_run_func_on_tag(&screen, "paused", ui_disable_element);
+    ui_run_func_on_tag(&screen, "practice_buttons", ui_disable_element);
 }
 
 int gameplay_screen_top_loop() { 

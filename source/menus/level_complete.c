@@ -20,6 +20,7 @@
 #include "level_select.h"
 #include "info_card.h"
 #include "state.h"
+#include "endwall.h"
 
 #define ANIM_DURATION 1.f
 #define RESTART_ANIM_DURATION 0.5f
@@ -44,6 +45,8 @@ static UIElement *jumps_text;
 static UIElement *time_text;
 
 static UIElement *completion_text;
+
+char *practice_completion_text = "Well done... Now try to complete it<p>without any checkpoints!";
 
 char *completion_texts[] = {
     "Not 1 attempt",
@@ -170,16 +173,15 @@ void level_complete_init() {
     animating_up = false;
     anim_time = 0;
     window_y_pos = 0;
+
+    // Set completion text
+    completion_text = ui_get_element_by_tag(&screen_top, "funnytext");
     
     if(state.custom_level == true){
         ui_run_func_on_tag(&screen_top, "coin1", ui_disable_element);
         ui_run_func_on_tag(&screen_top, "coin2", ui_disable_element);
         ui_run_func_on_tag(&screen_top, "coin3", ui_disable_element);
-
-        // Set completion text
-        completion_text = ui_get_element_by_tag(&screen_top, "funnytext");
     
-        
         int start_index = 0;
 
         // Skip the "Not 1 attempt" line
@@ -206,6 +208,27 @@ void level_complete_init() {
         completion_text->label.scale = text_scale;
     } else {
         ui_run_func_on_tag(&screen_top, "funnytext", ui_disable_element);
+    }
+
+    if (state.practice_mode) {
+        float text_scale;
+        float scale = completion_text->label.scale;
+
+        ui_run_func_on_tag(&screen_top, "levelcomplete", ui_disable_element);
+        ui_label_set_text(completion_text, practice_completion_text);
+        
+        // Get text length in pixels
+        float length = get_longest_line_length(&bigFont_fontCharset, scale, practice_completion_text);
+    
+        if (COMPLETION_TEXT_MAX_WIDTH < length) {
+            text_scale = scale * (COMPLETION_TEXT_MAX_WIDTH / length);
+        } else {
+            text_scale = scale;
+        }
+
+        completion_text->label.scale = text_scale;
+    } else {
+        ui_run_func_on_tag(&screen_top, "practicecomplete", ui_disable_element);
     }
 }
 

@@ -108,6 +108,7 @@ typedef struct {
     bool dead;
 
     bool profiling;
+    bool practice_mode;
 
     float level_progress;
 
@@ -123,6 +124,9 @@ typedef struct {
 
     int last_hitbox_trail;
     PlayerHitboxTrail hitbox_trail_players[2][HITBOX_TRAIL_SIZE];
+    
+    int p1_trail_pos[2];
+    P1Trail p1_trail_data[2][P1_TRAIL_LENGTH];
 
     KeyInput input;
     KeyInput old_input;
@@ -149,5 +153,8 @@ void init_player(Player *player);
 void init_state();
 void init_trails();
 void init_wave_trails();
+
+void play_level_song();
+void update_attempt_text_pos();
 
 extern bool disableHitboxesAfterRespawn;

@@ -6,6 +6,7 @@
 #include <string.h>
 #include "main.h"
 #include <unistd.h>
+#include "state.h"
 
 #define THREAD_AFFINITY -1           // Execute thread on any core
 #define THREAD_STACK_SZ 32 * 1024    // 32kB stack for audio thread
@@ -132,6 +133,8 @@ u32 decode_mp3(void* buffer)
 }
 
 float calculate_amplitude(float power) {
+    if (state.practice_mode) power = 0;
+
     static float prev = 0.0f;
     static float pulse = 0.0f;
     static float avg_delta = 0.0f;

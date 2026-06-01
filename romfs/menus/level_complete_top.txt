@@ -9,7 +9,7 @@ image x=320 y=-15 id=121 scale=1 sheet=3 tag="window"
 image x=200 y=120 id=14 scale=1 sheet=1 tag="window"
 
 image x=200 y=65 id=91 scale=0.62 sheet=0 tag="window,levelcomplete"
-# image x=200 y=65 id=147 scale=0.68 sheet=0 tag="window,practicecomplete"
+image x=200 y=65 id=147 scale=0.68 sheet=0 tag="window,practicecomplete"
  
 
 

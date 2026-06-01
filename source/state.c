@@ -9,6 +9,9 @@
 #include "particles/particles.h"
 #include "menus/settings.h"
 #include "menus/icon_kit.h"
+#include "utils/json_config.h"
+#include "level/main_levels.h"
+#include "menus/level_select.h"
 
 GameState state;
 
@@ -146,6 +149,17 @@ void set_mini(Player *player, bool mini) {
     set_hitbox_size(player, player->gamemode);
 }
 
+void update_attempt_text_pos() {
+    // Set attempt text positions
+    if (state.current_data.attempts == 1) {
+        state.attempt_text_pos.x = SCREEN_WIDTH_AREA / 2;
+    } else {
+        state.attempt_text_pos.x = state.player.x + (5 * 30);
+    }
+
+    state.attempt_text_pos.y = state.camera_y + (5 * 30);
+}
+
 void clear_snap_data(Player *player) {
     player->snap_data.snapped_obj = -1;
     player->snap_data.player_frame = 0;
@@ -190,8 +204,6 @@ void init_player(Player *player) {
     player->cutscene_initial_player_x = 0;
     player->cutscene_initial_player_y = 0;
 
-    player->p1_trail_pos = 0;
-
     clear_slope_data(player);
     clear_snap_data(player);
 }
@@ -224,6 +236,9 @@ void init_state() {
     level_info.wall_y = 0;
 
     state.end_wall_anim_playing = false;
+    
+    state.p1_trail_pos[0] = 0;
+    state.p1_trail_pos[1] = 0;
 
     state.current_data.attempts++;
 }
@@ -265,14 +280,7 @@ void init_level_bounds() {
     
     state.ground_y_gfx = calc_height; 
 
-    // Set attempt text positions
-    if (state.current_data.attempts == 1) {
-        state.attempt_text_pos.x = SCREEN_WIDTH_AREA / 2;
-    } else {
-        state.attempt_text_pos.x = state.player.x + (5 * 30);
-    }
-
-    state.attempt_text_pos.y = state.camera_y + (5 * 30);
+    update_attempt_text_pos();
 }
 
 void first_load_init_variables() {
@@ -342,7 +350,7 @@ void init_variables() {
 
 void handle_death(Player *player, bool pause_song) {
     play_sfx(&explode_sound, 1);
-    if (song_loaded && pause_song) {
+    if (song_loaded && pause_song && !state.practice_mode) {
         pause_playback_mp3();
         seek_mp3(level_info.song_offset);
     }
@@ -421,4 +429,18 @@ void handle_bg_flash() {
 void clear_bg_flash() {
     state.flash_data.flashing = false;
     state.flash_data.use_lbg = false;
+}
+
+void play_level_song() {
+    if (level_info.custom_song_id > 0) {
+        char full_path[273];
+        snprintf(full_path, sizeof(full_path), "%s/%d.mp3", USER_SONGS_DIR, level_info.custom_song_id);
+        song_loaded = play_mp3(full_path, false, level_info.song_offset);
+    } else {
+        if (state.custom_level) {
+            song_loaded = play_mp3(main_levels[level_info.song_id].song_path, false, level_info.song_offset);
+        } else {
+            song_loaded = play_mp3(main_levels[curr_level_id].song_path, false, 0);
+        }
+    }
 }

@@ -13,6 +13,8 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define CLAMP(x, lower, upper) (MIN((upper), MAX((x), (lower))))
+#define WRAP(x, min, max)	\
+	( (x)>=(max) ? (x)+(min)-(max) : ( ((x)<(min)) ? (x)+(max)-(min) : (x) ) )
 
 #define DegToRad(a)   ( (a) *  0.01745329252f )
 #define RadToDeg(a) ( (a) * 57.29577951f )

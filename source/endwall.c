@@ -11,6 +11,7 @@
 
 #include "menus/components/ui_screen.h"
 #include "menus/level_complete.h"
+#include "practice.h"
 
 static int fireworks_spawned = 0;
 static int circunferences_spawned = 0;
@@ -45,11 +46,16 @@ static LevelCompletePopup level_complete_popup;
 int handle_wall_cutscene(float delta) {
     // Init wall variables
     if (completion_timer == 0) {
-        state.completion_shake = true;
         fireworks_spawned = 0;
         circunferences_spawned = 0;
 
-        
+        // Skip rays and co
+        if (state.practice_mode) {
+            completion_timer = FIREWORK_SPAWN_TIME;
+            return 0;
+        }
+
+        state.completion_shake = true;
         
         UseEffect *effect = add_use_effect(level_info.wall_x, level_info.wall_y, USE_EFFECT_OBJ_NOTHING, &end_wall_filled_first, GFX_TOP);
         if (effect) {
@@ -65,7 +71,7 @@ int handle_wall_cutscene(float delta) {
     }
 
     // Make circunferences
-    if (circunference_timer >= (circunferences_spawned * CIRCUNFERENCE_SPAWN_DELAY) && circunferences_spawned < CIRCUNFERENCE_COUNT) {        
+    if (circunference_timer >= (circunferences_spawned * CIRCUNFERENCE_SPAWN_DELAY) && circunferences_spawned < CIRCUNFERENCE_COUNT && completion_timer < FIREWORK_SPAWN_TIME) {        
         UseEffect *effect = add_use_effect(level_info.wall_x, level_info.wall_y, USE_EFFECT_OBJ_NOTHING, &end_wall_circunference, GFX_TOP);
         if (effect) {
             Color p1_white = get_white_if_black(p1_color);
@@ -115,10 +121,12 @@ int handle_wall_cutscene(float delta) {
 
             spawnMultipleParticles(&level_complete_effect_p1, 200);
             spawnMultipleParticles(&level_complete_effect_p2, 200);
+            
+            if (state.practice_mode) fireworks_spawned++;
         }
 
         // Fireworks
-        if (completion_timer >= FIREWORK_SPAWN_TIME + (fireworks_spawned * FIREWORK_SPAWN_DELAY)) {
+        if (!state.practice_mode && completion_timer >= FIREWORK_SPAWN_TIME + (fireworks_spawned * FIREWORK_SPAWN_DELAY)) {
             float calc_x = state.camera_x + 100 + random_float(0, SCREEN_WIDTH_AREA - 200);
             float y = random_float(0, SCREEN_HEIGHT_AREA);
             float calc_y = state.camera_y + (SCREEN_HEIGHT - y);
@@ -157,7 +165,13 @@ int handle_wall_cutscene(float delta) {
             } else if (status == 2) { // Restarting
                 init_variables();
                 reload_level(); 
-                if (song_loaded) seek_mp3(level_info.song_offset);
+                if (state.practice_mode) {
+                    clear_practice_mode();
+                    stop_mp3();
+                    play_level_song();
+                } else {
+                    if (song_loaded) seek_mp3(level_info.song_offset);
+                }
                 unpause_playback_mp3();
             }
             level_complete_initialized = false;
@@ -225,7 +239,7 @@ void draw_level_complete_popup() {
         float scale = level_complete_popup.scale;
 
         C2D_Sprite text = { 0 };
-        C2D_SpriteFromSheet(&text, ui_sheet, LVL_COMPLETE_IMAGE_ID);
+        C2D_SpriteFromSheet(&text, ui_sheet, (state.practice_mode ? LVL_COMPLETE_PRACTICE_IMAGE_ID : LVL_COMPLETE_IMAGE_ID));
         C3D_TexSetFilter(text.image.tex, GPU_LINEAR, GPU_LINEAR);
         C2D_SpriteSetCenter(&text, 0.5f, 0.5f);
         C2D_SpriteSetPos(&text, SCREEN_WIDTH_AREA / 2, SCREEN_HEIGHT_AREA / 2);

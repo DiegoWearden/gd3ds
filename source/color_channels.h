@@ -50,6 +50,7 @@ typedef struct {
 } ColTriggerBuffer;
 
 extern ColorChannel channels[COL_CHANNEL_NUM];
+extern ColTriggerBuffer col_trigger_buffer[COL_CHANNEL_NUM];
 
 extern Color p1_color;
 extern Color p2_color;

@@ -279,8 +279,8 @@ void set_dual_bounds() {
 
 void setup_dual() {
     memcpy(&state.player2, &state.player, sizeof(Player));
-    memset(&state.player2.p1_trail_data, 0, sizeof(P1Trail) * P1_TRAIL_DURATION);
-    state.player2.p1_trail_pos = 0;
+    memset(&state.p1_trail_data[1], 0, sizeof(P1Trail) * P1_TRAIL_DURATION);
+    state.p1_trail_pos[1] = 0;
     state.player2.upside_down = state.player.upside_down ^ 1;
     UseEffect *effect = add_use_effect(player_1->x, player_1->y, USE_EFFECT_OBJ_P1, &portal_use_effect, GFX_TOP);
     if (effect) {
@@ -909,6 +909,8 @@ void handle_special_hitbox(Player *player, int obj, const ObjectHitbox *hitbox) 
         case SECRET_COIN:
             if (!GET_ACTIVATED(obj)) {
                 SET_ACTIVATED(obj, true);
+
+                if (state.practice_mode) break;
 
                 UseEffect *effect = add_use_effect(objects.x[obj], objects.y[obj], obj, &coin_use_effect, GFX_TOP);
                 if (effect) {

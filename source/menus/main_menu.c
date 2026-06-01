@@ -115,7 +115,7 @@ void action_open_info_card(int id, UIElement* e) {
             break;
         case 5:
             // debug info
-            set_info_content("Enables debug key shortcuts.<p>(L, R, X)");
+            set_info_content("Enables debug key shortcuts.<p>(B + L, B + R, X)");
             break;
         case 6:
             // accurate percentage info

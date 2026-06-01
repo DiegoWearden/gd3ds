@@ -46,6 +46,7 @@
 #include "menus/level_complete.h"
 
 #include "endwall.h"
+#include "practice.h"
 
 #define CITRA_TYPE 0x20000
 #define CITRA_VERSION 11
@@ -451,19 +452,8 @@ void game_loop() {
     if (!state.custom_level) {
         level_info.level_name = main_levels[curr_level_id].level_name;
     }
-    
 
-    if (level_info.custom_song_id > 0) {
-        char full_path[273];
-        snprintf(full_path, sizeof(full_path), "%s/%d.mp3", USER_SONGS_DIR, level_info.custom_song_id);
-        song_loaded = play_mp3(full_path, false, level_info.song_offset);
-    } else {
-        if (state.custom_level) {
-            song_loaded = play_mp3(main_levels[level_info.song_id].song_path, false, level_info.song_offset);
-        } else {
-            song_loaded = play_mp3(main_levels[curr_level_id].song_path, false, 0);
-        }
-    }
+    play_level_song();
 
     if (song_loaded) pause_playback_mp3();
 
@@ -480,6 +470,7 @@ void game_loop() {
     // Particle
     allocate_particles();
     init_particles(p1_color, p2_color);
+    clear_practice_mode();
 
     exiting_level = false;
 
@@ -499,6 +490,8 @@ void game_loop() {
 
         // Respond to user input
         u32 kDown = hidKeysDown();
+        u32 kHeld = hidKeysHeld();
+
         if (kDown & KEY_START) {
             if (game_paused) {
                 unpause_game();
@@ -512,10 +505,10 @@ void game_loop() {
         if (kDown & KEY_X && enableDebugBindings)
             state.noclip ^= 1;
 
-        if (kDown & KEY_L && enableDebugBindings)
+        if ((kDown & KEY_L) && (kHeld & KEY_B) && enableDebugBindings)
             state.profiling ^= 1;
 
-        if (kDown & KEY_R && enableDebugBindings) {
+        if ((kDown & KEY_R) && (kHeld & KEY_B) && enableDebugBindings) {
             if (hitboxesEnabled && hitboxTrail) {
                 hitboxesEnabled = false;
                 hitboxTrail = false;
@@ -533,9 +526,7 @@ void game_loop() {
         
         int steps = 0;
 
-        u32 kHeld = hidKeysHeld();
-
-        bool in_bounds = touchPos.px < 320 - 30 || touchPos.py > 30;
+        bool in_bounds = !((touchPos.px > 320 - 30 && touchPos.py < 30) || (state.practice_mode && (touchPos.px > 92 && touchPos.px < 222 && touchPos.py > 175 && touchPos.py < 222)));
         
         bool buttonPressed = (yJump ? (kDown & KEY_Y) : (kDown & KEY_A)) || (kDown & KEY_UP) || (kDown & KEY_L && !enableDebugBindings) || (kDown & KEY_R && !enableDebugBindings);
         bool buttonHeld = (yJump ? (kHeld & KEY_Y) : (kHeld & KEY_A)) || (kHeld & KEY_UP) || (kHeld & KEY_L && !enableDebugBindings) || (kHeld & KEY_R && !enableDebugBindings);
@@ -641,6 +632,7 @@ void game_loop() {
             if (state.dead && state.death_timer <= 0.f) {
                 state.death_timer = (quickRetry ? 0.5f : 1.f);
                 handle_death((state.current_player == 1) ? &state.player2 : &state.player, true);
+                delta = DT;
             }
 
             if (state.death_timer > 0.f) {
@@ -669,12 +661,19 @@ void game_loop() {
                 if (state.death_timer <= 0.f) {
                     init_variables();
                     reload_level(); 
+
+                    if (state.practice_mode && checkpoint_count > 0) {
+                        restore_checkpoint();
+                    }
+
                     if (song_loaded) unpause_playback_mp3();
                     fixed_dt = true; 
                     state.dead = false;
                     state.hitbox_display = 0;
                 }
             }
+
+            handle_practice_mode();
 
             u64 start_trig = svcGetSystemTick();
             handle_triggers();
@@ -900,6 +899,8 @@ void game_loop() {
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   66,  DEBUG_TEXT_SCALE, 0, " - Creating: %6.2f%%", (object_creating_time) * 6);
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   78,  DEBUG_TEXT_SCALE, 0, " - Sorting:  %6.2f%%", (object_sorting_time) * 6);
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   102,  DEBUG_TEXT_SCALE, 0, "Drawing:  %6.2f%%", (object_drawing_time) * 6);
+
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   114,  DEBUG_TEXT_SCALE, 0, "Touch:  %d, %d", touchPos.px, touchPos.py);
 
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   138,  DEBUG_TEXT_SCALE, 0, "Player");
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   150,  DEBUG_TEXT_SCALE, 0, "- Tick: %d", state.player.frame);

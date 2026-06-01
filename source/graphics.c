@@ -26,6 +26,7 @@
 
 #include "fonts/bigFont.h"
 #include "particles/rays.h"
+#include "practice.h"
 
 const Color white = { 255, 255, 255 };
 
@@ -1331,6 +1332,7 @@ void draw_player_graphics() {
     MotionTrail_DrawWaveTrail(&wave_trail_p2);
     change_blending(false);
     state.current_player = 0;
+    draw_checkpoints();
     draw_player(&state.player);
     
     if (state.dual) {

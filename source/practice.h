@@ -1,0 +1,15 @@
+#pragma once
+
+extern int checkpoint_count;
+extern int checkpoint_pointer;
+
+void start_practice_mode();
+void exit_practice_mode();
+
+void new_checkpoint();
+void restore_checkpoint();
+void delete_last_checkpoint();
+
+void handle_practice_mode();
+void draw_checkpoints();
+void clear_practice_mode();

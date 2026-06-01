@@ -871,8 +871,8 @@ void anim_player_to_wall(Player *player) {
 }
 
 
-void spawn_p1_trail(Player *player) {
-    P1Trail *trail_data = &player->p1_trail_data[player->p1_trail_pos];
+void spawn_p1_trail(Player *player, int player_id) {
+    P1Trail *trail_data = &state.p1_trail_data[player_id][state.p1_trail_pos[player_id]];
     
     float scale = (player->mini) ? 0.6f : 1.f;
 
@@ -903,9 +903,9 @@ void spawn_p1_trail(Player *player) {
 
     trail_data->active = true;
 
-    player->p1_trail_pos++;
-    if (player->p1_trail_pos >= P1_TRAIL_LENGTH) {
-        player->p1_trail_pos = 0;
+    state.p1_trail_pos[player_id]++;
+    if (state.p1_trail_pos[player_id] >= P1_TRAIL_LENGTH) {
+        state.p1_trail_pos[player_id] = 0;
     }
 }
 
@@ -914,12 +914,12 @@ void update_p1_trail(Player *player, int player_id) {
     if (!state.dead && p1_trail && (frame_counter % 3) == 0) {
         // If current player is player 2, dual must be true
         if (player_id == 0 || state.dual) {
-            spawn_p1_trail(player);
+            spawn_p1_trail(player, player_id);
         }
     }
 
     for (size_t i = 0; i < P1_TRAIL_LENGTH; i++) {
-        P1Trail *trail_data = &player->p1_trail_data[i];
+        P1Trail *trail_data = &state.p1_trail_data[player_id][i];
 
         if (trail_data->active) {
             trail_data->opacity -= (0.8f / P1_TRAIL_DURATION) * delta;
@@ -936,7 +936,7 @@ void update_p1_trail(Player *player, int player_id) {
 
 void draw_p1_trail(Player *player, int player_id) {
     for (size_t i = 0; i < P1_TRAIL_LENGTH; i++) {
-        P1Trail *trail_data = &player->p1_trail_data[i];
+        P1Trail *trail_data = &state.p1_trail_data[player_id][i];
 
         if (trail_data->active) {
             float calc_x = ((trail_data->x - state.camera_x));
