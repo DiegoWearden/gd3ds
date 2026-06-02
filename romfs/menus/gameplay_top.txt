@@ -9,7 +9,7 @@ progressbar x=200 y=90 max_value=100 style=0 scale=0.9 tag="pause_menu,normalpro
 label x=200 y=91 text="0%" scale=0.5 align=CENTER tag="pause_menu,normalprogressvalue"
 
 label x=200 y=117 text="Practice mode" scale=0.5 align=CENTER tag="pause_menu"
-progressbar x=200 y=135 max_value=130 style=0 scale=0.9 tag="pause_menu,practiceprogress"
+progressbar x=200 y=135 max_value=100 style=0 scale=0.9 tag="pause_menu,practiceprogress"
 label x=200 y=136 text="0%" scale=0.5 align=CENTER tag="pause_menu,practiceprogressvalue"
 
 image x=145 y=190 id=419 scale=0.5 tag="coin_1"
