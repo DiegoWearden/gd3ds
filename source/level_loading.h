@@ -96,6 +96,7 @@ typedef struct {
     bool initial_upsidedown;
 
     char *level_name;
+    char *creator_name;
 } LoadedLevelInfo;
 
 extern LoadedLevelInfo level_info;

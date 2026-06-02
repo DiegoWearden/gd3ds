@@ -457,7 +457,7 @@ void game_loop() {
     
     if (state.custom_level) {
         char file[256];
-        snprintf(file, sizeof(file), "ext_%s", level_info.level_name);
+        snprintf(file, sizeof(file), "ext_%s_%s", level_info.level_name, level_info.creator_name);
         load_level_progress(file);
     }
 

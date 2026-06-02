@@ -1323,6 +1323,13 @@ void load_level_info(char *data, char *level_string) {
     } else {
         level_info.level_name = (char *) default_name;
     }
+
+    char *creator_name_data = extract_gmd_key((const char *) data, "k5", "s");
+    if (creator_name_data) {
+        level_info.creator_name = creator_name_data;
+    } else {
+        level_info.creator_name = (char *) default_name;
+    }
 }
 
 int load_level(char *path) {
