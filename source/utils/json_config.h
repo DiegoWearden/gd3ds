@@ -6,6 +6,7 @@
 #define CONFIG_ROOT CONFIG_PARENT "gd3ds/"
 #define CONFIG_FILENAME "config.json"
 #define CONFIG_FILE CONFIG_ROOT CONFIG_FILENAME
+#define DATA_FOLDER CONFIG_ROOT "data/"
 
 #define CONFIG_FLAGS "flags."
 #define CONFIG_GRAPHICS_PATH "graphics."
@@ -25,7 +26,7 @@
 
 typedef struct {
     struct json_object* root;
-    const char* path;
+    char path[256];
 } Config;
 
 int config_load(Config* cfg, const char* path);

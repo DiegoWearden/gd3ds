@@ -43,16 +43,16 @@ image x=258 y=108 id=34 tag="level_card_2,coin_3" scale=0.75
 # duplicate progress bar
  
 label x=160 y=134 text="Normal mode" scale=0.45 align=CENTER tag="level_card_2"
-progressbar x=160 y=147 max_value=100 style=0 scale=0.65 tag="level_card_2,normalprogress"
+progressbar x=160 y=147 max_value=100 style=0 scale=0.65 tag="level_card_2,normalprogress_2"
 
-label x=160 y=148 text="0%" scale=0.4 align=CENTER tag="level_card_2,normalprogressvalue"
+label x=160 y=148 text="0%" scale=0.4 align=CENTER tag="level_card_2,normalprogressvalue_2"
 
 # duplicate practice bar
 
 label x=160 y=169 text="Practice mode" scale=0.45 align=CENTER tag="level_card_2"
-progressbar x=160 y=182 max_value=100 style=0 scale=0.65 tag="level_card_2,practiceprogress"
+progressbar x=160 y=182 max_value=100 style=0 scale=0.65 tag="level_card_2,practiceprogress_2"
 
-label x=160 y=183 text="0%" scale=0.4 align=CENTER tag="level_card_2,practiceprogressvalue"
+label x=160 y=183 text="0%" scale=0.4 align=CENTER tag="level_card_2,practiceprogressvalue_2"
 
 actionarea x=160 y=80 w=220 h=80 action="open_level"
 

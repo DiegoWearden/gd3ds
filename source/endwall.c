@@ -12,12 +12,15 @@
 #include "menus/components/ui_screen.h"
 #include "menus/level_complete.h"
 #include "practice.h"
+#include "menus/level_select.h"
 
 static int fireworks_spawned = 0;
 static int circunferences_spawned = 0;
 static float completion_timer = 0.0f;
 static float circunference_timer = 0.0f;
 static bool level_complete_initialized = false;
+
+#include "save/saving.h"
 
 typedef enum {
     SCALE_IN,
@@ -177,6 +180,14 @@ int handle_wall_cutscene(float delta) {
             level_complete_initialized = false;
             completion_timer = 0.0f;
             circunference_timer = 0.0f;
+            LevelData *level_data_sel = (state.custom_level ? &level_data : &main_level_data[curr_level_id]);
+            if (state.practice_mode) {
+                state.current_data.max_practice = 100;
+                level_data_sel->practice_progress = 100;
+            } else {
+                state.current_data.max_normal = 100;
+                level_data_sel->normal_progress = 100;
+            }
             return status;
         }
     }

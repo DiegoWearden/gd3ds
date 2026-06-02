@@ -45,6 +45,8 @@
 #include "menus/loading_screen.h"
 #include "menus/level_complete.h"
 
+#include "save/saving.h"
+
 #include "endwall.h"
 #include "practice.h"
 
@@ -452,6 +454,12 @@ void game_loop() {
     if (!state.custom_level) {
         level_info.level_name = main_levels[curr_level_id].level_name;
     }
+    
+    if (state.custom_level) {
+        char file[256];
+        snprintf(file, sizeof(file), "ext_%s", level_info.level_name);
+        load_level_progress(file);
+    }
 
     play_level_song();
 
@@ -631,6 +639,22 @@ void game_loop() {
 
             if (state.dead && state.death_timer <= 0.f) {
                 state.death_timer = (quickRetry ? 0.5f : 1.f);
+                
+                LevelData *level_data_sel = (state.custom_level ? &level_data : &main_level_data[curr_level_id]);
+                // Save new best
+                int progress = (int)state.level_progress;
+                if (state.practice_mode) {
+                    if (state.current_data.max_practice < progress) {
+                        state.current_data.max_practice = progress;
+                        level_data_sel->practice_progress = progress;
+                    }
+                } else {
+                    if (state.current_data.max_normal < progress) {
+                        state.current_data.max_normal = progress;
+                        level_data_sel->normal_progress = progress;
+                    }
+                }
+
                 handle_death((state.current_player == 1) ? &state.player2 : &state.player, true);
                 delta = DT;
             }
@@ -936,6 +960,20 @@ void game_loop() {
         }
     }
 
+    LevelData *level_data_sel = (state.custom_level ? &level_data : &main_level_data[curr_level_id]);
+
+    level_data_sel->attempts += state.current_data.attempts;
+    level_data_sel->jumps += state.current_data.jumps;
+    level_data_sel->normal_progress = state.current_data.max_normal;
+    level_data_sel->practice_progress = state.current_data.max_practice;
+
+    if (state.custom_level) {
+        save_level_progress();
+        free_level_progress();
+    } else {
+        save_main_level_progress(curr_level_id);
+    }
+
     free_particles();
 
     unload_level();
@@ -1027,6 +1065,9 @@ int main(int argc, char* argv[]) {
 
     ui_assets_init();
     game_assets_init();
+    loading_screen_update(10);
+
+    load_main_level_progress();
     
     loading_screen_update(25);
 
@@ -1130,6 +1171,8 @@ int main(int argc, char* argv[]) {
     close_log_file();
 
     free_cached_sprites();
+
+    free_main_level_progress();
 
     // Delete graphics
     C2D_SpriteSheetFree(spriteSheet);

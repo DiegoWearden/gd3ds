@@ -8,6 +8,7 @@
 #include "menus/components/ui_textbox.h"
 #include "menus/components/ui_image.h"
 #include "menus/components/ui_label.h"
+#include "menus/components/ui_progress_bar.h"
 #include "fonts/bigFont.h"
 #include "main.h"
 #include "easing.h"
@@ -17,6 +18,7 @@
 #include "level_select.h"
 
 #include "level/main_levels.h"
+#include "save/saving.h"
 
 #include "state.h"
 
@@ -47,6 +49,17 @@ static UIElement *level_card_2_window = NULL;
 
 static UIElement *level_card_2_title = NULL;
 static UIElement *level_card_2_stars = NULL;
+
+
+static UIElement *level_card_normal_progress = NULL;
+static UIElement *level_card_normal_progress_val = NULL;
+static UIElement *level_card_2_normal_progress = NULL;
+static UIElement *level_card_2_normal_progress_val = NULL;
+
+static UIElement *level_card_practice_progress = NULL;
+static UIElement *level_card_practice_progress_val = NULL;
+static UIElement *level_card_2_practice_progress = NULL;
+static UIElement *level_card_2_practice_progress_val = NULL;
 
 #define ANIM_DURATION 0.8f
 #define COLOR_FADE_DURATION 0.1f
@@ -82,6 +95,41 @@ void level_card_move_right(UIElement *e) {
 
 void level_card_move_left(UIElement *e) {
     e->x -= 320;
+}
+
+void update_level_progress(int level, int card) {
+    LevelData *data = &main_level_data[level]; 
+
+    char attempts[256];
+    snprintf(attempts, sizeof(attempts), "<#40e348>Total Attempts</>: %d", data->attempts);
+    
+    char jumps[256];
+    snprintf(jumps, sizeof(jumps), "<#60abef>Total Jumps</>: %d", data->jumps);
+    
+    char normal[256];
+    snprintf(normal, sizeof(normal), "<#ff00ff>Normal</>: %d%%", data->normal_progress);
+    
+    char practice[256];
+    snprintf(practice, sizeof(practice), "<#ffa54b>Practice</>: %d%%", data->practice_progress);
+
+    ui_label_set_text(ui_get_element_by_tag(&screen_top, "totalattempts"), attempts);
+    ui_label_set_text(ui_get_element_by_tag(&screen_top, "totaljumps"), jumps);
+    ui_label_set_text(ui_get_element_by_tag(&screen_top, "normalprogress"), normal);
+    ui_label_set_text(ui_get_element_by_tag(&screen_top, "practiceprogress"), practice);
+
+    UIElement *normal_prog = (card) ? level_card_2_normal_progress : level_card_normal_progress;
+    UIElement *practice_prog = (card) ? level_card_2_practice_progress : level_card_practice_progress;
+    UIElement *normal_progval = (card) ? level_card_2_normal_progress_val : level_card_normal_progress_val;
+    UIElement *practice_progval = (card) ? level_card_2_practice_progress_val : level_card_practice_progress_val;
+
+    normal_prog->progress_bar.value = data->normal_progress;
+    practice_prog->progress_bar.value = data->practice_progress;
+
+    snprintf(normal, sizeof(normal), "%d%%", data->normal_progress);
+    snprintf(practice, sizeof(practice), "%d%%", data->practice_progress);
+
+    ui_label_set_text(normal_progval, normal);
+    ui_label_set_text(practice_progval, practice);
 }
 
 void update_level_name(int level, int card) {
@@ -133,6 +181,7 @@ void handle_card_movement() {
         if (anim_time > ANIM_DURATION) {
             update_level_name(curr_level_id, 0);
             update_level_stars(curr_level_id, 0);
+            update_level_progress(curr_level_id, 0);
 
             ui_run_func_on_tag(&screen, "level_card_2", disable_card_2);
             ui_set_pos_on_tag(&screen, 160, LEVEL_CARD_Y_POS, "level_card");
@@ -166,11 +215,13 @@ void action_move_right(UIElement* e) {
 
     update_level_name(curr_level_id - 1, 0);
     update_level_stars(curr_level_id - 1, 0);
+    update_level_progress(curr_level_id - 1, 0);
     
     update_level_face(curr_level_id);
 
     update_level_name(curr_level_id, 1);
     update_level_stars(curr_level_id, 1);
+    update_level_progress(curr_level_id, 1);
 };
 
 void action_move_left(UIElement* e) { 
@@ -189,11 +240,13 @@ void action_move_left(UIElement* e) {
 
     update_level_name(curr_level_id + 1, 0);
     update_level_stars(curr_level_id + 1, 0);
+    update_level_progress(curr_level_id + 1, 0);
     
     update_level_face(curr_level_id);
 
     update_level_name(curr_level_id, 1);
     update_level_stars(curr_level_id, 1);
+    update_level_progress(curr_level_id, 1);
 };
 
 void action_exit(UIElement* e) {
@@ -243,9 +296,26 @@ void level_select_loop() {
     level_card_2_title = ui_get_element_by_tag(&screen, "level_title_2");
     level_card_2_stars = ui_get_element_by_tag(&screen, "level_stars_2");
 
+    level_card_normal_progress = ui_get_element_by_tag(&screen, "normalprogress");
+    level_card_normal_progress_val = ui_get_element_by_tag(&screen, "normalprogressvalue");
+    level_card_2_normal_progress = ui_get_element_by_tag(&screen, "normalprogress_2");
+    level_card_2_normal_progress_val = ui_get_element_by_tag(&screen, "normalprogressvalue_2");
+    
+    level_card_practice_progress = ui_get_element_by_tag(&screen, "practiceprogress");
+    level_card_practice_progress_val = ui_get_element_by_tag(&screen, "practiceprogressvalue");
+    level_card_2_practice_progress = ui_get_element_by_tag(&screen, "practiceprogress_2");
+    level_card_2_practice_progress_val = ui_get_element_by_tag(&screen, "practiceprogressvalue_2");
+    
+    ui_progress_bar_set_tint(level_card_normal_progress, C2D_Color32(0, 255, 0, 255));
+    ui_progress_bar_set_tint(level_card_2_normal_progress, C2D_Color32(0, 255, 0, 255));
+
+    ui_progress_bar_set_tint(level_card_practice_progress, C2D_Color32(0, 255, 255, 255));
+    ui_progress_bar_set_tint(level_card_2_practice_progress, C2D_Color32(0, 255, 255, 255));
+
     update_level_name(curr_level_id, 0);
     update_level_stars(curr_level_id, 0);
     update_level_face(curr_level_id);
+    update_level_progress(curr_level_id, 0);
     
     ui_run_func_on_tag(&screen, "level_card_2", disable_card_2);
 

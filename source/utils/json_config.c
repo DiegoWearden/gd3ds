@@ -52,7 +52,16 @@ static struct json_object* create_path_parent(struct json_object* root, const ch
 }
 
 int config_load(Config* cfg, const char* path) {
-    cfg->path = path;
+    if (cfg->root && strcmp(cfg->path, path) == 0)
+        return 1;
+
+    if (cfg->root) {
+        json_object_put(cfg->root);
+        cfg->root = NULL;
+    }
+
+    strncpy(cfg->path, path, sizeof(cfg->path) - 1);
+    cfg->path[sizeof(cfg->path) - 1] = '\0';
 
     // Check if it exists
     FILE* f = fopen(path, "r");
@@ -145,4 +154,5 @@ void config_init_int(Config* cfg, const char* path, int def) {
 
 void config_free(Config* cfg) {
     json_object_put(cfg->root);
+    cfg->root = NULL;
 }

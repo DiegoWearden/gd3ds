@@ -12,6 +12,7 @@
 #include "utils/json_config.h"
 #include "level/main_levels.h"
 #include "menus/level_select.h"
+#include "save/saving.h"
 
 GameState state;
 
@@ -299,7 +300,10 @@ void first_load_init_variables() {
 
     init_variables();
     
+    LevelData *level_data_sel = (state.custom_level ? &level_data : &main_level_data[curr_level_id]);
     state.current_data.time_start = svcGetSystemTick() / (CPU_TICKS_PER_MSEC * 1000);
+    state.current_data.max_normal = level_data_sel->normal_progress;
+    state.current_data.max_practice = level_data_sel->practice_progress;
 }
 
 void init_wave_trails() {

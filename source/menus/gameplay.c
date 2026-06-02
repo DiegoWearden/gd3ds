@@ -29,6 +29,8 @@
 
 #include "practice.h"
 
+#include "save/saving.h"
+
 bool game_paused = false;
 static bool in_disclaimer = false;
 static bool in_settings = false;
@@ -40,11 +42,32 @@ static UIElement *progress_bar;
 static UIElement *percent;
 static UIElement *level_name;
 
+static UIElement *normal_progress;
+static UIElement *normal_progress_val;
+static UIElement *practice_progress;
+static UIElement *practice_progress_val;
+
 int decimal;
+
+static void update_progress_bars() {
+    LevelData *level_data_sel = (state.custom_level ? &level_data : &main_level_data[curr_level_id]);
+
+    normal_progress->progress_bar.value = level_data_sel->normal_progress;
+    practice_progress->progress_bar.value = level_data_sel->practice_progress;
+
+    char normal[32];
+    char practice[32];
+    snprintf(normal, sizeof(normal), "%d%%", level_data_sel->normal_progress);
+    snprintf(practice, sizeof(practice), "%d%%", level_data_sel->practice_progress);
+
+    ui_label_set_text(normal_progress_val, normal);
+    ui_label_set_text(practice_progress_val, practice);
+}
 
 void pause_game() {
     if (state.end_wall_anim_playing) return;
 
+    update_progress_bars();
     game_paused = true;
     if (song_loaded || state.practice_mode) pause_playback_mp3();
     if (!state.custom_level){
@@ -102,7 +125,7 @@ void open_settings() {
     settings_init();
 }
 
-static void action_pause(UIElement *e) {
+static void action_pause(UIElement *e) { 
     pause_game();
 }
 
@@ -166,7 +189,15 @@ void gameplay_screen_init() {
     ui_window_set_tint(ui_get_element_by_tag(&screen_top, "bgwindow"), C2D_Color32(0, 0, 0, 127));
 
     ui_label_set_text(level_name, level_info.level_name);
+
+    normal_progress = ui_get_element_by_tag(&screen_top, "normalprogress");
+    normal_progress_val = ui_get_element_by_tag(&screen_top, "normalprogressvalue");
+    practice_progress = ui_get_element_by_tag(&screen_top, "practiceprogress");
+    practice_progress_val = ui_get_element_by_tag(&screen_top, "practiceprogressvalue");
     
+    ui_progress_bar_set_tint(normal_progress, C2D_Color32(0, 255, 0, 255));
+    ui_progress_bar_set_tint(practice_progress, C2D_Color32(0, 255, 255, 255));
+
     // hide coins if level is a custom level
     if(state.custom_level == true){
         ui_run_func_on_tag(&screen, "coin_1", ui_disable_element);

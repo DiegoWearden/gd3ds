@@ -46,6 +46,8 @@ typedef struct {
     int jumps;
     float time_start;
     float time_end;
+    int max_normal;
+    int max_practice;
 } StateLevelData;
 
 typedef struct {

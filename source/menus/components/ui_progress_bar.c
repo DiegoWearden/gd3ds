@@ -23,8 +23,8 @@ static void draw_bar(UIElement *e) {
     int pixels = (e->progress_bar.value / e->progress_bar.max_value) * bar_width;
 
     if (pixels > 0) {
-        if (pixels >= bar_width) {
-            pixels = bar_width - 1;
+        if (pixels > bar_width) {
+            pixels = bar_width;
         }
 
         C2D_Sprite spr;
