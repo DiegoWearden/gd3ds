@@ -6,6 +6,7 @@
 #include "math_helpers.h"
 #include "color_channels.h"
 #include "utils/gfx.h"
+#include "menus/settings.h"
 
 #define MAX_CHECKPOINTS 100
 #define CHECKPOINT_GFX_ID 6
@@ -174,12 +175,13 @@ void handle_practice_mode() {
     if (!state.practice_mode) return;
 
     u32 kDown = hidKeysDown();
+    u32 kHeld = hidKeysHeld();
 
-    if ((kDown & KEY_L) || (kDown & KEY_ZL)) {
+    if (((kDown & KEY_L) && !((kHeld & KEY_B) && enableDebugBindings)) || (kDown & KEY_ZL)) {
         new_checkpoint();
     }
 
-    if ((kDown & KEY_R) || (kDown & KEY_ZR)) {
+    if (((kDown & KEY_R) && !((kHeld & KEY_B) && enableDebugBindings)) || (kDown & KEY_ZR)) {
         delete_last_checkpoint();
     }
 }
