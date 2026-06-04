@@ -9,6 +9,7 @@
 #include <stdarg.h>
 
 static const u32 white = ABGR8(255, 255, 255, 255);
+static char wrap_buffer[4096];
 
 typedef struct {
     const char *name;
@@ -166,6 +167,65 @@ const Glyph *get_glyph(const Charset *font, char character) {
     }
     
     return NULL;
+}
+
+char *wrap_text(const Charset *font, float zoom_x, const char *text, float max_width) {
+    wrap_buffer[0] = '\0';
+
+    float line_width = 0.0f;
+    const char *p = text;
+    while (*p) {
+        // Copy tags 
+        if (*p == '<') {
+            const char *start = p;
+
+            while (*p && *p != '>') {
+                p++;
+            }
+
+            if (*p == '>') {
+                p++;
+            }
+
+            strncat(wrap_buffer, start, p - start);
+            continue;
+        }
+
+        // Extract next word
+        char word[256];
+        int len = 0;
+
+        while (*p && *p != ' ' && *p != '<') {
+            word[len++] = *p++;
+        }
+
+        word[len] = '\0';
+
+        float word_width =
+            get_text_length(font, zoom_x, word);
+
+        float space_width =
+            get_text_length(font, zoom_x, " ");
+
+        // Wrap if needed
+        if (line_width > 0 && line_width + space_width + word_width > max_width) {
+            strcat(wrap_buffer, "<p>");
+            line_width = 0.0f;
+        } else if (line_width > 0) {
+            strcat(wrap_buffer, " ");
+            line_width += space_width;
+        }
+
+        strcat(wrap_buffer, word);
+        line_width += word_width;
+
+        // Skip original spaces
+        while (*p == ' ') {
+            p++;
+        }
+    }
+
+    return wrap_buffer;
 }
 
 float get_line_length(const Charset *font, const float zoom_x, const char *text, int start) {

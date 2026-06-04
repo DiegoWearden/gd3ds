@@ -57,6 +57,8 @@ int game_state = STATE_MAIN_MENU;
 
 bool playing_menu_loop = false;
 
+int level_result = 0;
+
 PrintConsole console;
 
 C3D_RenderTarget* top;
@@ -445,20 +447,16 @@ void game_loop() {
     update_player_colors();
 
     int returned = load_level(path);
+    level_result = returned;
     if (returned) {
         printf("\x1b[9;1HFailed %d", returned);
+
         game_state = (state.custom_level ? STATE_EXTERNAL_LEVELS : STATE_LEVEL_SELECT);
         return;
     }
 
     if (!state.custom_level) {
         level_info.level_name = main_levels[curr_level_id].level_name;
-    }
-    
-    if (state.custom_level) {
-        char file[256];
-        snprintf(file, sizeof(file), "ext_%s_%s", level_info.level_name, level_info.creator_name);
-        load_level_progress(file);
     }
 
     play_level_song();
@@ -681,6 +679,8 @@ void game_loop() {
                         wave_trail_p2.nuPoints = 0;
                     }
                 }
+                
+                handle_mirror_transition();
 
                 if (state.death_timer <= 0.f) {
                     init_variables();
@@ -969,7 +969,6 @@ void game_loop() {
 
     if (state.custom_level) {
         save_level_progress();
-        free_level_progress();
     } else {
         save_main_level_progress(curr_level_id);
     }

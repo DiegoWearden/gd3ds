@@ -193,7 +193,6 @@ int base64_decode(const char *in, unsigned char *out) {
         int d = in[i+3] == '=' ? 0 : b64_char(in[i+3]);
 
         if (a == -1 || b == -1 || c == -1 || d == -1) {
-            output_log("Invalid base64 character at position %d\n", i);
             return -1;
         }
 
@@ -1138,7 +1137,7 @@ int compare_coins(const void *a, const void *b) {
     return objects.x[*c1] - objects.x[*c2];
 }
 
-bool parse_string(const char *levelString) {
+int parse_string(const char *levelString) {
     int sectionCount = 0;
 
     // Split the string in object sections
@@ -1147,7 +1146,7 @@ bool parse_string(const char *levelString) {
     if (sectionCount < 3) {
         output_log("Level string missing sections!\n");
         free_string_array(sections, sectionCount);
-        return false;
+        return 3;
     }
     
     int objectCount = sectionCount - 1;
@@ -1156,7 +1155,7 @@ bool parse_string(const char *levelString) {
     
     if (!init_arrays(objectCount)) {
         output_log("Failed to allocate object array\n");
-        return false;
+        return 4;
     }
 
     objects.count = objectCount;
@@ -1171,7 +1170,7 @@ bool parse_string(const char *levelString) {
         if (!parse_gd_object(sections[i + 1], i)) {
             output_log("Failed to parse object %d\n", i);
             free_string_array(sections, sectionCount);
-            return false;
+            return 5;
         }
 
         assign_object_to_section(i);
@@ -1189,7 +1188,7 @@ bool parse_string(const char *levelString) {
 
     free_string_array(sections, sectionCount);
 
-    return true;
+    return 0;
 }
 
 void set_color_channels() {
@@ -1354,7 +1353,7 @@ int load_level(char *path) {
     free(data);
     free(metaStr);
 
-    if (!returned) return 3;
+    if (returned) return returned;
     
     free(level);
 

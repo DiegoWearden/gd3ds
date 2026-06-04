@@ -244,7 +244,11 @@ int level_complete_loop(float delta) {
     if (animating_down) run_start_animation(delta);
     if (animating_up) run_end_animation(delta);
 
-    if (yes_exit || (kDown & KEY_B)) {
+    if (kDown & KEY_B) {
+        exit_level_complete(NULL);
+    }
+
+    if (yes_exit) {
         return 1;
     }
 

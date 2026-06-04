@@ -82,6 +82,8 @@ extern SFX quit_sound;
 extern SFX explode_sound;
 extern SFX end_sound;
 
+extern int level_result;
+
 void allocate_particles();
 void free_particles();
 void init_particles(Color p1_color, Color p2_color);

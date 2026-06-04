@@ -23,6 +23,32 @@ void ui_label_set_text(UIElement *e, const char *text) {
     strncpy(e->label.text, text, sizeof(e->label.text) - 1);
 }
 
+void ui_label_set_scale_from_width(UIElement *e, const char *text, float width) {
+    int font_id = e->label.font;
+
+    // Set to pusab if invalid
+    if (font_id >= NUM_FONTS) font_id = 0;
+
+    const LabelFont *font = &fonts[font_id];
+
+    float text_scale;
+
+    float scale = e->label.scale;
+
+    // Get text length in pixels
+    float length = get_longest_line_length(font->charset, scale, text);
+
+    if (length == 0) return;
+
+    if (width < length) {
+        text_scale = scale * (width / length);
+    } else {
+        text_scale = scale;
+    }
+
+    e->label.scale = text_scale;
+}
+
 UIElement ui_create_label(int x, int y, float scale, char *text, int font, float alignment, char (*tag)[TAG_LENGTH]) {
     UIElement e = {0};
 

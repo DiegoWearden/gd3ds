@@ -29,10 +29,25 @@
 #include "utils/folders.h"
 #include "level_loading.h"
 
+#include "menus/external_popup.h"
+#include "menus/info_card.h"
+
+const char *error_strings[] = {
+    "Invalid gmd.",
+    "Invalid level data.",
+    "Level string missing sections.",
+    "Out of memory.",
+    "Couldn't parse objects."
+};
+
+#define NUM_ERRORS (sizeof(error_strings) / sizeof(char *))
+
 static bool exit_flag = false;
-static bool start_level = false;
+bool external_start_level = false;
 
 static bool first_time_loaded = true;
+
+static bool in_external_popup = false;
 
 static UIScreen screen;
 static UIScreen screen_top;
@@ -54,14 +69,10 @@ static void action_exit(UIElement *e) {
     set_fade_status(FADE_STATUS_OUT);
 }
 
-static void open_level(UIElement *e) {
-    play_sfx(&play_sound, 1);
-
-    state.custom_level = true;
+static void open_external_popup(UIElement *e) {
     strncpy(state.custom_level_path, e->external_level_card.path, sizeof(state.custom_level_path));
-
-    set_fade_status(FADE_STATUS_OUT);
-    start_level = true; 
+    external_popup_init();
+    in_external_popup = true;
 }
 
 void load_level_folder(char *folder) {
@@ -94,7 +105,7 @@ void load_level_folder(char *folder) {
                 strip_extension(level_name);
                 char *name = strip_filename(level_name);
                 truncate_filename(name, 16);
-                texts[i] = ui_create_external_level_card(0, 0, 420, 0, name, entry->name, open_level, NULL);
+                texts[i] = ui_create_external_level_card(0, 0, 420, 0, name, entry->name, open_external_popup, NULL);
                 ui_list_add(list, &texts[i]);
             }
         }
@@ -143,6 +154,24 @@ static UIAction actions[] = {
     {"go_back", action_go_back },
 };
 
+static void show_error_message() {
+    // Level gave error
+    char tmp[512];
+
+    char *message = "Ultra unknown error.";
+    if (level_result < NUM_ERRORS) {
+        message = (char *) error_strings[level_result]; 
+    }
+
+    snprintf(tmp, sizeof(tmp), "<red>ERROR</>:<p>%s", message);
+
+    info_card_init();
+    set_info_content(tmp);
+
+    in_info_card = true;
+    level_result = 0;
+}
+
 void external_levels_loop() {
     C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
     C2D_SceneBegin(bot);
@@ -153,7 +182,7 @@ void external_levels_loop() {
     draw_text(&bigFont_fontCharset, &bigFont_sheet, 310, SCREEN_HEIGHT - 10, 0.5f, 1.0f, "Loading...");
     C3D_FrameEnd(0);
 
-    start_level = false;
+    external_start_level = false;
     exit_flag = false;
     if (first_time_loaded) {
         ui_load_screen(&screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/external_levels.txt");
@@ -169,6 +198,10 @@ void external_levels_loop() {
 
     load_level_folder(current_path);
 
+    if (level_result) {
+        show_error_message();
+    }
+
     set_fade_status(FADE_STATUS_IN);
 
     if (!playing_menu_loop) {
@@ -179,7 +212,7 @@ void external_levels_loop() {
     while (aptMainLoop()) {
         hidScanInput();
         u32 kDown = hidKeysDown();
-        if (kDown & KEY_B) {
+        if ((kDown & KEY_B) && !in_external_popup) {
             action_exit(NULL);
         }
 
@@ -190,7 +223,14 @@ void external_levels_loop() {
         touch.did_something = false;
         touch.interacted = false;
 
-        ui_screen_update(&screen, &touch);
+        if (!in_external_popup) ui_screen_update(&screen, &touch);
+
+        if (in_external_popup) {
+            int returned = external_popup_loop();
+            if (returned) {
+                in_external_popup = false;
+            }
+        }
         
         do {
             update_touch_effect(DT);
@@ -203,6 +243,16 @@ void external_levels_loop() {
             draw_fade();
 
             ui_screen_draw(&screen);
+            
+            if (in_external_popup) external_popup_draw_bot();
+
+
+            if (in_info_card) {
+                int returned = info_card_loop();
+                if (returned) {
+                    in_info_card = false;
+                }
+            }
 
             change_blending(true);
             draw_touch_effect();
@@ -214,11 +264,14 @@ void external_levels_loop() {
             draw_fade();
 
             ui_screen_draw(&screen_top);
+            
+            if (in_external_popup) external_popup_draw_top();
+
             C2D_ViewReset();
             C3D_FrameEnd(0);
         } while (handle_fading());
 
-        if (start_level) {
+        if (external_start_level) {
             stop_mp3();
             game_state = STATE_GAME;
             playing_menu_loop = false;

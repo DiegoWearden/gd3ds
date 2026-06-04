@@ -104,6 +104,8 @@ typedef struct {
 
 extern LoadedLevelInfo level_info;
 
+extern const char *default_name;
+
 #define BG_COUNT 7
 #define G_COUNT 7
 
@@ -115,6 +117,9 @@ char *decompress_level(char *data);
 int load_level(char *path);
 void reload_level();
 void unload_level();
+
+void fix_base64_url(char *b64);
+int base64_decode(const char *in, unsigned char *out);
 
 Section *get_section(int x, int y);
 Section *get_or_create_section(int x, int y);
