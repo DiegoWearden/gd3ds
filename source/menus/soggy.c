@@ -44,8 +44,13 @@ static void action_exit(UIElement *e) {
     set_fade_status(FADE_STATUS_OUT);
 }
 
+static void action_boop(UIElement *e) {
+    play_sfx(&honk, 1);
+}
+
 static UIAction actions[] = {
     {"exit", action_exit },
+    {"boop", action_boop},
 };
 
 void soggy_menu_loop() {
