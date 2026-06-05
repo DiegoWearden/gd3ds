@@ -371,10 +371,10 @@ void level_select_loop() {
     while (aptMainLoop()) {
         hidScanInput();
         u32 kDown = hidKeysDown();
-        if (kDown & KEY_LEFT) {
+        if ((kDown & KEY_LEFT) || (kDown & KEY_L)) {
             action_move_left(NULL);
         }
-        if (kDown & KEY_RIGHT) {
+        if ((kDown & KEY_RIGHT) || (kDown & KEY_R)) {
             action_move_right(NULL);
         }
         if (kDown & KEY_B) {
