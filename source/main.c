@@ -992,6 +992,7 @@ void game_loop() {
 
         if (exiting_level) {
             game_paused = false;
+            in_level_complete = false;
             if (song_loaded) unpause_playback_mp3();
             break;
         }

@@ -165,6 +165,7 @@ static void run_end_animation(float delta) {
 
 void level_complete_init() {
     init = true;
+    in_level_complete = true;
     ui_load_screen(&screen_top, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/level_complete_top.txt");
     ui_load_screen(&screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/level_complete.txt");
 
