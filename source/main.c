@@ -1114,11 +1114,6 @@ int main(int argc, char* argv[]) {
 
     calculate_stats();
 
-    output_log("Stars: %d\n", total_stars);
-    output_log("Coins: %d\n", total_coins);
-    output_log("Attempts: %d\n", total_attempts);
-    output_log("Jumps: %d\n", total_jumps);
-
     cache_all_sprites();
 
     loading_screen_update(40);

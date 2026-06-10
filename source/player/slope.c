@@ -239,6 +239,7 @@ void slope_snap_y(int obj, Player *player) {
 }
 
 #define SHIP_UFO_EXITING_VEL (508.248f / 4)
+#define SLOPE_EPSILON 0.01f
 
 void slope_calc(int obj, Player *player) {
     int orientation = grav_slope_orient(obj, player);
@@ -261,7 +262,7 @@ void slope_calc(int obj, Player *player) {
         //output_log("Tick %d - NRM player %.2f, obj %.2f slopes %d\n", player->frame, gravBottom(player), obj_gravTop(player, obj), get_player_touching_slopes(player));
 
         // Sliding off slope
-        if (gravBottom(player) >= obj_gravTop(player, obj) && get_player_touching_slopes(player) < 2) {
+        if (gravBottom(player) >= obj_gravTop(player, obj) - SLOPE_EPSILON && get_player_touching_slopes(player) < 2) {
             float vel = 0.9f * MIN(1.12f / slope_angle(obj, player), 1.54f) * (objects.height[obj] * player_speeds[state.speed] / objects.width[obj]);
             float time = clampf(10 * (player->timeElapsed - player->slope_data.elapsed), 0.4f, 1.0f);
             
@@ -299,11 +300,11 @@ void slope_calc(int obj, Player *player) {
             slope_snap_y(obj, player);
         }
 
-        if (obj_gravTop(player, obj) <= grav(player, player->y) || getLeft(player) - obj_getRight(obj) > 0) {
+        if (obj_gravTop(player, obj) <= grav(player, player->y) + SLOPE_EPSILON || getLeft(player) - obj_getRight(obj) > 0) {
             float vel = -falls[state.speed] * ((float) objects.height[obj] / objects.width[obj]);
             player->new_vel_y = vel;
             player->coyote_slope = player->slope_data;
-            player->slope_slide_coyote_time = 4;
+            player->slope_slide_coyote_time = 4 / fabsf(1.f - fabsf(slope_angle(obj, player)));
             push_player_action(clear_slope_data);
         }        
     } else if (orientation == ORIENT_UD_UP) { // Upside down - up
@@ -328,10 +329,10 @@ void slope_calc(int obj, Player *player) {
         if (gravBottom(player) != obj_gravTop(player, obj))
             slope_snap_y(obj, player);
 
-        //output_log("Tick %d - UD player %.2f, obj %.2f slopes %d\n", player->frame, gravTop(player), obj_gravBottom(player, obj), get_player_touching_slopes(player));
+        //output_log("Tick %d - UD player %f, obj %f slopes %d\n", player->frame, gravTop(player), obj_gravBottom(player, obj), get_player_touching_slopes(player));
 
         // Sliding off slope
-        if (gravTop(player) <= obj_gravBottom(player, obj) && get_player_touching_slopes(player) < 2) {
+        if (gravTop(player) <= obj_gravBottom(player, obj) + SLOPE_EPSILON && get_player_touching_slopes(player) < 2) {
             //output_log("Tick %d - player %.2f, obj %.2f slopes %d\n", player->frame, gravTop(player), obj_gravBottom(player, obj), get_player_touching_slopes(player));
             float vel = 0.9f * MIN(1.12f / slope_angle(obj, player), 1.54f) * (objects.height[obj] * player_speeds[state.speed] / objects.width[obj]);
             float time = clampf(10 * (player->timeElapsed - player->slope_data.elapsed), 0.4f, 1.0f);
@@ -379,11 +380,11 @@ void slope_calc(int obj, Player *player) {
         }
 
         // Sliding off
-        if (obj_gravTop(player, obj) <= grav(player, player->y) || getLeft(player) - obj_getRight(obj) > 0) {
+        if (obj_gravTop(player, obj) <= grav(player, player->y) - SLOPE_EPSILON || getLeft(player) - obj_getRight(obj) > 0) {
             float vel = falls[state.speed] * ((float) objects.height[obj] / objects.width[obj]);
             player->new_vel_y = vel;
             player->coyote_slope = player->slope_data;
-            player->slope_slide_coyote_time = 4;
+            player->slope_slide_coyote_time = 4 / fabsf(1.f - fabsf(slope_angle(obj, player)));
             push_player_action(clear_slope_data);
         }
     }
