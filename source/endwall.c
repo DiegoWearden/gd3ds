@@ -216,7 +216,7 @@ int handle_wall_cutscene(float delta) {
                 stop_mp3();
                 set_fade_status(FADE_STATUS_OUT);
             } else if (status == 2) { // Restarting
-                init_variables();
+                first_load_init_variables();
                 reload_level(); 
                 if (state.practice_mode) {
                     clear_practice_mode();
