@@ -137,9 +137,9 @@ void cube_gamemode(Player *player) {
     // Do cube rotation
     if (player->slope_data.slope_id < 0 && !player->on_ground) {
         if (player->inverse_rotation) {
-            player->cube_target_rotation -= (428.4f / 2) * STEPS_DT * mult * (player->mini ? 1.2f : 1.f);
+            player->cube_target_rotation -= (415.3848f / 2) * STEPS_DT * mult * (player->mini ? 1.2f : 1.f);
         } else {
-            player->cube_target_rotation += 428.4f * STEPS_DT * mult * (player->mini ? 1.2f : 1.f);
+            player->cube_target_rotation += 415.3848f * STEPS_DT * mult * (player->mini ? 1.2f : 1.f);
         }
     }
 
