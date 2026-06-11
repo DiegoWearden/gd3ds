@@ -22,6 +22,8 @@ const float falls[SPEED_COUNT] = {
     421.200108
 };
 
+#define SLOPE_EPSILON 0.01f
+
 // Count how many slopes is the player touching, in the case the player has an slope, it checks only the slopes with the same orientation
 int get_player_touching_slopes(Player *player) {
     int sx = (int)(player->x / SECTION_SIZE);
@@ -239,7 +241,6 @@ void slope_snap_y(int obj, Player *player) {
 }
 
 #define SHIP_UFO_EXITING_VEL (508.248f / 4)
-#define SLOPE_EPSILON 0.01f
 
 void slope_calc(int obj, Player *player) {
     int orientation = grav_slope_orient(obj, player);
@@ -300,11 +301,11 @@ void slope_calc(int obj, Player *player) {
             slope_snap_y(obj, player);
         }
 
-        if (obj_gravTop(player, obj) <= grav(player, player->y) + SLOPE_EPSILON || getLeft(player) - obj_getRight(obj) > 0) {
+        if ((obj_gravTop(player, obj) <= grav(player, player->y) + SLOPE_EPSILON || getLeft(player) - obj_getRight(obj) > 0) && get_player_touching_slopes(player) < 2) {
             float vel = -falls[state.speed] * ((float) objects.height[obj] / objects.width[obj]);
             player->new_vel_y = vel;
             player->coyote_slope = player->slope_data;
-            player->slope_slide_coyote_time = 4 / fabsf(1.f - fabsf(slope_angle(obj, player)));
+            player->slope_slide_coyote_time = 2;
             push_player_action(clear_slope_data);
         }        
     } else if (orientation == ORIENT_UD_UP) { // Upside down - up
@@ -380,11 +381,11 @@ void slope_calc(int obj, Player *player) {
         }
 
         // Sliding off
-        if (obj_gravTop(player, obj) <= grav(player, player->y) - SLOPE_EPSILON || getLeft(player) - obj_getRight(obj) > 0) {
+        if ((obj_gravTop(player, obj) <= grav(player, player->y) - SLOPE_EPSILON || getLeft(player) - obj_getRight(obj) > 0) && get_player_touching_slopes(player) < 2) {
             float vel = falls[state.speed] * ((float) objects.height[obj] / objects.width[obj]);
             player->new_vel_y = vel;
             player->coyote_slope = player->slope_data;
-            player->slope_slide_coyote_time = 4 / fabsf(1.f - fabsf(slope_angle(obj, player)));
+            player->slope_slide_coyote_time = 2;
             push_player_action(clear_slope_data);
         }
     }
@@ -475,9 +476,11 @@ void slope_collide(int obj, Player *player) {
         potential_slopes_buffer[state.current_player][potential_slopes[state.current_player]++] = obj;
     }
 
-    if (objects.orientation[obj] < 2 && expected_slope_y(obj, player) <= player->y)
+    bool hasSlope = state.old_player.slope_data.slope_id >= 0;
+
+    if (objects.orientation[obj] < 2 && expected_slope_y(obj, player) + (hasSlope ? 3 : 0) <= player->y)
 		return;
-	else if (objects.orientation[obj] >= 2 && expected_slope_y(obj, player) >= player->y)
+	else if (objects.orientation[obj] >= 2 && expected_slope_y(obj, player) - (hasSlope ? 3 : 0) >= player->y)
 		return;
     
     int clip = (player->gamemode == GAMEMODE_SHIP || player->gamemode == GAMEMODE_BIRD) ? 7 : 10;
@@ -583,6 +586,8 @@ void slope_collide(int obj, Player *player) {
     );
 
     int slope = player->slope_data.slope_id;
+    //output_log("Tick %d - dir %d oldDir %d touching %d colliding %d \n", player->frame, orient, (slope >= 0 ? grav_slope_orient(slope, player) : -1), slope_touching(obj, player), colliding);
+
     if (
         (slope < 0 || grav_slope_orient(slope, player) == grav_slope_orient(obj, player) ||
             (
@@ -597,8 +602,11 @@ void slope_collide(int obj, Player *player) {
     ) {
         if (slope >= 0 && slope_angle(obj, player) < slope_angle(slope, player)) return;
         
-        float angle = atanf((state.old_player.vel_y * STEPS_DT) / (player_speeds[state.speed] * STEPS_DT));
-        if (grav_slope_orient(obj, &state.old_player) >= ORIENT_UD_DOWN) angle = -angle;
+        int oldOrient = grav_slope_orient(obj, &state.old_player);
+        float oldVel = (oldOrient == ORIENT_NORMAL_DOWN || oldOrient == ORIENT_UD_DOWN) ? grav(player, state.old_player.delta_y) : (state.old_player.vel_y * STEPS_DT);
+
+        float angle = atanf(oldVel / (player_speeds[state.speed] * STEPS_DT));
+        if (oldOrient >= ORIENT_UD_DOWN) angle = -angle;
 
         bool hasSlope = state.old_player.slope_data.slope_id >= 0;
 
@@ -610,6 +618,8 @@ void slope_collide(int obj, Player *player) {
         bool projectedHit = (orient == ORIENT_NORMAL_DOWN || orient == ORIENT_UD_DOWN) ? (angle * 5.f <= slope_angle(obj, player)) : (angle <= slope_angle(obj, player));
         bool clip = true;//slope_touching(obj, player);
         bool snapDown = (orient == ORIENT_NORMAL_DOWN || orient == ORIENT_UD_DOWN) && player->vel_y * mult > 0 && player->x - obj_getLeft(obj) > 0;
+
+        //output_log("Tick %d - dir %d oldDir %d proyectedHit %d clip %d snapDown %d angle %f slope_angle %f\n", player->frame, orient, (slope >= 0 ? grav_slope_orient(slope, player) : -1), projectedHit, clip, snapDown, angle, slope_angle(obj, player));
 
         if ((projectedHit && clip) || snapDown) {
             // If wave, just die, nothing else, wave hates slopes
@@ -665,11 +675,11 @@ void slope_collide(int obj, Player *player) {
 }
 
 bool slope_touching(int obj, Player *player) {
-    bool hasSlope = player->slope_data.slope_id >= 0;
+    bool hasSlope = state.old_player.slope_data.slope_id >= 0;
 
     // If player is on slope, add a bit of hitbox
     if (hasSlope) {
-        int mult = grav_slope_orient(player->slope_data.slope_id, player) >= ORIENT_UD_DOWN ? -1 : 1;
+        int mult = grav_slope_orient(state.old_player.slope_data.slope_id, player) >= ORIENT_UD_DOWN ? -1 : 1;
         hasSlope = hasSlope && player->vel_y * mult <= 0;
     }
     
