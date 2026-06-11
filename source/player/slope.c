@@ -288,6 +288,8 @@ void slope_calc(int obj, Player *player) {
 
             player->new_vel_y = vel;// + player->gravity * STEPS_DT;
             
+            //output_log("Tick %d - Time %.2f PElapsed %.4f SElapsed %.4f Exit vel %.2f\n", player->frame, time, player->timeElapsed, player->slope_data.elapsed, player->new_vel_y);
+            
             push_player_action(clear_slope_data);
         }
     } else if (orientation == ORIENT_NORMAL_DOWN) { // Normal - down
@@ -588,17 +590,30 @@ void slope_collide(int obj, Player *player) {
     int slope = player->slope_data.slope_id;
     //output_log("Tick %d - dir %d oldDir %d touching %d colliding %d \n", player->frame, orient, (slope >= 0 ? grav_slope_orient(slope, player) : -1), slope_touching(obj, player), colliding);
 
-    if (
-        (slope < 0 || grav_slope_orient(slope, player) == grav_slope_orient(obj, player) ||
-            (
-                // Check if going from going down to up
-                grav_slope_orient(slope, player) != grav_slope_orient(obj, player) && 
-                (
-                    (grav_slope_orient(slope, player) == ORIENT_NORMAL_DOWN && grav_slope_orient(obj, player) == ORIENT_NORMAL_UP) ||
-                    (grav_slope_orient(slope, player) == ORIENT_UD_DOWN && grav_slope_orient(obj, player) == ORIENT_UD_UP)
-                )
-            ) 
-        ) && slope_touching(obj, player) && colliding && obj_gravTop(player, obj) - gravBottom(player) > 2
+    // Check if this would be the next slope if the next slope is higher than the current one
+    
+    
+    bool would_be_next = true;
+    if (slope >= 0) {
+        float diff = objects.y[obj] - objects.y[slope];
+        int orient = objects.orientation[slope];
+
+
+        if (orient == ORIENT_NORMAL_UP || orient == ORIENT_UD_DOWN) {
+            would_be_next = diff > 0;
+        } else {
+            would_be_next = diff < 0;
+        }
+    }
+    
+    // Check if going from going down to up
+    bool up_to_down = slope >= 0 && grav_slope_orient(slope, player) != grav_slope_orient(obj, player) && 
+    (
+        (grav_slope_orient(slope, player) == ORIENT_NORMAL_DOWN && grav_slope_orient(obj, player) == ORIENT_NORMAL_UP) ||
+        (grav_slope_orient(slope, player) == ORIENT_UD_DOWN && grav_slope_orient(obj, player) == ORIENT_UD_UP)
+    );
+
+    if ((slope < 0 || grav_slope_orient(slope, player) == grav_slope_orient(obj, player) || up_to_down) && slope_touching(obj, player) && colliding && obj_gravTop(player, obj) - gravBottom(player) > 2 && (up_to_down || would_be_next)
     ) {
         if (slope >= 0 && slope_angle(obj, player) < slope_angle(slope, player)) return;
         

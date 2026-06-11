@@ -345,6 +345,9 @@ void handle_special_hitbox(Player *player, int obj, const ObjectHitbox *hitbox) 
                 if ((rotation > 90 && rotation < 270) && !player->upside_down)
                     break;
 
+                // No double flip in the same frame
+                if (state.old_player.upside_down != player->upside_down) 
+                    break;
 
                 MotionTrail_ResumeStroke(trail);
                 if (player->gamemode == GAMEMODE_DART) MotionTrail_AddWavePoint(wave_trail);
