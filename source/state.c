@@ -373,7 +373,7 @@ void init_variables() {
     p1_trail = false;
 
     clear_bg_flash();
-    if (state.current_data.attempts != 1) start_respawn_effect();
+    if (game_state == STATE_GAME && state.current_data.attempts != 1) start_respawn_effect();
 }
 
 void handle_death(Player *player, bool pause_song) {
