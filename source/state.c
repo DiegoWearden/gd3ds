@@ -106,8 +106,8 @@ void run_camera() {
         state.camera_x = player->x - 125.0f/SCALE;
         
         if (state.current_data.attempts == 1) {
-            if (state.camera_x < 0) {
-                state.camera_x = 0;
+            if (state.camera_x < 15) {
+                state.camera_x = 15;
             }
         }
 
@@ -373,6 +373,7 @@ void init_variables() {
     p1_trail = false;
 
     clear_bg_flash();
+    if (state.current_data.attempts != 1) start_respawn_effect();
 }
 
 void handle_death(Player *player, bool pause_song) {
@@ -470,6 +471,72 @@ void play_level_song() {
             song_loaded = play_mp3(main_levels[curr_level_id].song_path, false, 0);
         }
     }
+}
+
+// Respawn effect
+
+void start_respawn_effect() {
+    RespawnEffectData *data = &state.respawn_effect_data;
+    data->active = true;
+    data->timer = RESPAWN_EFFECT_DURATION;
+    data->state = RESPAWN_EFFECT_HIDE_PLAYER;
+    data->remaining = RESPAWN_EFFECT_REPEAT;
+    data->hide_player = true;
+}
+
+void handle_respawn_effect() {
+    RespawnEffectData *data = &state.respawn_effect_data;
+    if (!data->active) return;
+
+    // Run respawn state
+    switch (data->state) {
+        case RESPAWN_EFFECT_NONE:
+            break;
+        
+        case RESPAWN_EFFECT_HIDE_PLAYER:
+            // First frame
+            if (data->timer == RESPAWN_EFFECT_DURATION) {
+                UseEffect *effect_p1 = add_use_effect(state.player.x, state.player.y, USE_EFFECT_OBJ_P1, &portal_use_effect, GFX_TOP);
+                if (effect_p1) {
+                    // Do shit
+                }
+
+                if (state.dual) {
+                    UseEffect *effect_p2 = add_use_effect(state.player2.x, state.player2.y, USE_EFFECT_OBJ_P2, &portal_use_effect, GFX_TOP);
+                    if (effect_p2) {
+                        // Do shit
+                    }
+                }
+            }
+
+            data->timer -= STEPS_DT;
+            if (data->timer <= 0) {
+                data->state = RESPAWN_EFFECT_SHOW_PLAYER;
+                data->timer = RESPAWN_EFFECT_DURATION;
+                data->hide_player = false;
+            }
+            break;
+        case RESPAWN_EFFECT_SHOW_PLAYER:
+            data->timer -= STEPS_DT;
+            if (data->timer <= 0) {
+                data->hide_player = true;
+                if (--data->remaining == 0) {
+                    data->timer = 0;
+                    data->state = RESPAWN_EFFECT_NONE;
+                    data->active = false;
+                    break;
+                }
+                
+                data->timer = RESPAWN_EFFECT_DURATION;
+                data->state = RESPAWN_EFFECT_HIDE_PLAYER;
+            }
+            break;
+    }
+}
+
+void clear_respawn_effect() {
+    state.respawn_effect_data.active = false;
+    state.respawn_effect_data.hide_player = false;
 }
 
 bool is_coin_collected(int obj) {

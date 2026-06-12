@@ -637,6 +637,7 @@ void game_loop() {
                     
                     run_camera();
                     handle_bg_flash();
+                    handle_respawn_effect();
 
                     u64 end_physics = svcGetSystemTick();
                     float physics_time = (end_physics - start_physics) / (CPU_TICKS_PER_MSEC);
@@ -1017,6 +1018,8 @@ void game_loop() {
     free_particles();
 
     unload_level();
+
+    clear_respawn_effect();
 
     level_complete_destroy();
 
