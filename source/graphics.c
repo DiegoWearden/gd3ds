@@ -45,6 +45,7 @@ C2D_SpriteSheet bg2Sheet;
 C2D_SpriteSheet groundSheet;
 C2D_SpriteSheet iconSheet;
 C2D_SpriteSheet trailSheet;
+C2D_SpriteSheet particleSheet;
 
 static SortItem buf_a[MAX_SPRITES];
 static SortItem buf_b[MAX_SPRITES];
