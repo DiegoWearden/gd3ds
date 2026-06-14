@@ -517,6 +517,9 @@ void game_loop() {
 
         if (kDown & KEY_X && enableDebugBindings) {
             state.noclip ^= 1;
+        }
+
+        if (state.noclip) {
             cheated = true;
             cheats_used[CHEAT_NOCLIP] = true;
         }
