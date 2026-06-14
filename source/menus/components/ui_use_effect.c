@@ -11,6 +11,8 @@ void ui_use_effect_clear(UIElement* e){
 
 void ui_use_effect_update_pos(UIElement* e) {
     UseEffectPool *pool = &(e->use_effect.useEffects);
+    if (!pool->pool) return;
+
     for(int i = 0; i < pool->capacity; i++){
         pool->pool[i].x = e->x + e->use_effect.xPos[i];
         pool->pool[i].y = e->y + e->use_effect.yPos[i];

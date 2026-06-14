@@ -322,6 +322,9 @@ UseEffectPool *get_use_effect_array_ptr(int screen) {
 
 void init_use_effect_pool(UseEffectPool *pool, int capacity) {
     pool->pool = (UseEffect *) malloc(sizeof(UseEffect) * capacity);
+    if (pool->pool) {
+        memset(pool->pool, 0, sizeof(UseEffect) * capacity);
+    }
     pool->capacity = capacity;
 }
 

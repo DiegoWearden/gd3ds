@@ -632,6 +632,7 @@ void ui_unload_screen(UIScreen *screen) {
             // Free pool
             if (e->use_effect.useEffects.pool) {
                 free(e->use_effect.useEffects.pool);
+                e->use_effect.useEffects.pool = NULL;
             }
         }
     }
