@@ -472,10 +472,14 @@ int level_complete_loop(float delta) {
     if (animating_up) run_end_animation(delta);
 
     if (yes_exit) {
+        ui_unload_screen(&screen);
+        ui_unload_screen(&screen_top);
         return 1;
     }
 
     if (restart) {
+        ui_unload_screen(&screen);
+        ui_unload_screen(&screen_top);
         return 2;
     }
 

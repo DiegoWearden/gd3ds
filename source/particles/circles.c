@@ -3,6 +3,7 @@
 #include "utils/gfx.h"
 #include "state.h"
 #include "main.h"
+#include <stdlib.h>
 
 const UseEffectDefinition pad_use_effect = {
     .colorR = 1, 
@@ -299,6 +300,12 @@ UseEffectPool use_effects_bot = {
     .stationary = true
 };
 
+void init_default_use_effect_pools() {
+    init_use_effect_pool(&use_effects_top, MAX_USE_EFFECTS);
+    init_use_effect_pool(&use_effects_top_above_level, MAX_USE_EFFECTS);
+    init_use_effect_pool(&use_effects_bot, MAX_USE_EFFECTS);
+}
+
 UseEffectPool *get_use_effect_array_ptr(int screen) {
     switch (screen) {
         case GFX_TOP:
@@ -313,10 +320,16 @@ UseEffectPool *get_use_effect_array_ptr(int screen) {
     return &use_effects_top;
 }
 
+void init_use_effect_pool(UseEffectPool *pool, int capacity) {
+    pool->pool = (UseEffect *) malloc(sizeof(UseEffect) * capacity);
+    pool->capacity = capacity;
+}
+
 UseEffect *add_use_effect(float x, float y, int obj, const UseEffectDefinition *def, UseEffectPool *pool) {
     UseEffect *ptr = pool->pool;
+    if (!ptr) return NULL;
 
-    for (size_t i = 0; i < MAX_USE_EFFECTS; i++) {
+    for (size_t i = 0; i < pool->capacity; i++) {
         UseEffect *effect = &ptr[i];
         if (!effect->active) {
             effect->active = true;
@@ -343,7 +356,9 @@ UseEffect *add_use_effect(float x, float y, int obj, const UseEffectDefinition *
 
 void update_use_effects(float delta, UseEffectPool *pool) {
     UseEffect *ptr = pool->pool;
-    for (size_t i = 0; i < MAX_USE_EFFECTS; i++) {
+    if (!ptr) return;
+
+    for (size_t i = 0; i < pool->capacity; i++) {
         UseEffect *effect = &ptr[i];
         if (effect->active) {
             float progress = (effect->elapsed / effect->def.duration);
@@ -396,14 +411,18 @@ void update_use_effects(float delta, UseEffectPool *pool) {
 
 void clear_use_effects(UseEffectPool *pool) {
     UseEffect *ptr = pool->pool;
-    for (size_t i = 0; i < MAX_USE_EFFECTS; i++) {
+    if (!ptr) return;
+
+    for (size_t i = 0; i < pool->capacity; i++) {
         ptr[i].active = false;
     }
 }
 
 void draw_use_effects(UseEffectPool *pool) {
     UseEffect *ptr = pool->pool;
-    for (size_t i = 0; i < MAX_USE_EFFECTS; i++) {
+    if (!ptr) return;
+
+    for (size_t i = 0; i < pool->capacity; i++) {
         UseEffect *effect = &ptr[i];
         if (effect->active) {
             float x = effect->x;

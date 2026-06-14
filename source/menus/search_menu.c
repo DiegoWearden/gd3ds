@@ -17,8 +17,6 @@
 static bool in_disclaimer = false;
 static bool exit_flag = false;
 
-static UIScreen screen;
-static UIScreen screen_top;
 static UIElement *bg_gradient;
 static UIElement *bg_gradient_top;
 
@@ -41,10 +39,10 @@ void search_menu_loop() {
 
     exit_flag = false;
 
-    ui_load_screen(&screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/search_menu.txt");
-    bg_gradient = ui_get_element_by_tag(&screen, "gradient");
-    ui_load_screen(&screen_top, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/search_menu_top.txt");
-    bg_gradient_top = ui_get_element_by_tag(&screen_top, "gradient_top");
+    ui_load_screen(&default_screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/search_menu.txt");
+    bg_gradient = ui_get_element_by_tag(&default_screen, "gradient");
+    ui_load_screen(&default_screen_top, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/search_menu_top.txt");
+    bg_gradient_top = ui_get_element_by_tag(&default_screen_top, "gradient_top");
 
     ui_image_set_tint(bg_gradient, C2D_Color32(50, 110, 255, 255));
     ui_image_set_tint(bg_gradient_top, C2D_Color32(50, 110, 255, 255));
@@ -62,7 +60,7 @@ void search_menu_loop() {
         touch.did_something = false;
         touch.interacted = false;
 
-        if (!in_disclaimer) ui_screen_update(&screen, &touch);
+        if (!in_disclaimer) ui_screen_update(&default_screen, &touch);
         
         do {
             update_touch_effect(DT);
@@ -74,7 +72,7 @@ void search_menu_loop() {
             C2D_SceneBegin(bot);
             draw_fade();
 
-            ui_screen_draw(&screen);
+            ui_screen_draw(&default_screen);
 
             if (in_disclaimer) {
                 int returned = disclaimer_loop();
@@ -92,7 +90,7 @@ void search_menu_loop() {
             C2D_SceneBegin(top);
             draw_fade();
 
-            ui_screen_draw(&screen_top);
+            ui_screen_draw(&default_screen_top);
             C2D_ViewReset();
             C3D_FrameEnd(0);
         } while (handle_fading());
@@ -103,4 +101,7 @@ void search_menu_loop() {
         }
     }
     C2D_TargetClear(bot, C2D_Color32(0, 0, 0, 255));
+    
+    ui_unload_screen(&default_screen);
+    ui_unload_screen(&default_screen_top);
 }

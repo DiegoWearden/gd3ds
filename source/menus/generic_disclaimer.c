@@ -36,6 +36,7 @@ void disclaimer_init() {
 
 int disclaimer_loop() {
     if (yes_exit) {
+        ui_unload_screen(&screen);
         return true;
     }
 

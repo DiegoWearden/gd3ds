@@ -11,7 +11,7 @@ void ui_use_effect_clear(UIElement* e){
 
 void ui_use_effect_update_pos(UIElement* e) {
     UseEffectPool *pool = &(e->use_effect.useEffects);
-    for(int i = 0; i < MAX_USE_EFFECTS; i++){
+    for(int i = 0; i < pool->capacity; i++){
         pool->pool[i].x = e->x + e->use_effect.xPos[i];
         pool->pool[i].y = e->y + e->use_effect.yPos[i];
     }
@@ -46,8 +46,9 @@ static void ui_use_effect_draw(UIElement* e) {
 UIElement ui_create_use_effect(char (*tag)[TAG_LENGTH]) {
     UIElement e = {0};
     UseEffectPool *pool = &(e.use_effect.useEffects);
+    init_use_effect_pool(pool, MAX_UI_USE_EFFECTS);
     pool->stationary = true;
-    for (size_t i = 0; i < MAX_USE_EFFECTS; i++) {
+    for (size_t i = 0; i < pool->capacity; i++) {
         pool->pool[i].active = false;
         e.use_effect.xPos[i] = 0;
         e.use_effect.yPos[i] = 0;

@@ -45,6 +45,7 @@ void info_card_init() {
 
 int info_card_loop() {
     if (yes_exit) {
+        ui_unload_screen(&screen);
         return true;
     }
 

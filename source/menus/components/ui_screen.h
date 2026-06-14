@@ -37,6 +37,9 @@ extern C2D_SpriteSheet window_sheet;
 extern C2D_SpriteSheet bg_gradient_sheet;
 extern C2D_SpriteSheet bar_sheet;
 
+extern UIScreen default_screen;
+extern UIScreen default_screen_top;
+
 extern const LabelFont fonts[NUM_FONTS];
 
 void required_loading_screen_assets_init();
@@ -46,6 +49,7 @@ C2D_SpriteSheet *get_sheet(int sheet);
 
 void copy_tag_array(UIElement *e, char (*tag)[TAG_LENGTH]);
 void ui_load_screen(UIScreen* screen, const UIAction* actions, size_t count, const char* path);
+void ui_unload_screen(UIScreen *screen);
 
 void ui_screen_update(UIScreen* screen, UIInput* touch);
 void ui_screen_draw(UIScreen* screen);

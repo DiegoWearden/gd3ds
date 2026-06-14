@@ -58,6 +58,7 @@ void external_level_infobox_init() {
 
 int external_level_infobox_loop() {
     if (yes_exit) {
+        ui_unload_screen(&screen);
         return true;
     }
 

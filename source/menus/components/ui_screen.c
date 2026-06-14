@@ -41,6 +41,9 @@ C2D_SpriteSheet goldFont_sheet;
 C2D_SpriteSheet bg_gradient_sheet;
 C2D_SpriteSheet bar_sheet;
 
+UIScreen default_screen;
+UIScreen default_screen_top;
+
 ParticleSystem *uiParticleSystems[UI_MAX_PARTICLE_SYSTEMS];
 int uiParticleSystemCount = 0;
 
@@ -294,9 +297,9 @@ void free_ui_particle_systems(){
     for (int i = 0; i < uiParticleSystemCount; i++)
     {
         if (uiParticleSystems[i]) {
-        freeParticleData(&(uiParticleSystems[i]->data));
-        uiParticleSystems[i] = NULL;
-    }
+            freeParticleData(&(uiParticleSystems[i]->data));
+            uiParticleSystems[i] = NULL;
+        }
     }
 
     uiParticleSystemCount = 0;
@@ -620,4 +623,16 @@ void ui_load_screen(UIScreen* screen,
     }
 
     fclose(f);
+}
+
+void ui_unload_screen(UIScreen *screen) {
+    for (int i = screen->count - 1; i >= 0; i--) {
+        UIElement *e = &screen->elements[i];
+        if (e->type == UI_USE_EFFECT) {
+            // Free pool
+            if (e->use_effect.useEffects.pool) {
+                free(e->use_effect.useEffects.pool);
+            }
+        }
+    }
 }

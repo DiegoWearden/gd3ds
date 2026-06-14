@@ -76,6 +76,7 @@ void statistics_init() {
 
 int statistics_loop() {
     if (yes_exit) {
+        ui_unload_screen(&screen);
         return true;
     }
 

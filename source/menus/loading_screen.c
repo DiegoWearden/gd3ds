@@ -10,8 +10,6 @@
 #include "color_channels.h"
 #include "graphics.h"
 
-static UIScreen screen_top;
-static UIScreen screen;
 static UIElement *progressbar;
 static UIElement *splashtext;
 
@@ -80,8 +78,8 @@ static UIAction actions_top[] = {
 };
 
 void loading_screen_init() {
-    ui_load_screen(&screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/loading_screen.txt");
-    ui_load_screen(&screen_top, actions_top, sizeof(actions_top) / sizeof(actions_top[0]), "romfs:/menus/loading_screen_top.txt");
+    ui_load_screen(&default_screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/loading_screen.txt");
+    ui_load_screen(&default_screen_top, actions_top, sizeof(actions_top) / sizeof(actions_top[0]), "romfs:/menus/loading_screen_top.txt");
 
     Color col;
     col.r = 0;
@@ -95,17 +93,17 @@ void loading_screen_init() {
 
     handle_col_channel(chan);
 
-    UIElement *title = ui_get_element_by_tag(&screen_top, "title");
+    UIElement *title = ui_get_element_by_tag(&default_screen_top, "title");
 
     if (title && alt_title_screen) {
         ui_image_set_image(title, 3, 1);
     }
     
-    progressbar = ui_get_element_by_tag(&screen_top, "loadprogress");
+    progressbar = ui_get_element_by_tag(&default_screen_top, "loadprogress");
     ui_progress_bar_set_tint(progressbar, C2D_Color32(50, 190, 240, 255));
     progressbar->progress_bar.max_value = 100;
 
-    splashtext = ui_get_element_by_tag(&screen_top, "splashtext");
+    splashtext = ui_get_element_by_tag(&default_screen_top, "splashtext");
     
     int text_index = random_int(0, NUM_SPLASH_TEXTS - 1);
 
@@ -123,7 +121,7 @@ void loading_screen_update(float progress) {
     touch.did_something = false;
     touch.interacted = false;
 
-    ui_screen_update(&screen_top, &touch);
+    ui_screen_update(&default_screen_top, &touch);
     C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
     
     // Top screen
@@ -131,7 +129,7 @@ void loading_screen_update(float progress) {
     C2D_SceneBegin(top);
 
     draw_background(0, -30);
-    ui_screen_draw(&screen_top);
+    ui_screen_draw(&default_screen_top);
 
     // Bottom Screen
     C2D_TargetClear(bot, C2D_Color32(0, 0, 0, 255));
@@ -142,7 +140,7 @@ void loading_screen_update(float progress) {
     draw_fade();
 
     C2D_ViewScale(1/SCALE, 1/SCALE);
-    ui_screen_draw(&screen);
+    ui_screen_draw(&default_screen);
     C2D_ViewReset();
     C3D_FrameEnd(0);
 }

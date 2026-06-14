@@ -50,9 +50,6 @@ static bool holding = false;
 
 static float death_wait_timer = 0;
 
-static UIScreen screen_top;
-static UIScreen screen;
-
 static int main_menu_color_index = 0;
 
 static int new_state = 0;
@@ -293,8 +290,8 @@ static void handle_players() {
 void main_menu_loop() {
     exit_flag = false;
     new_state = 0;
-    ui_load_screen(&screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/main_menu.txt");
-    ui_load_screen(&screen_top, actions_top, sizeof(actions_top) / sizeof(actions_top[0]), "romfs:/menus/main_menu_top.txt");
+    ui_load_screen(&default_screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/main_menu.txt");
+    ui_load_screen(&default_screen_top, actions_top, sizeof(actions_top) / sizeof(actions_top[0]), "romfs:/menus/main_menu_top.txt");
     
     main_menu_color_index = 0;
     u32 color = default_lvl_colors[main_menu_color_index % NUM_MENU_COLORS];
@@ -313,7 +310,7 @@ void main_menu_loop() {
     channels[chan_ground].color = col;
     channels[chan_line].color = white;
 
-    UIElement *title = ui_get_element_by_tag(&screen_top, "title");
+    UIElement *title = ui_get_element_by_tag(&default_screen_top, "title");
 
     if (title && alt_title_screen) {
         ui_image_set_image(title, 3, 1);
@@ -460,8 +457,8 @@ void main_menu_loop() {
             old_wide = wideEnabled;
         }
 
-        if (!in_menu) ui_screen_update(&screen, &touch);
-        ui_screen_update(&screen_top, &touch);
+        if (!in_menu) ui_screen_update(&default_screen, &touch);
+        ui_screen_update(&default_screen_top, &touch);
         do {
             update_touch_effect(DT);
             
@@ -486,7 +483,7 @@ void main_menu_loop() {
             draw_player(&title_screen_player);
 
             C2D_ViewScale(1/SCALE, 1/SCALE);
-            ui_screen_draw(&screen_top);
+            ui_screen_draw(&default_screen_top);
 
             // Bottom Screen
             C2D_TargetClear(bot, C2D_Color32(0, 0, 0, 255));
@@ -508,7 +505,7 @@ void main_menu_loop() {
 
             C2D_ViewScale(1/SCALE, 1/SCALE);
 
-            ui_screen_draw(&screen);
+            ui_screen_draw(&default_screen);
             if (in_settings) {
                 int returned = settings_loop();
                 if (returned) {
@@ -560,4 +557,7 @@ void main_menu_loop() {
         }
     }
     C2D_TargetClear(bot, C2D_Color32(0, 0, 0, 255));
+    
+    ui_unload_screen(&default_screen);
+    ui_unload_screen(&default_screen_top);
 }

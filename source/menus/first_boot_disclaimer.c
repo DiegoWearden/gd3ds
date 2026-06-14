@@ -42,6 +42,7 @@ int first_boot_disclaimer_loop() {
 
     if (yes_exit) {
         cfg_save();
+        ui_unload_screen(&screen);
         return true;
     }
 

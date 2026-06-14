@@ -36,9 +36,6 @@ static bool exit_flag = false;
 
 bool gotSogged = false;
 
-static UIScreen screen;
-static UIScreen screen_top;
-
 static void action_exit(UIElement *e) {
     exit_flag = true;
     set_fade_status(FADE_STATUS_OUT);
@@ -58,8 +55,8 @@ void soggy_menu_loop() {
     gotSogged = true;
     cfg_save(); // You got sogged
 
-    ui_load_screen(&screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/soggy.txt");
-    ui_load_screen(&screen_top, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/soggy_top.txt");
+    ui_load_screen(&default_screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/soggy.txt");
+    ui_load_screen(&default_screen_top, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/soggy_top.txt");
 
     set_fade_status(FADE_STATUS_IN);
 
@@ -76,7 +73,7 @@ void soggy_menu_loop() {
         touch.did_something = false;
         touch.interacted = false;
 
-        ui_screen_update(&screen, &touch);
+        ui_screen_update(&default_screen, &touch);
         
         do {
             update_touch_effect(DT);
@@ -88,7 +85,7 @@ void soggy_menu_loop() {
             C2D_SceneBegin(bot);
             draw_fade();
 
-            ui_screen_draw(&screen);
+            ui_screen_draw(&default_screen);
 
             change_blending(true);
             draw_touch_effect();
@@ -99,7 +96,7 @@ void soggy_menu_loop() {
             C2D_SceneBegin(top);
             draw_fade();
 
-            ui_screen_draw(&screen_top);
+            ui_screen_draw(&default_screen_top);
             C2D_ViewReset();
             C3D_FrameEnd(0);
         } while (handle_fading());
@@ -111,4 +108,7 @@ void soggy_menu_loop() {
         }
     }
     C2D_TargetClear(bot, C2D_Color32(0, 0, 0, 255));
+    
+    ui_unload_screen(&default_screen);
+    ui_unload_screen(&default_screen_top);
 }

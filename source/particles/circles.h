@@ -3,6 +3,7 @@
 #include "easing.h"
 
 #define MAX_USE_EFFECTS 32
+#define MAX_UI_USE_EFFECTS 32
 
 #define USE_EFFECT_OBJ_NOTHING -3
 #define USE_EFFECT_OBJ_P2 -2
@@ -58,7 +59,8 @@ typedef struct {
 } UseEffect;
 
 typedef struct {
-    UseEffect pool[MAX_USE_EFFECTS];
+    UseEffect *pool;
+    int capacity;
     //whether the effect should have mirror, fading, and world-space transforms
     bool stationary;
 } UseEffectPool;
@@ -81,6 +83,9 @@ extern const UseEffectDefinition end_wall_firework_circle;
 extern const UseEffectDefinition end_wall_circunference;
 extern const UseEffectDefinition respawn_effect;
 
+
+void init_default_use_effect_pools();
+void init_use_effect_pool(UseEffectPool *pool, int capacity);
 UseEffectPool *get_use_effect_array_ptr(int screen);
 UseEffect *add_use_effect(float x, float y, int obj, const UseEffectDefinition *def, UseEffectPool *pool);
 void update_use_effects(float delta, UseEffectPool *pool);

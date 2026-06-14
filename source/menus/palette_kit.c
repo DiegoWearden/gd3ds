@@ -253,7 +253,8 @@ void palette_kit_init() {
 }
 
 int palette_kit_loop() {
-    if (yes_exit) {
+    if (yes_exit) {  
+        ui_unload_screen(&screen);
         return true;
     }
 

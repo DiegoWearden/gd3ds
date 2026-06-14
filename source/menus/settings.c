@@ -347,6 +347,8 @@ void settings_init() {
 int settings_loop() {
     if (yes_exit) {
         cfg_save();
+        
+        ui_unload_screen(&screen);
         return true;
     }
 

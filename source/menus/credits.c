@@ -36,6 +36,7 @@ void credits_init() {
 
 int credits_loop() {
     if (yes_exit) {
+        ui_unload_screen(&screen);
         return true;
     }
 

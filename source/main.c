@@ -279,8 +279,6 @@ void free_particles() {
     freeParticleData(&end_wall_firework.data);
     freeParticleData(&level_complete_effect_p1.data);
     freeParticleData(&level_complete_effect_p2.data);
-
-    free_ui_particle_systems();
 }
 
 void init_particles(Color p1_color, Color p2_color) {    
@@ -1028,6 +1026,9 @@ void game_loop() {
 
     level_complete_destroy();
 
+    ui_unload_screen(&default_screen);
+    ui_unload_screen(&default_screen_top);
+
     game_state = (state.custom_level ? STATE_EXTERNAL_LEVELS : STATE_LEVEL_SELECT);
 }
 
@@ -1129,7 +1130,8 @@ int main(int argc, char* argv[]) {
     cache_all_sprites();
 
     loading_screen_update(40);
-
+    
+    init_default_use_effect_pools();
     update_player_colors();
 
     loading_screen_update(75);
@@ -1149,6 +1151,10 @@ int main(int argc, char* argv[]) {
     long waiting = (long)((3 - loading_time) * 1e9);
     if (waiting > 0) svcSleepThread(waiting);
     loading_screen_update(100);
+
+    // Unload loading screen
+    ui_unload_screen(&default_screen);
+    ui_unload_screen(&default_screen_top);
 
     // Set to known value
     change_blending(false);

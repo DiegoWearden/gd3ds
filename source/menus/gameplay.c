@@ -41,8 +41,6 @@ bool in_level_complete = false;
 static bool in_disclaimer = false;
 static bool in_settings = false;
 
-static UIScreen screen;
-static UIScreen screen_top;
 static UIElement *bg_gradient;
 static UIElement *progress_bar;
 static UIElement *percent;
@@ -100,7 +98,7 @@ static void reset_coin(LevelData *level_data_sel, int i){
 void reset_coins(){
     LevelData *level_data_sel = (state.custom_level ? &level_data : &main_level_data[curr_level_id]);
 
-    ui_use_effect_clear(ui_get_element_by_tag(&screen, "coin_circle"));
+    ui_use_effect_clear(ui_get_element_by_tag(&default_screen, "coin_circle"));
 
     for(int i = 0; i < 3; i++){
         reset_coin(level_data_sel, i);
@@ -117,20 +115,20 @@ void pause_game() {
     game_paused = true;
     if (song_loaded || state.practice_mode) pause_playback_mp3();
     if (!state.custom_level){
-        ui_run_func_on_tag(&screen_top, "coin_1", ui_enable_element);
-        ui_run_func_on_tag(&screen_top, "coin_2", ui_enable_element);
-        ui_run_func_on_tag(&screen_top, "coin_3", ui_enable_element);
-        ui_run_func_on_tag(&screen, "coin_1", ui_disable_element);
-        ui_run_func_on_tag(&screen, "coin_2", ui_disable_element);
-        ui_run_func_on_tag(&screen, "coin_3", ui_disable_element);
-        ui_run_func_on_tag(&screen, "coin_1_full", ui_disable_element);
-        ui_run_func_on_tag(&screen, "coin_2_full", ui_disable_element);
-        ui_run_func_on_tag(&screen, "coin_3_full", ui_disable_element);
-        ui_run_func_on_tag(&screen, "coin_circle", ui_disable_element);
+        ui_run_func_on_tag(&default_screen_top, "coin_1", ui_enable_element);
+        ui_run_func_on_tag(&default_screen_top, "coin_2", ui_enable_element);
+        ui_run_func_on_tag(&default_screen_top, "coin_3", ui_enable_element);
+        ui_run_func_on_tag(&default_screen, "coin_1", ui_disable_element);
+        ui_run_func_on_tag(&default_screen, "coin_2", ui_disable_element);
+        ui_run_func_on_tag(&default_screen, "coin_3", ui_disable_element);
+        ui_run_func_on_tag(&default_screen, "coin_1_full", ui_disable_element);
+        ui_run_func_on_tag(&default_screen, "coin_2_full", ui_disable_element);
+        ui_run_func_on_tag(&default_screen, "coin_3_full", ui_disable_element);
+        ui_run_func_on_tag(&default_screen, "coin_circle", ui_disable_element);
     }
-    ui_run_func_on_tag(&screen_top, "pause_menu", ui_enable_element);
-    ui_run_func_on_tag(&screen, "paused", ui_enable_element);
-    ui_run_func_on_tag(&screen, "not_paused", ui_disable_element);
+    ui_run_func_on_tag(&default_screen_top, "pause_menu", ui_enable_element);
+    ui_run_func_on_tag(&default_screen, "paused", ui_enable_element);
+    ui_run_func_on_tag(&default_screen, "not_paused", ui_disable_element);
     in_settings = false;
 }
 
@@ -140,20 +138,20 @@ void unpause_game() {
         unpause_playback_mp3();
     }
     if (!state.custom_level){
-        ui_run_func_on_tag(&screen_top, "coin_1", ui_disable_element);
-        ui_run_func_on_tag(&screen_top, "coin_2", ui_disable_element);
-        ui_run_func_on_tag(&screen_top, "coin_3", ui_disable_element);
-        ui_run_func_on_tag(&screen, "coin_1", ui_enable_element);
-        ui_run_func_on_tag(&screen, "coin_2", ui_enable_element);
-        ui_run_func_on_tag(&screen, "coin_3", ui_enable_element);
+        ui_run_func_on_tag(&default_screen_top, "coin_1", ui_disable_element);
+        ui_run_func_on_tag(&default_screen_top, "coin_2", ui_disable_element);
+        ui_run_func_on_tag(&default_screen_top, "coin_3", ui_disable_element);
+        ui_run_func_on_tag(&default_screen, "coin_1", ui_enable_element);
+        ui_run_func_on_tag(&default_screen, "coin_2", ui_enable_element);
+        ui_run_func_on_tag(&default_screen, "coin_3", ui_enable_element);
         for(int i = 0; i < 3; i++){
             reset_coin((state.custom_level ? &level_data : &main_level_data[curr_level_id]), i);
         }
-        ui_run_func_on_tag(&screen, "coin_circle", ui_enable_element);
+        ui_run_func_on_tag(&default_screen, "coin_circle", ui_enable_element);
     }
-    ui_run_func_on_tag(&screen_top, "pause_menu", ui_disable_element);
-    ui_run_func_on_tag(&screen, "paused", ui_disable_element);
-    ui_run_func_on_tag(&screen, "not_paused", ui_enable_element);
+    ui_run_func_on_tag(&default_screen_top, "pause_menu", ui_disable_element);
+    ui_run_func_on_tag(&default_screen, "paused", ui_disable_element);
+    ui_run_func_on_tag(&default_screen, "not_paused", ui_enable_element);
     in_settings = false;
 }
 
@@ -233,58 +231,58 @@ static UIAction actions[] = {
 };
 
 void gameplay_screen_init() {
-    ui_load_screen(&screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/gameplay.txt");
-    bg_gradient = ui_get_element_by_tag(&screen, "gradient");
+    ui_load_screen(&default_screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/gameplay.txt");
+    bg_gradient = ui_get_element_by_tag(&default_screen, "gradient");
 
-    ui_load_screen(&screen_top, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/gameplay_top.txt");;
-    progress_bar = ui_get_element_by_tag(&screen_top, "progressalert");
-    percent = ui_get_element_by_tag(&screen_top, "percent");
-    level_name = ui_get_element_by_tag(&screen_top, "level_title");
+    ui_load_screen(&default_screen_top, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/gameplay_top.txt");;
+    progress_bar = ui_get_element_by_tag(&default_screen_top, "progressalert");
+    percent = ui_get_element_by_tag(&default_screen_top, "percent");
+    level_name = ui_get_element_by_tag(&default_screen_top, "level_title");
 
     Color color = get_white_if_black(p1_color);
 
     ui_progress_bar_set_tint(progress_bar, C2D_Color32(color.r, color.g, color.b, 255));
     
-    ui_window_set_tint(ui_get_element_by_tag(&screen_top, "bgwindow"), C2D_Color32(0, 0, 0, 127));
+    ui_window_set_tint(ui_get_element_by_tag(&default_screen_top, "bgwindow"), C2D_Color32(0, 0, 0, 127));
 
     ui_label_set_text(level_name, level_info.level_name);
 
-    normal_progress = ui_get_element_by_tag(&screen_top, "normalprogress");
-    normal_progress_val = ui_get_element_by_tag(&screen_top, "normalprogressvalue");
-    practice_progress = ui_get_element_by_tag(&screen_top, "practiceprogress");
-    practice_progress_val = ui_get_element_by_tag(&screen_top, "practiceprogressvalue");
+    normal_progress = ui_get_element_by_tag(&default_screen_top, "normalprogress");
+    normal_progress_val = ui_get_element_by_tag(&default_screen_top, "normalprogressvalue");
+    practice_progress = ui_get_element_by_tag(&default_screen_top, "practiceprogress");
+    practice_progress_val = ui_get_element_by_tag(&default_screen_top, "practiceprogressvalue");
     
     ui_progress_bar_set_tint(normal_progress, C2D_Color32(0, 255, 0, 255));
     ui_progress_bar_set_tint(practice_progress, C2D_Color32(0, 255, 255, 255));
 
     // hide coins if level is a custom level
     if(state.custom_level == true){
-        ui_run_func_on_tag(&screen, "coin_1", ui_disable_element);
-        ui_run_func_on_tag(&screen, "coin_2", ui_disable_element);
-        ui_run_func_on_tag(&screen, "coin_3", ui_disable_element);
+        ui_run_func_on_tag(&default_screen, "coin_1", ui_disable_element);
+        ui_run_func_on_tag(&default_screen, "coin_2", ui_disable_element);
+        ui_run_func_on_tag(&default_screen, "coin_3", ui_disable_element);
     }
     
     // Hide pause menu
-    ui_run_func_on_tag(&screen_top, "coin_1", ui_disable_element);
-    ui_run_func_on_tag(&screen_top, "coin_2", ui_disable_element);
-    ui_run_func_on_tag(&screen_top, "coin_3", ui_disable_element);
-    ui_run_func_on_tag(&screen_top, "pause_menu", ui_disable_element);
-    ui_run_func_on_tag(&screen, "paused", ui_disable_element);
-    ui_run_func_on_tag(&screen, "practice_buttons", ui_disable_element);
+    ui_run_func_on_tag(&default_screen_top, "coin_1", ui_disable_element);
+    ui_run_func_on_tag(&default_screen_top, "coin_2", ui_disable_element);
+    ui_run_func_on_tag(&default_screen_top, "coin_3", ui_disable_element);
+    ui_run_func_on_tag(&default_screen_top, "pause_menu", ui_disable_element);
+    ui_run_func_on_tag(&default_screen, "paused", ui_disable_element);
+    ui_run_func_on_tag(&default_screen, "practice_buttons", ui_disable_element);
 
-    coin_1 = ui_get_element_by_tag(&screen, "coin_1");
-    coin_2 = ui_get_element_by_tag(&screen, "coin_2");
-    coin_3 = ui_get_element_by_tag(&screen, "coin_3");
+    coin_1 = ui_get_element_by_tag(&default_screen, "coin_1");
+    coin_2 = ui_get_element_by_tag(&default_screen, "coin_2");
+    coin_3 = ui_get_element_by_tag(&default_screen, "coin_3");
 
-    coins_full[0] = ui_get_element_by_tag(&screen, "coin_1_full");
-    coins_full[1] = ui_get_element_by_tag(&screen, "coin_2_full");
-    coins_full[2] = ui_get_element_by_tag(&screen, "coin_3_full");
+    coins_full[0] = ui_get_element_by_tag(&default_screen, "coin_1_full");
+    coins_full[1] = ui_get_element_by_tag(&default_screen, "coin_2_full");
+    coins_full[2] = ui_get_element_by_tag(&default_screen, "coin_3_full");
     
     reset_coins();
 
-    coin_1_top = ui_get_element_by_tag(&screen_top, "coin_1");
-    coin_2_top = ui_get_element_by_tag(&screen_top, "coin_2");
-    coin_3_top = ui_get_element_by_tag(&screen_top, "coin_3");
+    coin_1_top = ui_get_element_by_tag(&default_screen_top, "coin_1");
+    coin_2_top = ui_get_element_by_tag(&default_screen_top, "coin_2");
+    coin_3_top = ui_get_element_by_tag(&default_screen_top, "coin_3");
 }
 
 int gameplay_screen_top_loop() { 
@@ -299,23 +297,23 @@ int gameplay_screen_top_loop() {
     progress_bar->progress_bar.value = state.level_progress;
     snprintf(percent->label.text, 32, "%.*f%%", decimal, state.level_progress);
 
-    ui_run_func_on_tag(&screen_top, "progressalert", ui_disable_element);
-    ui_run_func_on_tag(&screen_top, "percent", ui_disable_element);
-    ui_set_pos_on_tag(&screen_top, 200, 11, "percent");
+    ui_run_func_on_tag(&default_screen_top, "progressalert", ui_disable_element);
+    ui_run_func_on_tag(&default_screen_top, "percent", ui_disable_element);
+    ui_set_pos_on_tag(&default_screen_top, 200, 11, "percent");
     percent->label.alignment = 0.5;
 
     if (showProgressBar) {
-        ui_run_func_on_tag(&screen_top, "progressalert", ui_enable_element);
-        ui_set_pos_on_tag(&screen_top, 282, 11, "percent");
+        ui_run_func_on_tag(&default_screen_top, "progressalert", ui_enable_element);
+        ui_set_pos_on_tag(&default_screen_top, 282, 11, "percent");
         percent->label.alignment = 0;
     }
 
     if (showProgressPercent) {
-        ui_run_func_on_tag(&screen_top, "percent", ui_enable_element);
+        ui_run_func_on_tag(&default_screen_top, "percent", ui_enable_element);
     }
 
-    ui_screen_update(&screen_top, &touch);
-    ui_screen_draw(&screen_top);
+    ui_screen_update(&default_screen_top, &touch);
+    ui_screen_draw(&default_screen_top);
 
     return false;
 }
@@ -353,7 +351,7 @@ int gameplay_screen_bot_loop() {
                 if(!coins_circles_spawned[i]){
                     ui_set_use_effect_col(
                         ui_add_use_effect(
-                            ui_get_element_by_tag(&screen, "coin_circle"), 
+                            ui_get_element_by_tag(&default_screen, "coin_circle"), 
                         coins_full[i]->x, coins_full[i]->y, &end_wall_firework_circle),
                     1.f, 0.75f, 0.f);
                     
@@ -377,29 +375,29 @@ int gameplay_screen_bot_loop() {
     coins_full[1]->y = complete_y_offset;
     coins_full[2]->y = complete_y_offset;
 
-    UIElement *pause_btn = ui_get_element_by_tag(&screen, "pause_btn");
+    UIElement *pause_btn = ui_get_element_by_tag(&default_screen, "pause_btn");
     pause_btn->y = complete_y_offset;
     
-    UIElement *add_checkpoint = ui_get_element_by_tag(&screen, "add_checkpoint");
-    UIElement *remove_checkpoint = ui_get_element_by_tag(&screen, "remove_checkpoint");
+    UIElement *add_checkpoint = ui_get_element_by_tag(&default_screen, "add_checkpoint");
+    UIElement *remove_checkpoint = ui_get_element_by_tag(&default_screen, "remove_checkpoint");
     add_checkpoint->y = complete_y_offset_practice;
     remove_checkpoint->y = complete_y_offset_practice;
 
     if (state.practice_mode) {
-        ui_button_set_image(ui_get_element_by_tag(&screen, "practice_mode"), 124, 0);
+        ui_button_set_image(ui_get_element_by_tag(&default_screen, "practice_mode"), 124, 0);
     } else {
-        ui_run_func_on_tag(&screen, "practice_buttons", ui_disable_element);
-        ui_button_set_image(ui_get_element_by_tag(&screen, "practice_mode"), 146, 0);
+        ui_run_func_on_tag(&default_screen, "practice_buttons", ui_disable_element);
+        ui_button_set_image(ui_get_element_by_tag(&default_screen, "practice_mode"), 146, 0);
     }
 
     touch.touchPosition = touchPos;
     touch.did_something = false;
     touch.interacted = false;
     if (!in_settings && !in_disclaimer && !in_info_card) {
-        ui_screen_update(&screen, &touch);
+        ui_screen_update(&default_screen, &touch);
     }
 
-    ui_screen_draw(&screen);
+    ui_screen_draw(&default_screen);
 
     if (in_settings) {
         int returned = settings_loop();

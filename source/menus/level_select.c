@@ -25,9 +25,6 @@
 
 #include "state.h"
 
-static UIScreen screen_top;
-static UIScreen screen;
-
 static bool start_level = false;
 static bool exit_flag = false;
 
@@ -186,7 +183,7 @@ void update_level_name(int level, int card) {
     if (level >= MAIN_LEVELS_NUM) level = 0;
 
     UIElement *e = (card) ? level_card_2_title : level_card_title;
-    level_card_title_top = ui_get_element_by_tag(&screen_top, "levelname");
+    level_card_title_top = ui_get_element_by_tag(&default_screen_top, "levelname");
     float length = get_text_length(&bigFont_fontCharset, 1 / 0.85f, main_levels[level].level_name);
 
     float txt_scale;
@@ -233,10 +230,10 @@ void update_level_top(int level){
     snprintf(practice, sizeof(practice), "<#ffa54b>Practice</>: %d%%", data->practice_progress);
 
     ui_label_set_text(level_card_title_top, main_levels[level].level_name);
-    ui_label_set_text(ui_get_element_by_tag(&screen_top, "totalattempts"), attempts);
-    ui_label_set_text(ui_get_element_by_tag(&screen_top, "totaljumps"), jumps);
-    ui_label_set_text(ui_get_element_by_tag(&screen_top, "normalprogress"), normal);
-    ui_label_set_text(ui_get_element_by_tag(&screen_top, "practiceprogress"), practice);
+    ui_label_set_text(ui_get_element_by_tag(&default_screen_top, "totalattempts"), attempts);
+    ui_label_set_text(ui_get_element_by_tag(&default_screen_top, "totaljumps"), jumps);
+    ui_label_set_text(ui_get_element_by_tag(&default_screen_top, "normalprogress"), normal);
+    ui_label_set_text(ui_get_element_by_tag(&default_screen_top, "practiceprogress"), practice);
 }
 
 void action_open_level(UIElement* e) { 
@@ -258,9 +255,9 @@ void handle_card_movement() {
             update_level_stars(curr_level_id, 0);
             update_level_progress(curr_level_id, 0);
 
-            ui_run_func_on_tag(&screen, "level_card_2", disable_card_2);
-            ui_set_pos_on_tag(&screen, 160, LEVEL_CARD_Y_POS, "level_card");
-            ui_set_pos_on_tag(&screen, 160, LEVEL_CARD_Y_POS, "level_card_2");
+            ui_run_func_on_tag(&default_screen, "level_card_2", disable_card_2);
+            ui_set_pos_on_tag(&default_screen, 160, LEVEL_CARD_Y_POS, "level_card");
+            ui_set_pos_on_tag(&default_screen, 160, LEVEL_CARD_Y_POS, "level_card_2");
             scroll_dir = 0;
             dragDistance = 0;
 
@@ -275,8 +272,8 @@ void handle_card_movement() {
         float value = (scroll_dir == 0) ? 160 + fade_value : 160 + fade_value * scroll_dir;
         anim_time += 0.016666f;
 
-        ui_set_pos_on_tag(&screen, value, LEVEL_CARD_Y_POS, "level_card");
-        ui_set_pos_on_tag(&screen, value - 320 * scroll_dir, LEVEL_CARD_Y_POS, "level_card_2");
+        ui_set_pos_on_tag(&default_screen, value, LEVEL_CARD_Y_POS, "level_card");
+        ui_set_pos_on_tag(&default_screen, value - 320 * scroll_dir, LEVEL_CARD_Y_POS, "level_card_2");
     }
 }
 
@@ -287,9 +284,9 @@ void action_move_right(UIElement* e) {
     
     if (curr_level_id >= MAIN_LEVELS_NUM) curr_level_id = 0;
     
-    ui_set_pos_on_tag(&screen, 160, LEVEL_CARD_Y_POS, "level_card");
-    ui_run_func_on_tag(&screen, "level_card_2", enable_card_2);
-    ui_run_func_on_tag(&screen, "level_card_2", level_card_move_right);
+    ui_set_pos_on_tag(&default_screen, 160, LEVEL_CARD_Y_POS, "level_card");
+    ui_run_func_on_tag(&default_screen, "level_card_2", enable_card_2);
+    ui_run_func_on_tag(&default_screen, "level_card_2", level_card_move_right);
     
     upload_color_to_buffer(0, default_lvl_colors[curr_level_id % NUM_MENU_COLORS], COLOR_FADE_DURATION);
 
@@ -312,9 +309,9 @@ void action_move_left(UIElement* e) {
 
     if (curr_level_id < 0) curr_level_id = MAIN_LEVELS_NUM-1;
 
-    ui_set_pos_on_tag(&screen, 160, LEVEL_CARD_Y_POS, "level_card");
-    ui_run_func_on_tag(&screen, "level_card_2", enable_card_2);
-    ui_run_func_on_tag(&screen, "level_card_2", level_card_move_left);
+    ui_set_pos_on_tag(&default_screen, 160, LEVEL_CARD_Y_POS, "level_card");
+    ui_run_func_on_tag(&default_screen, "level_card_2", enable_card_2);
+    ui_run_func_on_tag(&default_screen, "level_card_2", level_card_move_left);
 
     upload_color_to_buffer(0, default_lvl_colors[curr_level_id % NUM_MENU_COLORS], COLOR_FADE_DURATION);
 
@@ -338,7 +335,7 @@ void lerp_level_colors(u32 color1, u32 color2){
 }
 
 void peek_right(){
-    ui_run_func_on_tag(&screen, "level_card_2", enable_card_2);
+    ui_run_func_on_tag(&default_screen, "level_card_2", enable_card_2);
 
     int card2id = curr_level_id + 1;
     if (card2id >= MAIN_LEVELS_NUM) card2id = 0;
@@ -353,7 +350,7 @@ void peek_right(){
 }
 
 void peek_left(){
-    ui_run_func_on_tag(&screen, "level_card_2", enable_card_2);
+    ui_run_func_on_tag(&default_screen, "level_card_2", enable_card_2);
 
     int card2id = curr_level_id - 1;
     if (card2id < 0) card2id = MAIN_LEVELS_NUM-1;
@@ -395,42 +392,42 @@ void level_select_loop() {
     exit_flag = false;
     state.custom_level = false;
     dragDistance = 0;
-    ui_load_screen(&screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/level_select.txt");
-    ui_load_screen(&screen_top, actions_top, sizeof(actions_top) / sizeof(actions_top[0]), "romfs:/menus/level_select_top.txt");
+    ui_load_screen(&default_screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/level_select.txt");
+    ui_load_screen(&default_screen_top, actions_top, sizeof(actions_top) / sizeof(actions_top[0]), "romfs:/menus/level_select_top.txt");
 
     // Set window color
-    level_card_window = ui_get_element_by_tag(&screen, "card_window");
+    level_card_window = ui_get_element_by_tag(&default_screen, "card_window");
     ui_window_set_tint(level_card_window, C2D_Color32(0, 0, 0, 127));
 
-    level_card_2_window = ui_get_element_by_tag(&screen, "card_window_2");
+    level_card_2_window = ui_get_element_by_tag(&default_screen, "card_window_2");
     ui_window_set_tint(level_card_2_window, C2D_Color32(0, 0, 0, 127));
     
-    ui_window_set_tint(ui_get_element_by_tag(&screen_top, "face_card"), C2D_Color32(0, 0, 0, 127));
+    ui_window_set_tint(ui_get_element_by_tag(&default_screen_top, "face_card"), C2D_Color32(0, 0, 0, 127));
 
     // Get level card components
-    level_card_title = ui_get_element_by_tag(&screen, "level_title");
-    level_card_stars = ui_get_element_by_tag(&screen, "level_stars");
-    level_card_face = ui_get_element_by_tag(&screen_top, "level_face");
+    level_card_title = ui_get_element_by_tag(&default_screen, "level_title");
+    level_card_stars = ui_get_element_by_tag(&default_screen, "level_stars");
+    level_card_face = ui_get_element_by_tag(&default_screen_top, "level_face");
 
-    level_card_2_title = ui_get_element_by_tag(&screen, "level_title_2");
-    level_card_2_stars = ui_get_element_by_tag(&screen, "level_stars_2");
+    level_card_2_title = ui_get_element_by_tag(&default_screen, "level_title_2");
+    level_card_2_stars = ui_get_element_by_tag(&default_screen, "level_stars_2");
 
-    level_card_normal_progress = ui_get_element_by_tag(&screen, "normalprogress");
-    level_card_normal_progress_val = ui_get_element_by_tag(&screen, "normalprogressvalue");
-    level_card_2_normal_progress = ui_get_element_by_tag(&screen, "normalprogress_2");
-    level_card_2_normal_progress_val = ui_get_element_by_tag(&screen, "normalprogressvalue_2");
+    level_card_normal_progress = ui_get_element_by_tag(&default_screen, "normalprogress");
+    level_card_normal_progress_val = ui_get_element_by_tag(&default_screen, "normalprogressvalue");
+    level_card_2_normal_progress = ui_get_element_by_tag(&default_screen, "normalprogress_2");
+    level_card_2_normal_progress_val = ui_get_element_by_tag(&default_screen, "normalprogressvalue_2");
     
-    level_card_practice_progress = ui_get_element_by_tag(&screen, "practiceprogress");
-    level_card_practice_progress_val = ui_get_element_by_tag(&screen, "practiceprogressvalue");
-    level_card_2_practice_progress = ui_get_element_by_tag(&screen, "practiceprogress_2");
-    level_card_2_practice_progress_val = ui_get_element_by_tag(&screen, "practiceprogressvalue_2");
+    level_card_practice_progress = ui_get_element_by_tag(&default_screen, "practiceprogress");
+    level_card_practice_progress_val = ui_get_element_by_tag(&default_screen, "practiceprogressvalue");
+    level_card_2_practice_progress = ui_get_element_by_tag(&default_screen, "practiceprogress_2");
+    level_card_2_practice_progress_val = ui_get_element_by_tag(&default_screen, "practiceprogressvalue_2");
     
-    level_card_coin_1 = ui_get_element_by_tag(&screen, "coin_1");
-    level_card_coin_2 = ui_get_element_by_tag(&screen, "coin_2");
-    level_card_coin_3 = ui_get_element_by_tag(&screen, "coin_3");
-    level_card_2_coin_1 = ui_get_element_by_tag(&screen, "coin_1_2");
-    level_card_2_coin_2 = ui_get_element_by_tag(&screen, "coin_2_2");
-    level_card_2_coin_3 = ui_get_element_by_tag(&screen, "coin_3_2");
+    level_card_coin_1 = ui_get_element_by_tag(&default_screen, "coin_1");
+    level_card_coin_2 = ui_get_element_by_tag(&default_screen, "coin_2");
+    level_card_coin_3 = ui_get_element_by_tag(&default_screen, "coin_3");
+    level_card_2_coin_1 = ui_get_element_by_tag(&default_screen, "coin_1_2");
+    level_card_2_coin_2 = ui_get_element_by_tag(&default_screen, "coin_2_2");
+    level_card_2_coin_3 = ui_get_element_by_tag(&default_screen, "coin_3_2");
 
     ui_progress_bar_set_tint(level_card_normal_progress, C2D_Color32(0, 255, 0, 255));
     ui_progress_bar_set_tint(level_card_2_normal_progress, C2D_Color32(0, 255, 0, 255));
@@ -444,7 +441,7 @@ void level_select_loop() {
     update_level_top(curr_level_id);
     update_level_progress(curr_level_id, 0);
     
-    ui_run_func_on_tag(&screen, "level_card_2", disable_card_2);
+    ui_run_func_on_tag(&default_screen, "level_card_2", disable_card_2);
 
     u32 color = default_lvl_colors[curr_level_id % NUM_MENU_COLORS];
     upload_color_to_buffer(0, color, 0);
@@ -463,8 +460,8 @@ void level_select_loop() {
     set_fade_status(FADE_STATUS_IN);
         
     // Set bg color
-    bg_gradient = ui_get_element_by_tag(&screen, "gradient");
-    bg_gradient_top = ui_get_element_by_tag(&screen_top, "gradient");
+    bg_gradient = ui_get_element_by_tag(&default_screen, "gradient");
+    bg_gradient_top = ui_get_element_by_tag(&default_screen_top, "gradient");
 
     if (!playing_menu_loop) {
         play_mp3("romfs:/songs/menuLoop.mp3", true, 0);
@@ -494,11 +491,11 @@ void level_select_loop() {
 
         ui_image_set_tint(bg_gradient, C2D_Color32(channel.color.r, channel.color.g, channel.color.b, 255));
         ui_image_set_tint(bg_gradient_top, C2D_Color32(channel.color.r, channel.color.g, channel.color.b, 255));
-        ui_run_func_on_tag(&screen, "ground", tint_ground);
+        ui_run_func_on_tag(&default_screen, "ground", tint_ground);
 
         if(cardCorrection){
-            ui_run_func_on_tag(&screen, "level_card_2", disable_card_2);
-            ui_set_pos_on_tag(&screen, 160, LEVEL_CARD_Y_POS, "level_card_2");
+            ui_run_func_on_tag(&default_screen, "level_card_2", disable_card_2);
+            ui_set_pos_on_tag(&default_screen, 160, LEVEL_CARD_Y_POS, "level_card_2");
             cardCorrection = false;
         }
 
@@ -523,11 +520,11 @@ void level_select_loop() {
                     peek_right();
                 } else{
                     dragDir = 0;
-                    ui_run_func_on_tag(&screen, "level_card_2", disable_card_2);
+                    ui_run_func_on_tag(&default_screen, "level_card_2", disable_card_2);
                 }
 
-                ui_set_pos_on_tag(&screen, 160 + dragDistance, LEVEL_CARD_Y_POS, "level_card");
-                ui_set_pos_on_tag(&screen, 160 + dragDistance + (dragDir * 320), LEVEL_CARD_Y_POS, "level_card_2");
+                ui_set_pos_on_tag(&default_screen, 160 + dragDistance, LEVEL_CARD_Y_POS, "level_card");
+                ui_set_pos_on_tag(&default_screen, 160 + dragDistance + (dragDir * 320), LEVEL_CARD_Y_POS, "level_card_2");
             } else {
                 dragDir = 0;
 
@@ -565,15 +562,15 @@ void level_select_loop() {
         if(dragging){
             touch.touchPosition.px = -99;
             touch.touchPosition.py = -99;
-            ui_get_element_by_tag(&screen, "left")->button.keyBinds = 0;
-            ui_get_element_by_tag(&screen, "right")->button.keyBinds = 0;
+            ui_get_element_by_tag(&default_screen, "left")->button.keyBinds = 0;
+            ui_get_element_by_tag(&default_screen, "right")->button.keyBinds = 0;
         } else{
-            ui_get_element_by_tag(&screen, "left")->button.keyBinds = (KEY_DLEFT | KEY_L | KEY_ZL | KEY_CPAD_LEFT | KEY_CSTICK_LEFT);
-            ui_get_element_by_tag(&screen, "right")->button.keyBinds = (KEY_DRIGHT | KEY_R | KEY_ZR | KEY_CPAD_RIGHT | KEY_CSTICK_RIGHT);
+            ui_get_element_by_tag(&default_screen, "left")->button.keyBinds = (KEY_DLEFT | KEY_L | KEY_ZL | KEY_CPAD_LEFT | KEY_CSTICK_LEFT);
+            ui_get_element_by_tag(&default_screen, "right")->button.keyBinds = (KEY_DRIGHT | KEY_R | KEY_ZR | KEY_CPAD_RIGHT | KEY_CSTICK_RIGHT);
         }
 
-        ui_screen_update(&screen, &touch);
-        ui_screen_update(&screen_top, &touch);
+        ui_screen_update(&default_screen, &touch);
+        ui_screen_update(&default_screen_top, &touch);
         
         do {
             update_touch_effect(DT);
@@ -585,7 +582,7 @@ void level_select_loop() {
             C2D_SceneBegin(bot);
             draw_fade();
 
-            ui_screen_draw(&screen);
+            ui_screen_draw(&default_screen);
 
             change_blending(true);
             draw_touch_effect();
@@ -595,7 +592,7 @@ void level_select_loop() {
             C2D_TargetClear(top, C2D_Color32(0, 0, 0, 255));
             C2D_SceneBegin(top);
 
-            ui_screen_draw(&screen_top);
+            ui_screen_draw(&default_screen_top);
             draw_dots(curr_level_id);
 
             C2D_ViewReset();
@@ -615,4 +612,7 @@ void level_select_loop() {
         }
     }
     C2D_TargetClear(bot, C2D_Color32(0, 0, 0, 255));
+    
+    ui_unload_screen(&default_screen);
+    ui_unload_screen(&default_screen_top);
 }

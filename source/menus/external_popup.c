@@ -332,6 +332,9 @@ void external_popup_init() {
 int external_popup_loop() {
     if (yes_exit) {
         free_level_progress();
+        
+        ui_unload_screen(&screen);
+        ui_unload_screen(&screen_top);
         return true;
     }
 
