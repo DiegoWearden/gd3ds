@@ -152,6 +152,10 @@ void unpause_game() {
     ui_run_func_on_tag(&default_screen_top, "pause_menu", ui_disable_element);
     ui_run_func_on_tag(&default_screen, "paused", ui_disable_element);
     ui_run_func_on_tag(&default_screen, "not_paused", ui_enable_element);
+    
+    if (!state.practice_mode) {
+        ui_run_func_on_tag(&default_screen, "practice_buttons", ui_disable_element);
+    }
     in_settings = false;
 }
 
