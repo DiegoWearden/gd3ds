@@ -125,6 +125,8 @@ static void exit_level_complete(UIElement* e) {
 
 static void restart_level(UIElement* e) {
     if (!animating_up) {
+        ui_get_element_by_tag(&screen, "endDarken")->opacity = 0.f;
+        
         play_sfx(&play_sound, 1);
         animating_up = true;
         animating_down = false;
@@ -458,6 +460,8 @@ void level_complete_init() {
         ui_run_func_on_tag(&screen_top, "practicecomplete", ui_disable_element);
         if (doNot) ui_get_element_by_tag(&screen_top, "levelcomplete")->image.scaleX *= -1.f;
     }
+
+    ui_get_element_by_tag(&screen, "endDarken")->opacity = 0.f;
 }
 
 int level_complete_loop(float delta) {

@@ -176,8 +176,6 @@ static void restart_level() {
 
     reset_coins();
 
-    ui_get_element_by_tag(&screen, "endDarken")->opacity = 0.f;
-
     unpause_game();
 }
 
@@ -287,8 +285,6 @@ void gameplay_screen_init() {
     coin_1_top = ui_get_element_by_tag(&screen_top, "coin_1");
     coin_2_top = ui_get_element_by_tag(&screen_top, "coin_2");
     coin_3_top = ui_get_element_by_tag(&screen_top, "coin_3");
-
-    ui_get_element_by_tag(&screen, "endDarken")->opacity = 0.f;
 }
 
 int gameplay_screen_top_loop() { 
