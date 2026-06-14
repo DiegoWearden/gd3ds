@@ -25,8 +25,10 @@ jobs:
         run: |
           mkdir -p out/3dsx/rom
           mkdir -p out/cia/rom
+          mkdir -p out/elf
           cp output/GeometryDash3DS.3dsx out/3dsx/rom
           cp output/GeometryDash3DS.cia out/cia/rom
+          cp output/GeometryDash3DS.elf out/elf
       - name: Publish 3dsx to GH Actions
         uses: actions/upload-artifact@main
         with:
@@ -38,6 +40,12 @@ jobs:
         with:
           name: gd3ds-cia
           path: out/cia/rom
+          archive: false
+      - name: Publish debug info to GH Actions
+        uses: actions/upload-artifact@main
+        with:
+          name: gd3ds-elf
+          path: out/elf
           archive: false
       - name: Create or update nightly release
         uses: softprops/action-gh-release@v3
