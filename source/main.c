@@ -80,6 +80,7 @@ SFX quit_sound;
 SFX explode_sound;
 SFX end_sound;
 SFX honk;
+SFX coin_sound;
 
 ParticleSystem touch_drag_particles;
 ParticleSystem touch_explosion_particles;
@@ -278,6 +279,8 @@ void free_particles() {
     freeParticleData(&end_wall_firework.data);
     freeParticleData(&level_complete_effect_p1.data);
     freeParticleData(&level_complete_effect_p2.data);
+
+    free_ui_particle_systems();
 }
 
 void init_particles(Color p1_color, Color p2_color) {    
@@ -716,6 +719,8 @@ void game_loop() {
                 if (state.death_timer <= 0.f) {
                     init_variables();
                     reload_level(); 
+                    //resets UI coins on gameplay screen
+                    reset_coins();
 
                     if (state.practice_mode && checkpoint_count > 0) {
                         restore_checkpoint();
@@ -796,8 +801,8 @@ void game_loop() {
             end_wall_particles.emitterY = level_info.wall_y;
             end_wall_particles.emitting = level_info.wall_y > 0;
 
-            update_use_effects(delta, GFX_TOP);
-            update_use_effects(delta, GFX_TOP_BUT_ABOVE_LEVEL);
+            update_use_effects(delta, get_use_effect_array_ptr(GFX_TOP));
+            update_use_effects(delta, get_use_effect_array_ptr(GFX_TOP_BUT_ABOVE_LEVEL));
             update_object_particles(delta);
             u64 end_part = svcGetSystemTick();
             u64 ticks_part = end_part - start_part;
@@ -902,7 +907,7 @@ void game_loop() {
             }
 
             change_blending(true);
-            draw_use_effects(GFX_TOP_BUT_ABOVE_LEVEL);
+            draw_use_effects(get_use_effect_array_ptr(GFX_TOP_BUT_ABOVE_LEVEL));
 
             if (level_info.wall_y > 0) {
                 drawParticleSystem(&end_wall_firework, 0, 0, 1);
@@ -1077,6 +1082,7 @@ void load_sfx() {
     load_wav("romfs:/sfx/explode_11.wav", &explode_sound);
     load_wav("romfs:/sfx/endStart_02.wav", &end_sound);
     load_wav("romfs:/sfx/honk.wav", &honk);
+    load_wav("romfs:/sfx/highscoreGet02.wav", &coin_sound);
 }
 
 int main(int argc, char* argv[]) {

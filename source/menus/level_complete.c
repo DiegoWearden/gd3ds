@@ -24,6 +24,11 @@
 #include "info_card.h"
 #include "state.h"
 #include "endwall.h"
+#include "menus/components/ui_darken.h"
+#include "main.h"
+#include "particles/circles.h"
+#include "menus/components/ui_particle.h"
+#include "menus/components/ui_use_effect.h"
 
 #include "menus/settings.h"
 #include "utils/string_helpers.h"
@@ -38,12 +43,19 @@ static bool restart = false;
 static bool init = false;
 
 static bool animating_down = false;
+static bool animating_reward = false;
 static bool animating_up = false;
 
 static float anim_time = 0;
 
 static float up_y_start = 0;
 static float window_y_pos = 0;
+
+static int rewardAnimPhase = 0;
+static float rewardAnimTime = 0.f;
+static bool playedRewardSFX;
+
+static bool showStars;
 
 static UIScreen screen_top;
 static UIScreen screen;
@@ -54,9 +66,8 @@ static UIElement *time_text;
 
 static UIElement *completion_text;
 
-static UIElement *coin_1;
-static UIElement *coin_2;
-static UIElement *coin_3;
+static UIElement *coins_full[3];
+static UIElement *particles[4];
 
 char *practice_completion_text = "Well done... Now try to complete it<p>without any checkpoints!";
 
@@ -122,6 +133,12 @@ static void restart_level(UIElement* e) {
     }
 }
 
+static void scale_bottom_buttons_anim(UIElement* e){
+    float fade_value_scale = easeValue(ELASTIC_OUT, 0, 1, anim_time, ANIM_DURATION, 1.f);
+    e->button.scaleX = fade_value_scale;
+    e->button.scaleY = fade_value_scale;
+}
+
 static UIAction actions[] = {
     { "restart", restart_level },
     { "exit", exit_level_complete },
@@ -129,12 +146,22 @@ static UIAction actions[] = {
 
 // This runs the initial animation of the menu coming off screen
 static void run_start_animation(float delta) {
-    float fade_value = easeValue(BOUNCE_OUT, 0, 240, anim_time, ANIM_DURATION, 1.f);
+    float fade_value = easeValue(BOUNCE_OUT, 0, 240, anim_time, ANIM_DURATION, 1.f);\
     window_y_pos = -120 + fade_value;
     up_y_start = fade_value;
 
+    UIElement *darken = ui_get_element_by_tag(&screen, "endDarken");
+    darken->opacity = clampf(anim_time, 0.f, 0.6f);
+    ui_darken_reset_opacity(darken);
+
+    ui_run_func_on_tag(&screen, "bottomWindow", scale_bottom_buttons_anim);
+    
     ui_set_pos_on_tag(&screen, SCREEN_BOT_WIDTH / 2, window_y_pos, "window");
     ui_set_pos_on_tag(&screen_top, SCREEN_WIDTH / 2, window_y_pos, "window");
+
+    if(anim_time > 0.6f){
+        animating_reward = true;
+    }
 
     // Animation end
     if (anim_time >= ANIM_DURATION) {
@@ -142,6 +169,98 @@ static void run_start_animation(float delta) {
         anim_time = 0;
     }
     anim_time += delta;
+}
+
+static void spawn_reward_firework(UIElement* e){
+    float x = e->x;
+    float y = e->y;
+    UIElement *particle = particles[rewardAnimPhase];
+    ui_particle_emit(particle, 60);
+
+    ui_set_use_effect_col(
+        ui_add_use_effect(
+            ui_get_element_by_tag(&screen_top, "rewardCircle"),
+        x, y, &death_effect),
+    1.f, 0.75f, 0.f);
+}
+
+// This plays the animation of the coins popping into place and the stars
+static void run_rewards_animation(float delta){
+    if(rewardAnimPhase > 3){
+        animating_reward = false;
+        return;
+    }
+
+    //move particles and use effects to align with coin when still animating the window coming onscreen
+    if(animating_down || animating_up){
+        ui_particle_update_pos(particles[rewardAnimPhase]);
+        ui_use_effect_update_pos(ui_get_element_by_tag(&screen_top, "rewardCircle"));
+    }
+
+    LevelData *level_data_sel = (state.custom_level ? &level_data : &main_level_data[curr_level_id]);
+    UIElement *rewardCenter = NULL;
+
+    float scale_value = easeValue(BOUNCE_OUT, 3.f, 1.f, rewardAnimTime, 0.35f, 1.f);
+    float opacity_value = easeValue(EASE_LINEAR, 0.f, 1.f, rewardAnimTime, 0.1f, 1.f);
+    //coins
+    if(rewardAnimPhase < 3){
+        //Skip uncollected/already collected coins
+        if((rewardAnimPhase == 0 && (!state.current_data.coin1 || level_data_sel->coin1))
+        || (rewardAnimPhase == 1 && (!state.current_data.coin2 || level_data_sel->coin2))
+        || (rewardAnimPhase == 2 && (!state.current_data.coin3 || level_data_sel->coin3))){
+            rewardAnimPhase++;
+            rewardAnimTime = 0;
+            return;
+        }
+
+        UIElement* coin = coins_full[rewardAnimPhase];
+        rewardCenter = coin;
+        
+        coin->enabled = true;
+        coin->image.scaleX = scale_value * 0.88f;
+        coin->image.scaleY = scale_value * 0.88f;
+
+        ui_image_set_tint(coin, C2D_Color32f(1, 1, 1, opacity_value));
+    } else{
+        if(showStars) {
+            UIElement* star = ui_get_element_by_tag(&screen_top, "star");
+            UIElement* star_text = ui_get_element_by_tag(&screen_top, "startext");
+            rewardCenter = star;
+
+            star->enabled = true;
+            star_text->enabled = true;
+
+            //scale around y = 128 (relative to window)
+            int center = up_y_start - 128;
+            star->y = ((scale_value * 0.7f) * (up_y_start - 127 - center) + center);
+            star_text->y = ((scale_value * 0.55f) * (up_y_start - 83 - center) + center);
+
+            star->image.scaleX = scale_value * 0.7f;
+            star->image.scaleY = scale_value * 0.7f;
+            star_text->label.scale = scale_value * 0.55f;
+
+            ui_image_set_tint(star, C2D_Color32f(1, 1, 1, opacity_value));
+            star_text->opacity = opacity_value;
+        } else {
+            return;
+        }
+    }
+
+    if(rewardAnimTime >= 0.1f){
+        if(!playedRewardSFX){
+            play_sfx(&coin_sound, 1);
+            spawn_reward_firework(rewardCenter);
+            playedRewardSFX = true;
+        }
+    }
+
+    if (rewardAnimTime >= 0.35f) {
+        playedRewardSFX = false;
+        rewardAnimPhase++;
+        rewardAnimTime = 0;
+    }
+
+    rewardAnimTime += delta;
 }
 
 // This runs the animation that happens when you press "restart"
@@ -152,7 +271,6 @@ static void run_end_animation(float delta) {
     ui_set_pos_on_tag(&screen, SCREEN_BOT_WIDTH / 2, window_y_pos, "window");
     ui_set_pos_on_tag(&screen_top, SCREEN_WIDTH / 2, window_y_pos, "window");
     
-
     // Animation end
     if (anim_time >= RESTART_ANIM_DURATION) {
         animating_up = false;
@@ -203,17 +321,43 @@ void level_complete_init() {
     yes_exit = false;
     restart = false;
     animating_down = true;
+    animating_reward = false;
     animating_up = false;
     anim_time = 0;
     window_y_pos = 0;
 
-    coin_1 = ui_get_element_by_tag(&screen_top, "coin1");
-    coin_2 = ui_get_element_by_tag(&screen_top, "coin2");
-    coin_3 = ui_get_element_by_tag(&screen_top, "coin3");
+    rewardAnimPhase = 0;
+    rewardAnimTime = 0.f;
+    playedRewardSFX = false;
+
+    coins_full[0] = ui_get_element_by_tag(&screen_top, "coin1full");
+    coins_full[1] = ui_get_element_by_tag(&screen_top, "coin2full");
+    coins_full[2] = ui_get_element_by_tag(&screen_top, "coin3full");
+
+    ui_run_func_on_tag(&screen_top, "coinfull", ui_disable_element);
+
+    particles[0] = ui_get_element_by_tag(&screen_top, "coinParticle1");
+    particles[1] = ui_get_element_by_tag(&screen_top, "coinParticle2");
+    particles[2] = ui_get_element_by_tag(&screen_top, "coinParticle3");
+    particles[3] = ui_get_element_by_tag(&screen_top, "starParticle");
 
     // Set completion text
     completion_text = ui_get_element_by_tag(&screen_top, "funnytext");
     
+    LevelData *level_data_sel = (state.custom_level ? &level_data : &main_level_data[curr_level_id]);
+
+    UIElement *star_text = ui_get_element_by_tag(&screen_top, "startext");
+
+    char star_count[4];
+    int stars = state.custom_level ? level_data_sel->stars : main_levels[curr_level_id].stars;
+    snprintf(star_count, sizeof(star_count), "+%d", stars);
+    ui_label_set_text(star_text, star_count);
+
+    ui_disable_element(ui_get_element_by_tag(&screen_top, "star"));
+    ui_disable_element(star_text);
+
+    showStars = stars > 0 && level_data_sel->normal_progress < 100;
+
     if(state.custom_level == true || state.practice_mode || cheated) {
         ui_run_func_on_tag(&screen_top, "coin1", ui_disable_element);
         ui_run_func_on_tag(&screen_top, "coin2", ui_disable_element);
@@ -287,17 +431,28 @@ void level_complete_init() {
         completion_text->label.scale = text_scale;
     } else {
         ui_run_func_on_tag(&screen_top, "funnytext", ui_disable_element);
-        
-        LevelData *level_data_sel = (state.custom_level ? &level_data : &main_level_data[curr_level_id]);
 
-        ui_image_set_image(coin_1, (state.current_data.coin1 | level_data_sel->coin1 ? COMPLETE_COIN_FILLED_ID : COMPLETE_COIN_UNFILLED_ID), 1);
-        ui_image_set_image(coin_2, (state.current_data.coin2 | level_data_sel->coin2 ? COMPLETE_COIN_FILLED_ID : COMPLETE_COIN_UNFILLED_ID), 1);
-        ui_image_set_image(coin_3, (state.current_data.coin3 | level_data_sel->coin3 ? COMPLETE_COIN_FILLED_ID : COMPLETE_COIN_UNFILLED_ID), 1);
+        for(int i = 0; i < 3; i++){
+            bool alreadyCollectedCoin = false;
+            if((i == 0 && level_data_sel->coin1)
+            || (i == 1 && level_data_sel->coin2)
+            || (i == 2 && level_data_sel->coin3)){
+                alreadyCollectedCoin = true;
+            }
+            
+            UIElement* coin = coins_full[i];
+
+            if(alreadyCollectedCoin){
+                coin->enabled = true;
+                coin->opacity = 1.f;
+                coin->image.scaleX = 0.88f;
+                coin->image.scaleY = 0.88f;
+            }
+        }
     }
 
     if (state.practice_mode) {
         ui_run_func_on_tag(&screen_top, "levelcomplete", ui_disable_element);
-
         if (doNot) ui_get_element_by_tag(&screen_top, "practicecomplete")->image.scaleX *= -1.f;
     } else {
         ui_run_func_on_tag(&screen_top, "practicecomplete", ui_disable_element);
@@ -309,6 +464,7 @@ int level_complete_loop(float delta) {
     if (!init) return 0;
 
     if (animating_down) run_start_animation(delta);
+    if (animating_reward && !state.practice_mode && !cheated) run_rewards_animation(delta);
     if (animating_up) run_end_animation(delta);
 
     if (yes_exit) {
