@@ -530,13 +530,10 @@ void drawParticleSystem(ParticleSystem* ps, float x_offset, float y_offset, floa
 
         C2D_PlainImageTint(&tint, color, 1.f);
 
-        // Draw centered square
-        float half = size * 0.5f;
-
         C2D_DrawImageAtRotated(
             img, 
-            x - half,
-            y - half + y_offset,
+            x,
+            y + y_offset,
             0.0f,
             d->rotation[i], 
             &tint,
