@@ -84,7 +84,7 @@ int config_load(Config* cfg, const char* path) {
     free(data);
 
     if (!cfg->root)
-        return 0;
+        cfg->root = json_object_new_object();
 
     return 1;
 }
