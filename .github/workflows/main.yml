@@ -48,6 +48,7 @@ jobs:
           path: out/elf
           archive: false
       - name: Create or update nightly release
+        if: github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v3
         with:
           tag_name: nightly
