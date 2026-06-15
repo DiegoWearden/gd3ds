@@ -170,7 +170,7 @@ void cube_gamemode(Player *player) {
         update_rotation_direction(player);
     }
 
-    bool should_coyote = player->upside_down && state.input.holdJump && player->coyote_frames < 10;
+    bool should_coyote = (state.dual || player->upside_down) && state.input.holdJump && player->coyote_frames < 10;
 
     SlopeData slope_data = player->slope_data;
 
