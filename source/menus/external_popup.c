@@ -47,6 +47,7 @@ static UIElement *level_id_label;
 static UIElement *song_label;
 
 static UIElement *difficulty_face;
+static UIElement *like_image;
 
 static UIElement *normal_progress;
 static UIElement *normal_progress_val;
@@ -65,6 +66,8 @@ static int stars_num = 0;
 #define HARDER_FACE 255
 #define INSANE_FACE 256
 #define DEMON_FACE  258
+
+#define DISLIKE_ICON 56
 
 const int difficulty_stars[MAX_STARS + 1] = {
     NA_FACE,
@@ -199,11 +202,15 @@ static void set_downloads_likes(char *gmd) {
     char *likes = extract_gmd_key((const char *) gmd, "k22", "i");
     if (likes) {
         snprintf(tmp, sizeof(tmp), "%s", likes);
-        free(likes);
 
         ui_label_set_scale_from_width(likes_label, tmp, MAX_LIKES_WIDTH);
 
         ui_label_set_text(likes_label, tmp);
+
+        if (atoi(likes) < 0) {
+            ui_image_set_image(like_image, DISLIKE_ICON, 0);
+        }
+        free(likes);
     }
 }
 
@@ -301,8 +308,9 @@ void external_popup_init() {
     difficulty_face = ui_get_element_by_tag(&screen_top, "difficultyface");
     level_id_label = ui_get_element_by_tag(&screen_top, "levelid");
     song_label = ui_get_element_by_tag(&screen, "songid");
-
     
+    like_image = ui_get_element_by_tag(&screen_top, "likeimage");
+
     normal_progress = ui_get_element_by_tag(&screen, "normalprogress");
     normal_progress_val = ui_get_element_by_tag(&screen, "normalprogressvalue");
     practice_progress = ui_get_element_by_tag(&screen, "practiceprogress");
