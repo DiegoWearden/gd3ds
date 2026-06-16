@@ -1,6 +1,6 @@
 # Geometry Dash for the 3DS
 
-This is a WIP Port of the popular mobile game Geometry Dash by RobTop for the Nintendo 3DS.
+This is a demake of the popular mobile game Geometry Dash by RobTop for the Nintendo 3DS.
 
 Geometry Dash and its respective resources are by RobTop Games.
 <img width="1460" height="480" alt="imagen" src="https://github.com/user-attachments/assets/631a3a8b-1750-4f18-b534-9b7ce75e6746" />
@@ -34,9 +34,8 @@ Geometry Dash and its respective resources are by RobTop Games.
  - __camila314__ - Pathfinder Mod's physics
 
 ## Download
-You can download both the .3dsx and the .cia file [here](https://github.com/AleFunky/gd3ds/releases/tag/nightly) or you can scan the QR code below in FBI to install the game to your home menu automatically.\
-<img width="256" height="256" alt="imagen" src="https://github.com/user-attachments/assets/662c535b-3d2c-41b2-8365-2852c1b4e599" />
-
+You can download both the .3dsx and the .cia file [here](https://github.com/AleFunky/gd3ds/releases/latest) or you can scan the QR code below in FBI to install the game to your home menu automatically.\
+<img width="256" height="256" alt="imagen" src="https://github.com/user-attachments/assets/0df1a8b2-f653-41ff-a0ce-608d73cf54d1" />
 
 # Discord
 You can come to our Discord server and get help (or talk if you want): [Discord](https://discord.gg/Yh6JrS7eSU)
@@ -50,9 +49,6 @@ If you're playing on actual hardware this shouldn't be an issue as most homebrew
 
 ### How do I play / add custom levels?
 You'll need to either export a copy of your level of choice using the [GDShare Geode mod](https://geode-sdk.org/mods/hjfod.gdshare) or download an archive of said level from [GDHistory](https://history.geometrydash.eu/). If the level uses a custom song, you'll also need to either extract it from your Geometry Dash songs folder (```%localappdata%\GeometryDash``` on Windows), or download it seperately from [Newgrounds](https://www.newgrounds.com/audio). Once you have the level .gmd (and song, renamed to its Newgrounds ID) prepared, copy them to ```\3ds\gd3ds\external_levels\``` and ```\3ds\gd3ds\saved_songs\``` on your SD Card respectively. Putting the .gmd's into additional folders within the main ```\external_levels\``` directory is supported. Do keep in mind, however, that any objects from updates 2.0 and above will not load + have the chance to crash your game, and object-heavy levels are not guaranteed to be playable.
-
-### X button doesn't work / X effect is missing / X object doesn't do anything
-This project is WIP, so chances are that feature simply is not implemented yet. If you think you found an actual bug, you're welcome to open a GitHub Issue or (preferably) ask on the Discord server.
 
 ### Are you going to add a level editor?
 The short answer is no. The long answer is that it's simply too much work for something that would run poorly on the already underpowered 3DS hardware, would be unable to upload levels to the Geometry Dash servers and that 99% of people would not care about. 
