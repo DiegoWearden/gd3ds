@@ -119,11 +119,18 @@ void init_col_channels() {
     channels[lbg].color.b = 255;
     channels[lbg].blending = true;
 
-    int blue_glow = get_col_channel_index(CHANNEL_BLUE_GLOW);
-    channels[blue_glow].color.r = 0;
-    channels[blue_glow].color.g = 255;
-    channels[blue_glow].color.b = 255;
-    channels[blue_glow].blending = true;
+    
+    int black_chn = get_col_channel_index(CHANNEL_BLACK);
+    channels[black_chn].color.r = 0;
+    channels[black_chn].color.g = 0;
+    channels[black_chn].color.b = 0;
+    channels[black_chn].blending = false;
+
+    int white_chn = get_col_channel_index(CHANNEL_WHITE);
+    channels[white_chn].color.r = 255;
+    channels[white_chn].color.g = 255;
+    channels[white_chn].color.b = 255;
+    channels[white_chn].blending = false;
 
     int yellow_glow = get_col_channel_index(CHANNEL_YELLOW_GLOW);
     channels[yellow_glow].color.r = 255;
@@ -131,23 +138,30 @@ void init_col_channels() {
     channels[yellow_glow].color.b = 0;
     channels[yellow_glow].blending = true;
 
+
+    int blue_glow = get_col_channel_index(CHANNEL_BLUE_GLOW);
+    channels[blue_glow].color.r = 0;
+    channels[blue_glow].color.g = 255;
+    channels[blue_glow].color.b = 255;
+    channels[blue_glow].blending = true;
+
     int pink_glow = get_col_channel_index(CHANNEL_PINK_GLOW);
     channels[pink_glow].color.r = 255;
     channels[pink_glow].color.g = 0;
     channels[pink_glow].color.b = 255;
     channels[pink_glow].blending = true;
-
-    int white_chn = get_col_channel_index(CHANNEL_WHITE);
-    channels[white_chn].color.r = 255;
-    channels[white_chn].color.g = 255;
-    channels[white_chn].color.b = 255;
-    channels[white_chn].blending = true;
     
     int invis_glow = get_col_channel_index(CHANNEL_INVISIBLE_GLOW);
     channels[invis_glow].color.r = 255;
     channels[invis_glow].color.g = 255;
     channels[invis_glow].color.b = 255;
     channels[invis_glow].blending = true;
+    
+    int white_glow = get_col_channel_index(CHANNEL_WHITE_GLOW);
+    channels[white_glow].color.r = 255;
+    channels[white_glow].color.g = 255;
+    channels[white_glow].color.b = 255;
+    channels[white_glow].blending = true;
 }
 
 void handle_col_channel(int chan) {

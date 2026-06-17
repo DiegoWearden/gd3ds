@@ -39,6 +39,7 @@ static bool blending_state = false;
 
 C2D_SpriteSheet spriteSheet;
 C2D_SpriteSheet spriteSheet2;
+C2D_SpriteSheet spriteSheet3;
 C2D_SpriteSheet glowSheet;
 C2D_SpriteSheet bgSheet;
 C2D_SpriteSheet bg2Sheet;
@@ -96,9 +97,15 @@ static C2D_SpriteSheet *get_sprite_sheet(int index, int *rel_index) {
         return &spriteSheet;
     }
 
-    // Return spritesheet 2 (portals)
-    *rel_index = index - SPRITESHEET2_START;
-    return &spriteSheet2;
+    if (index < SPRITESHEET3_START) {
+        // Return spritesheet 2 (portals)
+        *rel_index = index - SPRITESHEET2_START;
+        return &spriteSheet2;
+    }
+
+    // Return spritesheet 3 (2.0 objects)
+    *rel_index = index - SPRITESHEET3_START;
+    return &spriteSheet3;
 }
 
 Color get_color_abgr8(u32 color) {
@@ -406,7 +413,7 @@ int get_glow_channel(int obj) {
         case 201:
         case 202:
         case 203:
-            return CHANNEL_WHITE;
+            return CHANNEL_WHITE_GLOW;
         case 397:
         case 398:
         case 399:
@@ -492,8 +499,25 @@ float get_rotation_speed(int id) {
         case 394:
         case 395:
         case 396:
+        case 997:
+        case 998:
+        case 999:
+        case 1000:
+        case 1019:
+        case 1020:
+        case 1021:
+        case 1055:
+        case 1056:
+        case 1057:
+        case 1058:
+        case 1059:
+        case 1060:
+        case 1061:
             return 180.f;
     }
+
+    //if (id >= 745) return 180.f; // Le test
+
     return 0.f;
 }
 
@@ -715,7 +739,7 @@ static inline uint32_t make_sort_key(SpriteObject *s)
     if (s->layer == 1) {
         sheet = 2;
     } else {
-        sheet = tex < SPRITESHEET2_START ? 1 : 0;
+        sheet = tex < SPRITESHEET2_START || tex >= SPRITESHEET3_START ? 1 : 0;
     }
     
     int zorder = objects.zorder[obj] ? objects.zorder[obj] : game_obj->z_order;

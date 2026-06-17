@@ -3,7 +3,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define SPRITESHEET2_START 819
+#define SPRITESHEET2_START 767
+#define SPRITESHEET3_START (SPRITESHEET2_START + 64)
 
 typedef enum {
    COLLISION_NONE = 0,
@@ -60,7 +61,7 @@ typedef struct {
     const ObjectHitbox* hitbox;
 } GameObject;
 
-#define TEXTURE_COUNT 883
-#define GAME_OBJECT_COUNT 746
+#define TEXTURE_COUNT 1427
+#define GAME_OBJECT_COUNT 1330
 
 extern const GameObject game_objects[GAME_OBJECT_COUNT];

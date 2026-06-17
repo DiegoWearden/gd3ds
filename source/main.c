@@ -1043,6 +1043,9 @@ void game_assets_init() {
     spriteSheet2 = C2D_SpriteSheetLoad("romfs:/gfx/portals.t3x");
     if (!spriteSheet2) svcBreak(USERBREAK_PANIC);
     
+    spriteSheet3 = C2D_SpriteSheetLoad("romfs:/gfx/sprites_2p0.t3x");
+    if (!spriteSheet3) svcBreak(USERBREAK_PANIC);
+
     glowSheet = C2D_SpriteSheetLoad("romfs:/gfx/glow.t3x");
     if (!glowSheet) svcBreak(USERBREAK_PANIC);
     
@@ -1241,6 +1244,7 @@ int main(int argc, char* argv[]) {
     // Delete graphics
     C2D_SpriteSheetFree(spriteSheet);
     C2D_SpriteSheetFree(spriteSheet2);
+    C2D_SpriteSheetFree(spriteSheet3);
     C2D_SpriteSheetFree(glowSheet);
     C2D_SpriteSheetFree(bgSheet);
     C2D_SpriteSheetFree(bg2Sheet);
