@@ -990,14 +990,15 @@ void change_blending(bool blending) {
         C3D_TexEnvInit(env);
         C3D_TexEnvSrc(env, C3D_Alpha, GPU_PREVIOUS, GPU_TEXTURE0, 0);
         C3D_TexEnvFunc(env, C3D_Alpha, GPU_MODULATE);
-        //C2D_Prepare();
     } else {
         C2D_Flush();
         C3D_AlphaBlend(
             GPU_BLEND_ADD, GPU_BLEND_ADD, 
             GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA, 
             GPU_ONE, GPU_ZERO);
-        C2D_Prepare();
+        
+        C3D_TexEnv *env = C3D_GetTexEnv(2);
+        C3D_TexEnvInit(env);
     }
 
     blending_state = blending;
