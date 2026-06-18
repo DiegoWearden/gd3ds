@@ -958,7 +958,7 @@ void change_blending(bool blending) {
             GPU_ONE, GPU_ZERO
         );
 
-        C3D_TexEnv *env = C3D_GetTexEnv(2);
+        C3D_TexEnv *env = C3D_GetTexEnv(4);
         C3D_TexEnvInit(env);
         C3D_TexEnvSrc(env, C3D_Alpha, GPU_PREVIOUS, GPU_PREVIOUS, 0);
         C3D_TexEnvFunc(env, C3D_Alpha, GPU_MODULATE);
@@ -969,7 +969,7 @@ void change_blending(bool blending) {
             GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA, 
             GPU_ONE, GPU_ZERO);
         
-        C3D_TexEnv *env = C3D_GetTexEnv(2);
+        C3D_TexEnv *env = C3D_GetTexEnv(4);
         C3D_TexEnvInit(env);
     }
 
