@@ -1139,8 +1139,6 @@ int main(int argc, char* argv[]) {
 
     loading_screen_update(75);
 
-    make_opacity_lut();
-
     load_sfx();
 
     memset(&level_info, 0, sizeof(LoadedLevelInfo));

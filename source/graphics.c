@@ -61,34 +61,6 @@ SpriteTemplate sprite_templates[GAME_OBJECT_COUNT]; // global cache
 
 float touch_effect_drag_timer = 0.f;
 
-#define LUT_SIZE 256
-
-uint8_t opacityLUT[LUT_SIZE];
-
-// GD opacity is not linear. For speed this makes a lookup table for fast access
-void make_opacity_lut() {
-    for (int i = 0; i < LUT_SIZE; i++) {
-        float x = (float)i / (LUT_SIZE - 1);  // normalize to [0,1]
-
-        float y = 0.175656971639325f * powf(7.06033051530761f, x)
-                - 0.213355914301931f;
-
-        // clamp
-        if (y < 0.0f) y = 0.0f;
-        if (y > 1.0f) y = 1.0f;
-
-        opacityLUT[i] = (uint8_t)(y * 255.0f + 0.5f);
-    }
-}
-
-float get_opacity(float opacity) {
-    int index = (int)(opacity * 255.0f + 0.5f);
-    index = index < 0 ? 0 : (index > 255 ? 255 : index);
-
-    uint8_t result = opacityLUT[index];
-    return result / 255.f;
-}
-
 static C2D_SpriteSheet *get_sprite_sheet(int index, int *rel_index) {
     // Check if index belongs to spritesheet 1 (most objects)
     if (index < SPRITESHEET2_START) {

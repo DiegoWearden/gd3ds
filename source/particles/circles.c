@@ -387,7 +387,7 @@ void update_use_effects(float delta, UseEffectPool *pool) {
                 }
             }
 
-            effect->opacity = get_opacity(opacity);
+            effect->opacity = opacity;
 
             float rad;
 

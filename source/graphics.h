@@ -171,9 +171,6 @@ void draw_post_player_effects();
 void draw_player_graphics();
 int get_coin_texture(int tex, int ticks);
 
-void make_opacity_lut();
-float get_opacity(float opacity);
-
 void update_touch_effect(float delta);
 void draw_touch_effect();
 

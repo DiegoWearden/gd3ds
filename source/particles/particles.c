@@ -500,7 +500,7 @@ void drawParticleSystem(ParticleSystem* ps, float x_offset, float y_offset, floa
         float r = d->colorR[i];
         float g = d->colorG[i];
         float b = d->colorB[i];
-        float a = get_opacity(d->colorA[i]);
+        float a = d->colorA[i];
 
         u32 color = C2D_Color32f(r, g, b, a * opacity);
 
