@@ -622,7 +622,7 @@ void spawn_object_at(
         vo->obj = obj_game;
         vo->layer = 1;
         vo->col_type = COLOR_TYPE_BASE;
-        vo->opacity = 0.5f;
+        vo->opacity = obj->opacity;
         vo->col_channel = get_glow_channel(obj_game);
         viewable_objects_ptr[sprite_count] = vo;
         sprite_count++;
