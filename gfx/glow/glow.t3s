@@ -1,4 +1,4 @@
---atlas -f rgba8888 -z auto
+--atlas -f auto-l8 -z auto
 blackCogwheel_01_glow_001.png
 blackCogwheel_02_glow_001.png
 blackCogwheel_03_glow_001.png

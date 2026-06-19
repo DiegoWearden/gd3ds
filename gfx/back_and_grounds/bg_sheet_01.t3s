@@ -1,4 +1,4 @@
---atlas -f auto -z auto
+--atlas -f auto-l8 -z auto
 bg.png
 bg_02.png
 bg_03.png

@@ -1,4 +1,4 @@
---atlas --border transparent -f rgba8888 -z auto
+--atlas --border transparent -f auto-l8 -z auto
 bird_01_001.png
 bird_01_2_001.png
 bird_01_3_001.png
