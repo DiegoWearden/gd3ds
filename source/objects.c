@@ -3071,12 +3071,12 @@ const ChildSprite children_1257[] = {
 };
 
 const ChildSprite children_1258[] = {
- { 1140, 0.00, -2.00, 1.00, 1.00, 0, 0, 1, 0, 0.00, COLOR_TYPE_BLACK, 0.30 },
+ { 1140, 0.00, 0.00, 1.00, 1.00, 0, 0, 1, 0, 0.00, COLOR_TYPE_BLACK, 0.30 },
  { 1142, 12.00, -12.00, 1.00, 1.00, 0, 0, 100, 0, 0.00, COLOR_TYPE_DETAIL, 1.00 },
 };
 
 const ChildSprite children_1259[] = {
- { 1141, 0.00, -2.00, 1.00, 1.00, 0, 0, 1, 0, 0.00, COLOR_TYPE_BLACK, 0.30 },
+ { 1141, 0.00, 0.00, 1.00, 1.00, 0, 0, 1, 0, 0.00, COLOR_TYPE_BLACK, 0.30 },
  { 1143, 25.00, -12.00, 1.00, 1.00, 0, 0, 100, 0, 0.00, COLOR_TYPE_DETAIL, 1.00 },
 };
 
