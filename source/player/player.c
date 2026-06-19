@@ -80,13 +80,6 @@ const float cube_accelerations[] = {
     -2799.36,
 };
 
-const float slopeHeights[SPEED_COUNT] = {
-    322.345224,
-    399.889818,
-    497.224926,
-    600.643296
-};
-
 const float player_speed_mults[SPEED_COUNT] = {
 	0.7f,
 	0.9f,
@@ -186,7 +179,9 @@ void cube_gamemode(Player *player) {
             int orient = grav_slope_orient(slope_data.slope_id, player);
             if (orient == ORIENT_NORMAL_UP) {
                 float time = clampf(10 * (player->timeElapsed - slope_data.elapsed), 0.4f, 1.0f);
-                set_p_velocity(player, 0.25f * time * slopeHeights[state.speed] + cube_jump_heights[state.speed], false);
+                float vel = 0.9f * MIN(1.12f / slope_angle(slope_data.slope_id, player), 1.54f) * (objects.height[slope_data.slope_id] * player_speeds[state.speed] / objects.width[slope_data.slope_id]);
+                set_p_velocity(player, 0.25f * time * vel + cube_jump_heights[state.speed], false);
+                player->slope_slide_coyote_time = 0;
             } else {
                 set_p_velocity(player, cube_jump_heights[state.speed], state.old_input.holdJump);
             }
@@ -233,14 +228,8 @@ void rotate_fly(Player *player, float mult) {
     } else if (STEPS_DT * 72 <= diff_x * diff_x + diff_y * diff_y) {
         // This is how gd does rotation
         if (player->gamemode == GAMEMODE_BIRD) {
-            if (player->slope_data.slope_id >= 0 || player->slope_slide_coyote_time) {
-                int slope = player->slope_data.slope_id;
-
-                if (player->slope_slide_coyote_time) {
-                    slope = player->coyote_slope.slope_id;
-                }
-
-                angle_rad = slope_snap_angle(slope, player);
+            if (player->slope_data.slope_id >= 0) {
+                angle_rad = slope_snap_angle(player->slope_data.slope_id, player);
             } else if (player->on_ground) {
                 angle_rad = 0;
             } else if (!player->upside_down) {
