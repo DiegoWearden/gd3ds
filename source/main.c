@@ -579,7 +579,12 @@ void game_loop() {
             land_particles[i].emitting = false;
         }
 
+        u64 now = svcGetSystemTick();
+        delta = (now - lastTime) / (CPU_TICKS_PER_MSEC * 1000);
+        lastTime = now;
+
         if (state.death_timer <= 0)  {
+            float physics_delta = delta;
             physics_calc_time = 0;
             number_of_collisions = 0;
             number_of_collisions_checks = 0;
@@ -594,18 +599,15 @@ void game_loop() {
             normal_speed_particles_bottom.emitting = false;
             fast_speed_particles_bottom.emitting = false;
             faster_speed_particles_bottom.emitting = false;
-
-            u64 now = svcGetSystemTick();
-            delta = (now - lastTime) / (CPU_TICKS_PER_MSEC * 1000);
-            lastTime = now;
-            if (delta > 0.5f) delta = STEPS_DT_UNMOD; // Avoid spiral of death
+            
+            if (physics_delta > 0.5f) physics_delta = STEPS_DT_UNMOD; // Avoid spiral of death
             if (fixed_dt) {
-                delta = STEPS_DT_UNMOD;
+                physics_delta = STEPS_DT_UNMOD;
                 if (!being_faded) fixed_dt = false;
             }
 
             if (!game_paused) {
-                accumulator += delta;
+                accumulator += physics_delta;
                 // Run simulation in fixed steps
                 while (accumulator >= STEPS_DT_UNMOD) {
                     u64 start_physics = svcGetSystemTick();
@@ -689,11 +691,10 @@ void game_loop() {
                 if (had_new_best) state.death_timer = 1.4f;
 
                 handle_death((state.current_player == 1) ? &state.player2 : &state.player, true);
-                delta = DT;
             }
 
             if (state.death_timer > 0.f) {
-                state.death_timer -= DT;
+                state.death_timer -= delta;
 
                 fade_to_amplitude(0);
 
