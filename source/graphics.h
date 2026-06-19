@@ -92,11 +92,12 @@ extern C2D_SpriteSheet spriteSheet2;
 extern C2D_SpriteSheet spriteSheet3;
 extern C2D_SpriteSheet glowSheet;
 extern C2D_SpriteSheet bgSheet;
-extern C2D_SpriteSheet bg2Sheet;
 extern C2D_SpriteSheet groundSheet;
 extern C2D_SpriteSheet iconSheet;
 extern C2D_SpriteSheet trailSheet;
 extern C2D_SpriteSheet particleSheet;
+
+extern int loaded_bg_sheet;
 
 extern SpriteTemplate sprite_templates[GAME_OBJECT_COUNT];
 

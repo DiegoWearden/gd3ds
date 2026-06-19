@@ -78,9 +78,6 @@ void ui_assets_init() {
     chatFont_sheet = C2D_SpriteSheetLoad("romfs:/gfx/chatFont.t3x");
     bg_gradient_sheet = C2D_SpriteSheetLoad("romfs:/gfx/bg_gradient.t3x");
     
-    bg2Sheet = C2D_SpriteSheetLoad("romfs:/gfx/bg_sheet_02.t3x");
-    if (!bg2Sheet) svcBreak(USERBREAK_PANIC);
-    
     groundSheet = C2D_SpriteSheetLoad("romfs:/gfx/grounds.t3x");
     if (!groundSheet) svcBreak(USERBREAK_PANIC);
 }
@@ -103,8 +100,6 @@ C2D_SpriteSheet *get_sheet(int sheet) {
             return &groundSheet;
         case 7:
             return &iconSheet;
-        case 8:
-            return &bg2Sheet;
         case 9:
             return &bar_sheet;
     }

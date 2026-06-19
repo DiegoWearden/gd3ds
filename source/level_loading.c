@@ -1226,6 +1226,13 @@ void set_color_channels() {
     }
 }
 
+const char *bg_sheet_paths[] = {
+    "romfs:/gfx/bg_sheet_01.t3x",
+    "romfs:/gfx/bg_sheet_02.t3x",
+    "romfs:/gfx/bg_sheet_03.t3x",
+    "romfs:/gfx/bg_sheet_04.t3x"
+};
+
 const char *default_name = "Unknown";
 
 void load_level_info(char *data, char *level_string) {
@@ -1257,6 +1264,13 @@ void load_level_info(char *data, char *level_string) {
     if (background_data) {
         level_info.background_id = CLAMP(atoi(background_data) - 1, 0, BG_COUNT - 1);
         free(background_data);
+
+        int new_sheet = level_info.background_id / 4;
+        if (loaded_bg_sheet != new_sheet) {
+            C2D_SpriteSheetFree(bgSheet);
+            bgSheet = C2D_SpriteSheetLoad(bg_sheet_paths[new_sheet]);
+            loaded_bg_sheet = new_sheet;
+        }
     } else {
         level_info.background_id = 0;
     }

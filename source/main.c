@@ -1247,7 +1247,6 @@ int main(int argc, char* argv[]) {
     C2D_SpriteSheetFree(spriteSheet3);
     C2D_SpriteSheetFree(glowSheet);
     C2D_SpriteSheetFree(bgSheet);
-    C2D_SpriteSheetFree(bg2Sheet);
     C2D_SpriteSheetFree(iconSheet);
     C2D_SpriteSheetFree(trailSheet);
     C2D_SpriteSheetFree(particleSheet);

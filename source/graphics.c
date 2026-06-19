@@ -42,7 +42,6 @@ C2D_SpriteSheet spriteSheet2;
 C2D_SpriteSheet spriteSheet3;
 C2D_SpriteSheet glowSheet;
 C2D_SpriteSheet bgSheet;
-C2D_SpriteSheet bg2Sheet;
 C2D_SpriteSheet groundSheet;
 C2D_SpriteSheet iconSheet;
 C2D_SpriteSheet trailSheet;
@@ -61,6 +60,8 @@ int current_pulserod_ball_image = 0;
 SpriteTemplate sprite_templates[GAME_OBJECT_COUNT]; // global cache
 
 float touch_effect_drag_timer = 0.f;
+
+int loaded_bg_sheet = 0;
 
 #define LUT_SIZE 256
 
@@ -1045,7 +1046,7 @@ void draw_background(float x, float y) {
         float draw_x = -calc_x + i * offset;
 
         
-        C2D_SpriteFromSheet(&bg, bg_id < 4 ? bgSheet : bg2Sheet, bg_id & 0b11);
+        C2D_SpriteFromSheet(&bg, bgSheet, bg_id & 0b11);
         C3D_TexSetFilter(bg.image.tex, GPU_LINEAR, GPU_LINEAR);
         C2D_SpriteSetPos(&bg, (int)draw_x, (int)draw_y);
         C2D_SpriteSetScale(&bg, BACKGROUND_SCALE, BACKGROUND_SCALE);
