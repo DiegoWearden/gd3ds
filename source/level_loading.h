@@ -107,7 +107,7 @@ extern LoadedLevelInfo level_info;
 extern const char *default_name;
 
 #define BG_COUNT 13
-#define G_COUNT 7
+#define G_COUNT 11
 
 extern ObjectsArray objects;
 

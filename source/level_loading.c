@@ -1202,7 +1202,7 @@ void set_color_channels() {
                 break;
 
             default:
-                if (!(id > COL_4 && id < CHANNEL_BG) && id < CHANNEL_P1) {
+                if (!(id > COL_4 && id < CHANNEL_BG) && (id < CHANNEL_P1 || id == CHANNEL_GROUND_2)) {
                     int chan = get_col_channel_index(id);
 
                     memset(&channels[chan], 0, sizeof(ColorChannel));

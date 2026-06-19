@@ -330,6 +330,10 @@ void run_trigger(int obj) {
         case THREEDL_TRIGGER: // 3DL
             upload_to_buffer(obj, CHANNEL_3DL);
             break;
+        
+        case GROUND_2_TRIGGER:
+            upload_to_buffer(obj, CHANNEL_GROUND_2);
+            break;
 
         case ENABLE_TRAIL:
             p1_trail = true;
