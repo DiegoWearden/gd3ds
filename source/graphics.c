@@ -1099,10 +1099,11 @@ void draw_ground(float cam_x, float cam_y, float y, bool is_ceiling, int screen_
 
     // First draw the ground
     float calc_x = 0 - positive_fmodf(cam_x, GROUND_SIZE);
-    float calc_y = SCREEN_HEIGHT - ((g_y - cam_y));
+    float calc_y = SCREEN_HEIGHT - ((y - cam_y));
+    float ground_calc_y = SCREEN_HEIGHT - ((g_y - cam_y));
 
     for (float i = -GROUND_SIZE; i < (screen_width / SCALE) + GROUND_SIZE; i += GROUND_SIZE) {
-        C2D_SpriteSetPos(&ground, calc_x + i, calc_y);
+        C2D_SpriteSetPos(&ground, calc_x + i, ground_calc_y);
         C2D_SpriteSetScale(&ground, 1.f, mult);
         C2D_DrawSpriteTinted(&ground, &tint);
     }
@@ -1119,9 +1120,9 @@ void draw_ground(float cam_x, float cam_y, float y, bool is_ceiling, int screen_
 
         if (is_ceiling) g2_y -= GROUND_SIZE - ground2.image.subtex->height;    
 
-        calc_y = SCREEN_HEIGHT - ((g2_y - cam_y));
+        ground_calc_y = SCREEN_HEIGHT - ((g2_y - cam_y));
         for (float i = -GROUND_SIZE; i < (screen_width / SCALE) + GROUND_SIZE; i += GROUND_SIZE) {
-            C2D_SpriteSetPos(&ground2, calc_x + i, calc_y);
+            C2D_SpriteSetPos(&ground2, calc_x + i, ground_calc_y);
             C2D_SpriteSetScale(&ground2, 1.f, mult);
             C2D_DrawSpriteTinted(&ground2, &tint);
         }
