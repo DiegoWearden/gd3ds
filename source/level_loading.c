@@ -1264,15 +1264,16 @@ void load_level_info(char *data, char *level_string) {
     if (background_data) {
         level_info.background_id = CLAMP(atoi(background_data) - 1, 0, BG_COUNT - 1);
         free(background_data);
-
-        int new_sheet = level_info.background_id / 4;
-        if (loaded_bg_sheet != new_sheet) {
-            C2D_SpriteSheetFree(bgSheet);
-            bgSheet = C2D_SpriteSheetLoad(bg_sheet_paths[new_sheet]);
-            loaded_bg_sheet = new_sheet;
-        }
     } else {
         level_info.background_id = 0;
+    }
+
+    // Load background
+    int new_sheet = level_info.background_id / 4;
+    if (loaded_bg_sheet != new_sheet) {
+        C2D_SpriteSheetFree(bgSheet);
+        bgSheet = C2D_SpriteSheetLoad(bg_sheet_paths[new_sheet]);
+        loaded_bg_sheet = new_sheet;
     }
 
     char *ground_data = get_metadata_value(level_string, "kA7");
