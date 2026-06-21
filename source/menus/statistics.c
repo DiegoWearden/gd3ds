@@ -37,8 +37,8 @@ typedef struct StatisticEntries {
 } StatisticEntries;
 
 static const StatisticEntries stats[] = {
-    { "Total Attempts", &total_attempts },
     { "Total Jumps", &total_jumps },
+    { "Total Attempts", &total_attempts },
     { "Collected Stars", &total_stars }, 
     { "Completed Levels", &completed_main_levels },
     { "Completed Ext. Levels", &completed_external_levels },
