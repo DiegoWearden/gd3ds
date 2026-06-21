@@ -168,7 +168,7 @@ void ui_screen_draw(UIScreen* s) {
         int height = 240;
 
         if(s->open_anim == ANIM_ZOOM) {
-            float scale_value = easeValue(ELASTIC_OUT, 0.f, 1.f, s->open_anim_time, 0.5f, 1.f);
+            float scale_value = easeValue(ELASTIC_OUT, 0.f, 1.f, s->open_anim_time, 0.5f, 0.6f);
 
             float cx = width * 0.5f;
             float cy = height * 0.5f;
@@ -177,7 +177,7 @@ void ui_screen_draw(UIScreen* s) {
             C2D_ViewScale(scale_value, scale_value);
             C2D_ViewTranslate(-cx, -cy);
         } else if(s->open_anim == ANIM_SLIDE_RIGHT) {
-            float slide_value = easeValue(ELASTIC_OUT, 0.f, 1.f, s->open_anim_time, 0.5f, 1.f);
+            float slide_value = easeValue(ELASTIC_OUT, 0.f, 1.f, s->open_anim_time, 0.5f, 0.6f);
 
             offX = -(1.f - slide_value) * (width / 2.f);
         }
