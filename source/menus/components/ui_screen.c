@@ -686,7 +686,8 @@ void ui_load_screen(UIScreen* screen,
                     text,
                     font,
                     tag,
-                    textScale
+                    textScale,
+                    keyBinds
                 );
         } else if (strcmp(type, "progressbar") == 0) {
             screen->elements[screen->count++] =

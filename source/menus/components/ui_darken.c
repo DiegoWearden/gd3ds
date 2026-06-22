@@ -13,11 +13,6 @@ static void ui_darken_update(UIElement* e, UIInput* touch) {
     // Mask background elements
     if (inside) touch->did_something = true;
 
-    if(e->darken.darkenTime <= 0.f){
-        e->opacity = e->darken.targetOpacity;
-        e->darken.darkenOver = true;
-    }
-
     if(!e->darken.darkenOver){
         e->opacity = (e->darken.darkenTimeElapsed / e->darken.darkenTime) * e->darken.targetOpacity;
         e->darken.darkenTimeElapsed += 1.f / 60.f;
@@ -33,8 +28,8 @@ static void ui_darken_draw(UIElement* e) {
         ui_darken_reset_opacity(e);
     }
 
-    C2D_SpriteSetPos(&e->darken.sprite, 200, 120);
-    C2D_SpriteSetScale(&e->darken.sprite, 400, 240);
+    C2D_SpriteSetPos(&e->darken.sprite, e->x, e->y);
+    C2D_SpriteSetScale(&e->darken.sprite, e->w/16.f, e->h/16.f);
     C2D_DrawSpriteTinted(&e->darken.sprite, &e->darken.tint);
 }
 
@@ -49,10 +44,17 @@ UIElement ui_create_darken(float x, float y, float width, float height, float op
     e.enabled = true;
     e.opacity = 0.0f;
 
-    e.darken.darkenTime = darkenTime;
-    e.darken.darkenTimeElapsed = 0.f;
-    e.darken.darkenOver = false;
-    e.darken.targetOpacity = opacity;
+    if (darkenTime <= 0.f) {
+        ui_darken_reset_opacity(&e);
+        
+        e.opacity = opacity;
+        e.darken.darkenOver = true;
+    } else {
+        e.darken.darkenTime = darkenTime;
+        e.darken.darkenTimeElapsed = 0.f;
+        e.darken.darkenOver = false;
+        e.darken.targetOpacity = opacity;
+    }
 
     // Copy tag
     copy_tag_array(&e, tag);

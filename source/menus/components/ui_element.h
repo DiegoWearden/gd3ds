@@ -159,6 +159,9 @@ typedef struct {
     char text[64];
 
     float textScale;
+    
+    u32 keyBinds;
+    int keyPressTimer;
 } UIWindowButtonData;
 
 typedef struct {

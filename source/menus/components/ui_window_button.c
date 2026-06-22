@@ -9,15 +9,50 @@
 #include "easing.h"
 #include "math_helpers.h"
 #include "ui_screen.h"
+#include "menus/settings.h"
+#include "menus/gameplay.h"
+#include "state.h"
 
 #include "main.h"
 
+//if a button has been pressed with a keybind, no other button should be pressed after
+static int pressedKey;
+
 static void ui_window_button_update(UIElement* e, UIInput* touch) {
+    //Keybinds logic
+    u32 validKeybinds = e->window_button.keyBinds;
+
+    if(enableDebugBindings && game_state == STATE_GAME && !game_paused && !in_level_complete){
+        validKeybinds &= ~(KEY_B | KEY_X | KEY_L | KEY_R);
+    }
+
+    if((hidKeysDown() & validKeybinds) > 0){
+        e->window_button.pressed = true;
+        e->window_button.hovered = true;
+        e->window_button.hoverTimer = 0.2f;
+        e->window_button.keyPressTimer = 45;
+        pressedKey = true;
+    }
+
+    if(e->window_button.keyPressTimer > 0){
+        if(e->window_button.keyPressTimer == 44){
+            pressedKey = false;
+            if (e->action){
+                e->action(e);
+            }
+        }
+        if(--(e->window_button.keyPressTimer) == 0){
+            e->window_button.pressed = false;
+            e->window_button.hovered = false;
+        }
+    }
+
     bool pressedTouch = hidKeysDown() & KEY_TOUCH;
     bool releasedTouch = hidKeysUp() & KEY_TOUCH;
 
     bool inside = touch->touchPosition.px >= e->x - (e->w / 2) && touch->touchPosition.px < e->x + (e->w / 2) &&
-                  touch->touchPosition.py >= e->y - (e->h / 2) && touch->touchPosition.py < e->y + (e->h / 2);
+                  touch->touchPosition.py >= e->y - (e->h / 2) && touch->touchPosition.py < e->y + (e->h / 2) && 
+                  !pressedKey;
 
     // Check if pressed the button
     if (inside && pressedTouch && !touch->did_something) {
@@ -25,26 +60,11 @@ static void ui_window_button_update(UIElement* e, UIInput* touch) {
         e->window_button.pressed = true;
     }
 
-    // If previously window_button on it, hover
-    if (inside && e->button.pressed) {
+    // If previously pressed on it, hover
+    if (inside) {
         e->window_button.hovered = true;
     }
     
-    EaseTypes bounce_type;
-    // Animation
-    if (e->window_button.hovered) {
-        e->window_button.hoverTimer += DT;
-        bounce_type = BOUNCE_OUT;
-    } else {
-        e->window_button.hoverTimer -= DT;
-        // As the animation plays in reverse, we just use bounce in
-        bounce_type = BOUNCE_IN;
-    }
-
-    e->window_button.hoverTimer = clampf(e->window_button.hoverTimer, 0.f, WINDOW_BUTTON_HOVER_ANIM_TIME);
-    e->window_button.hoverScale = easeValue(bounce_type, 1.0f, WINDOW_BUTTON_HOVER_SCALE, e->window_button.hoverTimer, WINDOW_BUTTON_HOVER_ANIM_TIME, 0);
-
-
     // If released on button, do its action
     if (e->window_button.hovered && releasedTouch) {
         e->window_button.pressed = false;
@@ -68,6 +88,20 @@ static void ui_window_button_update(UIElement* e, UIInput* touch) {
 }
 
 static void ui_window_button_draw(UIElement* e) {
+    EaseTypes bounce_type;
+    // Animation
+    if (e->window_button.hovered) {
+        e->window_button.hoverTimer += DT * (e->window_button.keyPressTimer > 0 ? 2 : 1);
+        bounce_type = (e->window_button.keyPressTimer > 0 ? EASE_OUT : BOUNCE_OUT);
+    } else {
+        e->window_button.hoverTimer -= DT;
+        // As the animation plays in reverse, we just use bounce in
+        bounce_type = BOUNCE_IN;
+    }
+
+    e->window_button.hoverTimer = clampf(e->window_button.hoverTimer, 0.f, WINDOW_BUTTON_HOVER_ANIM_TIME);
+    e->window_button.hoverScale = easeValue(bounce_type, 1.0f, WINDOW_BUTTON_HOVER_SCALE, e->window_button.hoverTimer, WINDOW_BUTTON_HOVER_ANIM_TIME, 0);
+
     int font_id = e->window_button.font;
 
     // Set to pusab if invalid
@@ -111,7 +145,8 @@ UIElement ui_create_window_button(
     char *text,
     int font,
     char (*tag)[TAG_LENGTH],
-    float textScale
+    float textScale,
+    u32 keyBinds
 ){
     UIElement e = {
         .type = UI_WINDOW_BUTTON,
@@ -137,6 +172,8 @@ UIElement ui_create_window_button(
 
     e.window_button.font = font;
     e.window_button.textScale = textScale;
+
+    e.window_button.keyBinds = keyBinds;
 
     return e;
 }
