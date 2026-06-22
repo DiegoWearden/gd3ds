@@ -204,6 +204,12 @@ void ui_screen_draw(UIScreen* s) {
     C2D_ViewRestore(&originalMat);
 }
 
+void finish_animation(UIScreen *screen) {
+    // Surely no animation lasts more than 31 years
+    screen->open_anim_time = 999999999;
+    screen->open_anim_done = true;
+}
+
 // Find an action by its name
 UIActionFn ui_find_action(const UIAction* actions, size_t count, const char* name) {
     for (size_t i = 0; i < count; i++)

@@ -93,6 +93,8 @@ const int difficulty_stars[MAX_STARS + 1] = {
 #define MAX_DOWNLOADS_WIDTH 60
 #define MAX_LIKES_WIDTH 60
 
+void external_popup_enter_from_level();
+
 void exit_external_popup(UIElement* e) {
     yes_exit = true;
 }
@@ -105,6 +107,7 @@ static void open_level(UIElement *e) {
     set_fade_status(FADE_STATUS_OUT);
     
     external_start_level = true; 
+    external_popup_enter_from_level();
 }
 
 static void open_info(UIElement *e) {
@@ -298,6 +301,11 @@ static void set_progress() {
 
 static void set_difficulty() {
     ui_image_set_image(difficulty_face, difficulty_stars[stars_num], 0);
+}
+
+void external_popup_enter_from_level() {
+    finish_animation(&screen_top);
+    finish_animation(&screen);
 }
 
 void external_popup_init() {

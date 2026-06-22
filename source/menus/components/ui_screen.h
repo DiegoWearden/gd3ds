@@ -64,6 +64,7 @@ void copy_tag_array(UIElement *e, char (*tag)[TAG_LENGTH]);
 void ui_load_screen(UIScreen* screen, const UIAction* actions, size_t count, const char* path);
 void ui_unload_screen(UIScreen *screen);
 
+void finish_animation(UIScreen *screen);
 void run_animation_slide(UIScreen *screen, bool go_up);
 
 void ui_screen_update(UIScreen* screen, UIInput* touch);
