@@ -171,6 +171,7 @@ typedef struct {
     float darkenTime;
     float darkenTimeElapsed;
     bool darkenOver;
+    bool fullScreen;
 } UIDarken;
 
 typedef struct {

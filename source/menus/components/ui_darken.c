@@ -28,12 +28,17 @@ static void ui_darken_draw(UIElement* e) {
         ui_darken_reset_opacity(e);
     }
 
-    C2D_SpriteSetPos(&e->darken.sprite, e->x, e->y);
-    C2D_SpriteSetScale(&e->darken.sprite, e->w/16.f, e->h/16.f);
+    if (e->darken.fullScreen) {
+        C2D_SpriteSetPos(&e->darken.sprite, SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
+        C2D_SpriteSetScale(&e->darken.sprite, SCREEN_WIDTH/16.f, SCREEN_HEIGHT/16.f);
+    } else {
+        C2D_SpriteSetPos(&e->darken.sprite, e->x, e->y);
+        C2D_SpriteSetScale(&e->darken.sprite, e->w/16.f, e->h/16.f);
+    }
     C2D_DrawSpriteTinted(&e->darken.sprite, &e->darken.tint);
 }
 
-UIElement ui_create_darken(float x, float y, float width, float height, float opacity, float darkenTime, char (*tag)[TAG_LENGTH]) {
+UIElement ui_create_darken(float x, float y, float width, float height, float opacity, float darkenTime, bool fullScreen, char (*tag)[TAG_LENGTH]) {
     UIElement e = {0};
 
     e.type = UI_DARKEN;
@@ -43,6 +48,7 @@ UIElement ui_create_darken(float x, float y, float width, float height, float op
     e.h = height;
     e.enabled = true;
     e.opacity = 0.0f;
+    e.darken.fullScreen = fullScreen;
 
     if (darkenTime <= 0.f) {
         ui_darken_reset_opacity(&e);
