@@ -917,7 +917,7 @@ int parse_gd_object(const char *objStr, int obj) {
             }
         } else {
             if (!objects.col_channel[obj]) objects.col_channel[obj] = game_object->base_color;
-            if (!objects.detail_col_channel[obj]) objects.detail_col_channel[obj] = 1;
+            if (!objects.detail_col_channel[obj]) objects.detail_col_channel[obj] = game_object->detail_color;
         }
 
         // Give each object its own random value

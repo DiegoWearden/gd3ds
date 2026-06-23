@@ -53,6 +53,7 @@ typedef struct {
     int z_layer;
     int z_order;
     int base_color;
+    int detail_color;
     int color_type;
     int swap_base_detail;
     float opacity;
@@ -61,7 +62,7 @@ typedef struct {
     const ObjectHitbox* hitbox;
 } GameObject;
 
-#define TEXTURE_COUNT 1427
+#define TEXTURE_COUNT 1429
 #define GAME_OBJECT_COUNT 1330
 
 extern const GameObject game_objects[GAME_OBJECT_COUNT];
