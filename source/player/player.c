@@ -87,6 +87,11 @@ const float player_speed_mults[SPEED_COUNT] = {
 	1.3f	
 };
 
+const float cube_rotation_speed[2] = {
+    415.3848f,
+    540.f
+};
+
 float player_get_vel(Player *player, float vel) {
     return vel * (player->upside_down ? -1 : 1);
 }
@@ -138,9 +143,9 @@ void cube_gamemode(Player *player) {
     // Do cube rotation
     if (player->slope_data.slope_id < 0 && !player->on_ground) {
         if (player->inverse_rotation) {
-            player->cube_target_rotation -= (415.3848f / 2) * STEPS_DT * mult * (player->mini ? 1.2f : 1.f);
+            player->cube_target_rotation -= (cube_rotation_speed[player->mini] / 2) * STEPS_DT * mult;
         } else {
-            player->cube_target_rotation += 415.3848f * STEPS_DT * mult * (player->mini ? 1.2f : 1.f);
+            player->cube_target_rotation += cube_rotation_speed[player->mini] * STEPS_DT * mult;
         }
     }
 
