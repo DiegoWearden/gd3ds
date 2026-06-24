@@ -75,15 +75,12 @@ void run_camera() {
         if (player->gamemode == GAMEMODE_PLAYER && !state.dual) {
             float player_y = player->y;
 
-            const float half_view = (SCREEN_HEIGHT_AREA / 2);
-            const float bgparallaxdrop = LEVEL_Y_OFFSET;
+            float upside_down_offset = (player->upside_down ? -30.f : 0);
 
-            float anchor_y = cam_y - bgparallaxdrop + half_view;
-
-            if (player_y > anchor_y + 70.0f) {
-                target_y = player_y - half_view - 70.0f + bgparallaxdrop;
-            } else if (player_y < anchor_y - 40.0f) {
-                target_y = player_y - half_view + 40.0f + bgparallaxdrop;
+            if (player_y > cam_y + 140.f + upside_down_offset) { // Top margin
+                target_y = player_y - (140.f + upside_down_offset);
+            } else if (player_y < cam_y + 30.f + upside_down_offset) { // Bottom margin
+                target_y = player_y - (30.f + upside_down_offset);
             }
         } else {
             target_y = state.camera_intended_y;
