@@ -37,6 +37,10 @@ extern bool exiting_level;
 
 extern bool alt_title_screen;
 
+extern float global_volume;
+extern float music_volume;
+extern float sound_volume;
+
 extern ParticleSystem touch_drag_particles;
 extern ParticleSystem touch_explosion_particles;
 extern ParticleSystem glitter_particles_bottom;
@@ -110,6 +114,9 @@ void allocate_particles();
 void free_particles();
 void init_particles(Color p1_color, Color p2_color);
 void update_player_effects(float delta);
+
+void apply_volume_settings();
+float get_volume_slider();
 
 int output_log(const char *fmt, ...);
 

@@ -36,11 +36,14 @@ void config_free(Config* cfg);
 
 const char* config_get_string(Config* cfg, const char* path, const char* def);
 int config_get_int(Config* cfg, const char* path, int def);
+float config_get_float(Config* cfg, const char* path, float def);
 int config_get_bool(Config* cfg, const char* path, int def);
 
 void config_set_string(Config* cfg, const char* path, const char* value);
 void config_set_int(Config* cfg, const char* path, int value);
+void config_set_float(Config* cfg, const char* path, float value);
 void config_set_bool(Config* cfg, const char* path, int value);
 
 void config_init_bool(Config* cfg, const char* path, bool def);
 void config_init_int(Config* cfg, const char* path, int def);
+void config_init_float(Config* cfg, const char* path, float def);

@@ -17,6 +17,7 @@
 #include "ui_progress_bar.h"
 #include "ui_particle.h"
 #include "ui_use_effect.h"
+#include "ui_slider.h"
 #include "particles/particle_definitions.h"
 #include "ui_pallete_icons.h"
 
@@ -716,6 +717,12 @@ void ui_load_screen(UIScreen* screen,
         } else if (strcmp(type, "palleteicons") == 0) {
             screen->elements[screen->count++] =
                 ui_create_pallete_icons(tag);
+        } else if (strcmp(type, "slider") == 0) {
+            screen->elements[screen->count++] =
+                ui_create_slider(
+                    x, y, scale, max_value,
+                    tag
+                );
         }
     }
 

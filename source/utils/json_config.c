@@ -116,6 +116,13 @@ int config_get_int(Config* cfg, const char* path, int def) {
     return json_object_get_int(obj);
 }
 
+float config_get_float(Config* cfg, const char* path, float def) {
+    struct json_object* obj = get_path_object(cfg->root, path);
+    if (!obj) return def;
+
+    return json_object_get_double(obj);
+}
+
 int config_get_bool(Config* cfg, const char* path, int def) {
     struct json_object* obj = get_path_object(cfg->root, path);
     if (!obj) return def;
@@ -137,6 +144,13 @@ void config_set_int(Config* cfg, const char* path, int value) {
     json_object_object_add(parent, key, json_object_new_int(value));
 }
 
+void config_set_float(Config* cfg, const char* path, float value) {
+    char key[128];
+    struct json_object* parent = create_path_parent(cfg->root, path, key);
+
+    json_object_object_add(parent, key, json_object_new_double(value));
+}
+
 void config_set_bool(Config* cfg, const char* path, int value) {
     char key[128];
     struct json_object* parent = create_path_parent(cfg->root, path, key);
@@ -150,6 +164,10 @@ void config_init_bool(Config* cfg, const char* path, bool def) {
 
 void config_init_int(Config* cfg, const char* path, int def) {
     config_set_int(cfg, path, config_get_int(cfg, path, def));
+}
+
+void config_init_float(Config* cfg, const char* path, float def) {
+    config_set_float(cfg, path, config_get_float(cfg, path, def));
 }
 
 void config_free(Config* cfg) {

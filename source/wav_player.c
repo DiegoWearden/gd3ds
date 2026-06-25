@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "wav_player.h"
+#include "main.h"
 static ndspWaveBuf waveBufs[24];
 
 bool load_wav(const char* path, SFX* sfx) {
@@ -85,4 +86,6 @@ void play_sfx(SFX* sfx, int channel) {
         sfx->sampleCount * sizeof(int16_t));
 
     ndspChnWaveBufAdd(channel, &waveBufs[channel]);
+    
+    apply_volume_settings();
 }

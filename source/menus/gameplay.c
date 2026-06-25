@@ -51,6 +51,9 @@ static UIElement *normal_progress_val;
 static UIElement *practice_progress;
 static UIElement *practice_progress_val;
 
+static UIElement *music_slider_bar;
+static UIElement *sound_slider_bar;
+
 static UIElement *coin_1;
 static UIElement *coin_2;
 static UIElement *coin_3;
@@ -287,6 +290,12 @@ void gameplay_screen_init() {
     coin_1_top = ui_get_element_by_tag(&default_screen_top, "coin_1");
     coin_2_top = ui_get_element_by_tag(&default_screen_top, "coin_2");
     coin_3_top = ui_get_element_by_tag(&default_screen_top, "coin_3");
+
+    music_slider_bar = ui_get_element_by_tag(&default_screen, "music_slider");
+    sound_slider_bar = ui_get_element_by_tag(&default_screen, "sound_slider");
+
+    if (music_slider_bar) music_slider_bar->slider.value = music_volume;
+    if (sound_slider_bar) sound_slider_bar->slider.value = sound_volume;
 }
 
 int gameplay_screen_top_loop() { 
@@ -365,6 +374,13 @@ int gameplay_screen_bot_loop() {
 
             coin_anims[i] += delta;
         }
+    }
+
+    if (game_paused) {
+        if (music_slider_bar) music_volume = music_slider_bar->slider.value;
+        if (sound_slider_bar) sound_volume = sound_slider_bar->slider.value;
+
+        apply_volume_settings();
     }
 
     //level end buttons retraction animation

@@ -26,7 +26,8 @@ typedef enum {
     UI_STATISTIC_CARD,
     UI_PARTICLE,
     UI_USE_EFFECT,
-    UI_PALLETE_ICONS
+    UI_PALLETE_ICONS,
+    UI_SLIDER,
 } UIElementType;
 
 typedef struct {
@@ -235,6 +236,19 @@ typedef struct {
     float yPos[MAX_USE_EFFECTS];
 } UIUseEffectData;
 
+typedef struct {
+    float max_value;
+    float value;
+
+    float scale;
+
+    bool dragging;
+
+    C2D_Sprite track_frame;
+    C2D_Sprite track;
+    C2D_Sprite button;
+} UISliderData;
+
 typedef void (*UIActionFn)(UIElement* e);
 
 struct UIElement {
@@ -267,6 +281,7 @@ struct UIElement {
         UIStatisticCardData statistic_card;
         UIParticleData particle;
         UIUseEffectData use_effect;
+        UISliderData slider;
     };
 
     char tag[TAGS_PER_ELEMENT][TAG_LENGTH];

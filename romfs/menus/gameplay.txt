@@ -22,3 +22,8 @@ button x=260 y=180 id=139 scale=1.15 tag="paused" action="unpause" keyBinds="A,S
 button x=178 y=180 id=111 scale=0.90 tag="paused" action="exit" keyBinds="B"
 button x=112 y=180 id=155 scale=0.90 tag="paused" action="restart" keyBinds="X"
 button x=45 y=180 id=146 scale=0.90 tag="paused,practice_mode" action="practice" keyBinds="Y"
+
+label x=88 y=38 text="Music" scale=0.5 tag="paused"
+slider x=180 y=50 max_value=1 scale=0.9 tag="paused,music_slider"
+label x=88 y=88 text="Sounds" scale=0.5 tag="paused"
+slider x=180 y=100 max_value=1 scale=0.9 tag="paused,sound_slider"

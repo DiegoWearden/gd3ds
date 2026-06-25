@@ -22,6 +22,8 @@ void init_values() {
     config_init_bool(&cfg, CONFIG_FLAGS "sogged", false);
     
     config_init_int(&cfg, CONFIG_VALUES "playersDestroyed", 0);
+    config_init_float(&cfg, CONFIG_VALUES "music_volume", 1);
+    config_init_float(&cfg, CONFIG_VALUES "sound_volume", 1);
 
     config_init_bool(&cfg, CONFIG_GRAPHICS_PATH "particlesDisabled", false);
     config_init_bool(&cfg, CONFIG_GRAPHICS_PATH "wideEnabled", false);
@@ -75,6 +77,8 @@ void cfg_init() {
     gotSogged = config_get_bool(&cfg, CONFIG_FLAGS "sogged", false);
 
     players_destroyed = config_get_int(&cfg, CONFIG_VALUES "playersDestroyed", 0);
+    music_volume = config_get_float(&cfg, CONFIG_VALUES "music_volume", 1);
+    sound_volume = config_get_float(&cfg, CONFIG_VALUES "sound_volume", 1);
 
     particlesDisabled = config_get_bool(&cfg, CONFIG_GRAPHICS_PATH "particlesDisabled", false);
     set_wide(config_get_bool(&cfg, CONFIG_GRAPHICS_PATH "wideEnabled", false));
@@ -120,6 +124,8 @@ void cfg_save() {
     config_set_bool(&cfg, CONFIG_FLAGS "sogged", gotSogged);
 
     config_set_int(&cfg, CONFIG_VALUES "playersDestroyed", players_destroyed);
+    config_set_float(&cfg, CONFIG_VALUES "music_volume", music_volume);
+    config_set_float(&cfg, CONFIG_VALUES "sound_volume", sound_volume);
 
     config_set_bool(&cfg, CONFIG_GRAPHICS_PATH "particlesDisabled", particlesDisabled);
     config_set_bool(&cfg, CONFIG_GRAPHICS_PATH "wideEnabled", wideEnabled);

@@ -83,6 +83,8 @@ void audio_init() {
         memset(&waveBuf[i], 0, sizeof(ndspWaveBuf));
         waveBuf[i].data_vaddr = audioBuffer + i * buffsize_mp3() * channels_mp3();
     }
+
+    apply_volume_settings();
 }
 
 void audio_exit() {
@@ -323,6 +325,8 @@ void seek_mp3(float time) {
         LightLock_Unlock(&decoderLock);
         ndspChnSetPaused(MUSIC_CHANNEL, oldstate); //once the seeking is done, playback can continue.
 
+        apply_volume_settings();
+        
         restart_requested = true;
         LightEvent_Signal(&seekEvent);
     }

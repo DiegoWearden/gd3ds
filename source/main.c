@@ -52,6 +52,8 @@
 
 #include "new_best.h"
 
+#include "math_helpers.h"
+
 #define CITRA_TYPE 0x20000
 #define CITRA_VERSION 11
 
@@ -62,6 +64,10 @@ bool playing_menu_loop = false;
 int level_result = 0;
 
 bool cheated = false;
+
+float global_volume;
+float music_volume;
+float sound_volume;
 
 bool cheats_used[CHEAT_COUNT];
 
@@ -181,6 +187,38 @@ int output_log(const char *fmt, ...) {
     va_end(args1);
 
     return ret;
+}
+
+#define MAX_AUDIO_DB 9
+
+float get_volume_slider() {
+    u8 slider = 63;
+    HIDUSER_GetSoundVolume(&slider);
+
+    return slider / 63.f;
+}
+
+float slider_to_volume(float v) {
+    return expm1f(v * log1pf(MAX_AUDIO_DB)) / MAX_AUDIO_DB;
+}
+
+void set_channel_volume(int channel, float volume) {
+    float mix[12] = {0};
+
+    float gain = slider_to_volume(volume);
+
+    mix[0] = gain;
+    mix[1] = gain;
+
+    ndspChnSetMix(channel, mix);
+}
+
+void apply_volume_settings() {
+    set_channel_volume(0, music_volume);
+
+    for (int i = 1; i <= 7; i++) {
+        set_channel_volume(i, sound_volume);
+    }
 }
 
 float sprite_drawing_time = 0;
@@ -561,6 +599,8 @@ void game_loop() {
         if(!game_paused){
             kHeld &= ~kHeldPaused;
         }
+        
+        global_volume = get_volume_slider();
 
         bool buttonPressed = (yJump ? (kDown & KEY_Y) : (kDown & KEY_A)) || (kDown & KEY_UP);
         bool buttonHeld = (yJump ? (kHeld & KEY_Y) : (kHeld & KEY_A)) || (kHeld & KEY_UP);
@@ -873,8 +913,8 @@ void game_loop() {
                 level_complete_destroy();
                 continue;
             }
-        }  
-        
+        }
+
         u64 end = svcGetSystemTick();
         u64 ticks = end - start;
 
@@ -1002,7 +1042,6 @@ void game_loop() {
         if (exiting_level) {
             game_paused = false;
             in_level_complete = false;
-            if (song_loaded) unpause_playback_mp3();
             break;
         }
     }
@@ -1023,6 +1062,8 @@ void game_loop() {
         save_main_level_progress(curr_level_id);
     }
 
+    cfg_save();
+
     free_particles();
 
     unload_level();
@@ -1033,6 +1074,8 @@ void game_loop() {
 
     ui_unload_screen(&default_screen);
     ui_unload_screen(&default_screen_top);
+    
+    if (song_loaded) unpause_playback_mp3();
 
     game_state = (state.custom_level ? STATE_EXTERNAL_LEVELS : STATE_LEVEL_SELECT);
 }
