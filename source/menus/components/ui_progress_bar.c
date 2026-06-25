@@ -31,12 +31,18 @@ static void draw_bar(UIElement *e) {
         Tex3DS_SubTexture sub;
         C2D_Image img;
 
+        
+        float x = e->x - e->w / 2;
+        if (e->progress_bar.style == 0) {
+            x += 0.5f;
+        }
+
         sub = select_box(&e->progress_bar.sprite.image, 0, 0, pixels, e->progress_bar.sprite.image.subtex->height);
         img = e->progress_bar.sprite.image; img.subtex = &sub;
         C2D_SpriteFromImage(&spr, img);
         C2D_SpriteSetCenter(&spr, 0.f, 0.5f);
-        C2D_SpriteSetPos(&spr, e->x - e->w / 2, e->y);
-        C2D_SpriteSetScale(&spr, e->progress_bar.scale, e->progress_bar.scale);
+        C2D_SpriteSetPos(&spr, x, e->y);
+        C2D_SpriteSetScale(&spr, e->progress_bar.fill_scaleX, e->progress_bar.fill_scaleY);
         if (e->progress_bar.useTint) {
             C2D_DrawSpriteTinted(&spr, &e->progress_bar.tint);
         } else {
@@ -82,6 +88,8 @@ void ui_progress_bar_set_images(UIElement *e, int style, float scale) {
             e->w = e->progress_bar.sprite.image.subtex->width * scale;
             e->h = e->progress_bar.sprite.image.subtex->height * scale;
 
+            e->progress_bar.fill_scaleX = scale * ((float)(e->w - 2) / (float)e->w);
+            e->progress_bar.fill_scaleY = scale * ((float)(e->h - 2) / (float)e->h);
             e->progress_bar.flip_order = false;
             break;
         case 1:
@@ -130,6 +138,8 @@ UIElement ui_create_progress_bar(int x, int y, int style, float scale, float max
     copy_tag_array(&e, tag);
 
     e.progress_bar.scale = scale;
+    e.progress_bar.fill_scaleX = scale;
+    e.progress_bar.fill_scaleY = scale;
 
     ui_progress_bar_set_images(&e, style, scale);
 

@@ -183,6 +183,8 @@ typedef struct {
     C2D_ImageTint tint;
 
     float scale;
+    float fill_scaleX;
+    float fill_scaleY;
     int style;
 
     float value;

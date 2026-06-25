@@ -471,6 +471,7 @@ float get_rotation_speed(int id) {
 
 // Map amplitude pulsing to ranges
 float get_object_pulse(float amplitude, int id, int layer) {
+     // No pulse if one of those is 0
     amplitude *= music_volume > 0 && global_volume > 0;
     amplitude = MAX(0.1f, amplitude); // Cap at 0.1
     switch (id) {
