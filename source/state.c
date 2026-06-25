@@ -310,6 +310,11 @@ void first_load_init_variables() {
     state.camera_y = 0;
     current_fading_effect = FADE_NONE;
 
+    slow_speed_particles_timer = 0;
+    normal_speed_particles_timer = 0;
+    fast_speed_particles_timer = 0;
+    faster_speed_particles_timer = 0;
+
     clear_new_best_popup();
     init_variables();
     
