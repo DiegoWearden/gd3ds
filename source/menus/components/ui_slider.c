@@ -3,6 +3,9 @@
 #include "ui_screen.h"
 #include "ui_slider.h"
 
+// If currently using an slider
+bool sliding;
+
 static void draw_button(UIElement *e) {
     float left_side = e->x - e->w / 2;
     
@@ -109,6 +112,7 @@ static void ui_slider_update(UIElement* e, UIInput* touch) {
 
     if (pressedTouch && inside) {
         s->dragging = true;
+        sliding = true;
     }
 
     if (s->dragging && heldTouch) {
@@ -117,6 +121,7 @@ static void ui_slider_update(UIElement* e, UIInput* touch) {
 
     if (releasedTouch) {
         s->dragging = false;
+        sliding = false;
     }
 
     // Mask background elements

@@ -12,6 +12,7 @@
 #include "menus/palette_kit.h"
 
 #include "main.h"
+#include "ui_slider.h"
 
 static void ui_color_button_update(UIElement* e, UIInput* touch) {
     bool pressedTouch = hidKeysDown() & KEY_TOUCH;
@@ -27,7 +28,7 @@ static void ui_color_button_update(UIElement* e, UIInput* touch) {
     }
 
     // If previously pressed on it, hover
-    if (inside && e->color.pressed) {
+    if (inside && !sliding) {
         e->color.hovered = true;
     }
     

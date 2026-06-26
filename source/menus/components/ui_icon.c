@@ -12,6 +12,7 @@
 #include "menus/icon_kit.h"
 
 #include "main.h"
+#include "ui_slider.h"
 
 #define FIRST_TRAIL_ID 27
 
@@ -29,7 +30,7 @@ static void ui_icon_update(UIElement* e, UIInput* touch) {
     }
 
     // If previously pressed on it, hover
-    if (inside && e->icon.pressed) {
+    if (inside && !sliding) {
         e->icon.hovered = true;
     }
     

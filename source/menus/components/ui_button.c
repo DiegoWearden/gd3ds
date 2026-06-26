@@ -14,6 +14,7 @@
 #include "state.h"
 
 #include "main.h"
+#include "ui_slider.h"
 
 //if a button has been pressed with a keybind, no other button should be pressed after
 static int pressedKey;
@@ -61,7 +62,7 @@ static void ui_button_update(UIElement* e, UIInput* touch) {
     }
 
     // If previously pressed on it, hover
-    if (inside) {
+    if (inside && !sliding) {
         e->button.hovered = true;
     }
     
