@@ -160,9 +160,10 @@ static void show_error_message() {
     // Level gave error
     char tmp[512];
 
+    int message_id = level_result - 1;
     char *message = "Ultra unknown error.";
-    if (level_result < NUM_ERRORS) {
-        message = (char *) error_strings[level_result]; 
+    if (message_id < NUM_ERRORS) {
+        message = (char *) error_strings[message_id]; 
     }
 
     snprintf(tmp, sizeof(tmp), "<red>ERROR</>:<p>%s", message);
