@@ -1143,7 +1143,7 @@ int parse_string(const char *levelString) {
     // Split the string in object sections
     char **sections = split_string(levelString, ';', &sectionCount);
 
-    if (sectionCount < 3) {
+    if (sectionCount < 1) {
         output_log("Level string missing sections!\n");
         free_string_array(sections, sectionCount);
         return 3;
