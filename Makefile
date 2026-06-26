@@ -208,6 +208,7 @@ SILENT	:= $(if $(VERBOSE)$(V),,@)
 
 OBJDUMP	:= $(TOOLCHAIN)-objdump
 DUMPFILE := $(OUTPUT_DIR)/$(OUTPUT_NAME).dump
+DUMPFILE_HEX := $(OUTPUT_DIR)/$(OUTPUT_NAME)_hex.dump
 
 _3DSXFLAGS += --smdh=$(OUTPUT_FILE).smdh
 ifneq ("$(wildcard $(TOPDIR)/$(ROMFS))","")
@@ -230,7 +231,9 @@ $(OUTPUT_FILE).elf: $(OFILES) $(T3XFILES)
 
 $(OUTPUT_FILE).3dsx: $(OUTPUT_FILE).elf $(OUTPUT_FILE).smdh
 	@echo "dump  ... $(notdir $<)"
-	$(SILENT)$(OBJDUMP) -h -C -S $< > $(DUMPFILE)
+	$(SILENT)$(OBJDUMP) -h -C -S --visualize-jumps $< > $(DUMPFILE)
+	@echo "hex   ... $(notdir $<)"
+	$(SILENT)$(OBJDUMP) -h -C -S -s -j .rodata $< > $(DUMPFILE_HEX)
 	@echo "built ... $(notdir $@)"
 	$(SILENT)3dsxtool $< $@ $(_3DSXFLAGS)
 
