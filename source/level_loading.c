@@ -1348,7 +1348,7 @@ int load_level(char *path) {
     // Minimum size
     level_info.last_obj_x = 570.f;
 
-    bool returned = parse_string(data);
+    int returned = parse_string(data);
 
     free(data);
     free(metaStr);
