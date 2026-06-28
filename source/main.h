@@ -28,6 +28,7 @@ typedef struct {
 
 extern float delta;
 extern unsigned int frame_counter;
+extern float frame_timer;
 
 extern unsigned int level_frame;
 

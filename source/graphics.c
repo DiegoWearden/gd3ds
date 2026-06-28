@@ -1,5 +1,6 @@
 #include "graphics.h"
 #include "objects.h"
+#include "animations.h"
 #include "main.h"
 #include "math_helpers.h"
 #include "color_channels.h"
@@ -40,6 +41,7 @@ static bool blending_state = false;
 C2D_SpriteSheet spriteSheet;
 C2D_SpriteSheet spriteSheet2;
 C2D_SpriteSheet spriteSheet3;
+C2D_SpriteSheet animatedSheet;
 C2D_SpriteSheet glowSheet;
 C2D_SpriteSheet bgSheet;
 C2D_SpriteSheet groundSheet;
@@ -83,6 +85,33 @@ void make_opacity_lut() {
     }
 }
 
+const SlotFrames* find_slot_frames(const GameObject* obj, int slot) {
+    for (int i = 0; i < obj->slot_count; i++) {
+        if (obj->slot_frames[i].slot == slot) return &obj->slot_frames[i];
+    }
+    return NULL;
+}
+
+int get_child_group(const GameObject* obj, int child_index) {
+    for (int g = 0; g < obj->group_count; g++) {
+        int end = obj->groups[g].start + obj->groups[g].count;
+        if (child_index >= obj->groups[g].start && child_index < end)
+            return g;
+    }
+    return -1;
+}
+
+const Animation* get_animation_for_object(int id) {
+    switch (id) {
+        case 918: return &animations[ANIM_GJBEAST01_BITE];
+        case 919: return &animations[ANIM_BLACKSLUDGE_LOOP];
+        case 1327: return &animations[ANIM_GJBEAST02_IDLE01];
+        case 1328: return &animations[ANIM_GJBEAST03_IDLE01];
+        
+        default:  return NULL;
+    }
+}
+
 float get_opacity(float opacity) {
     int index = (int)(opacity * 255.0f + 0.5f);
     index = index < 0 ? 0 : (index > 255 ? 255 : index);
@@ -104,9 +133,15 @@ static C2D_SpriteSheet *get_sprite_sheet(int index, int *rel_index) {
         return &spriteSheet2;
     }
 
-    // Return spritesheet 3 (2.0 objects)
-    *rel_index = index - SPRITESHEET3_START;
-    return &spriteSheet3;
+    if (index < ANIMATEDSHEET_START) {
+        // Return spritesheet 3 (2.0 objects)
+        *rel_index = index - SPRITESHEET3_START;
+        return &spriteSheet3;
+    }
+
+    // Return spritesheet 4 (animated objects)
+    *rel_index = index - ANIMATEDSHEET_START;
+    return &animatedSheet;
 }
 
 Color get_color_abgr8(u32 color) {
@@ -251,10 +286,15 @@ bool object_fades(int obj) {
     return false;
 }
 
+int get_glow_channel(int obj);
+
 inline int get_color_channel(int col_type, int obj, const GameObject *game_obj) {
     int obj_id = objects.id[obj];
     int col_channel = game_obj->base_color;
-    if (col_type == COLOR_TYPE_BLACK) col_channel = 0;
+    if (col_type == COLOR_TYPE_GLOW) {
+        col_channel = get_glow_channel(obj);
+    }
+    else if (col_type == COLOR_TYPE_BLACK) col_channel = 0;
     else if (col_type == COLOR_TYPE_WHITE) col_channel = -1;
     else {
         // Check for the presence of 1.9 color channel
@@ -386,6 +426,9 @@ int get_glow_channel(int obj) {
         case 186:
         case 187:
         case 188:
+        case 918:
+        case 1327:
+        case 1328:
             return CHANNEL_LBG_NOLERP;
         case 144:
         case 145:
@@ -588,6 +631,16 @@ void spawn_object_at(
     float sx = scale * flip_x_mult;
     float sy = scale * flip_y_mult;
 
+    // Get animation for this object
+    const AnimFrame* anim_keyframe = NULL;
+    if (obj->animation_type == ANIMATION_MOVEMENT && obj->group_count > 0) {
+        const Animation* anim = get_animation_for_object(id);
+        if (anim && anim->frame_count > 0) {
+            float time = frame_timer * anim->fps;
+            anim_keyframe = &anim->frames[(int)time % anim->frame_count];
+        }
+    }
+
     if (sprite_count >= MAX_SPRITES - 1) return;
 
     // Spawn parent, skip if no texture
@@ -603,16 +656,36 @@ void spawn_object_at(
         float p_x = x + rot_x * scale;
         float p_y = y + rot_y * scale;
 
-        int random_layer = get_obj_random_layer(obj_game, id);
-        if (random_layer < 0) {
-            vo->spr = sprite_templates[id].parent_template;
+        // Handle frame swap animations
+        if (obj->animation_type == ANIMATION_FRAME_SWAP && obj->frame_count > 0) {
+            const SlotFrames* slot_frames = find_slot_frames(obj, 0);
+            if (slot_frames) {
+                float time = frame_timer * slot_frames->fps;
+                int index = (int)time % slot_frames->count;
+                const SwapFrame* swap_frame = &obj->swap_frames[slot_frames->start + index];
+
+                int rel_index;
+                C2D_SpriteSheet *sheet = get_sprite_sheet(swap_frame->texture, &rel_index);
+                C2D_SpriteFromSheet(&vo->spr, *sheet, rel_index);
+                C2D_SpriteSetCenter(&vo->spr, 0.5f, 0.5f);
+                
+                sx *= (swap_frame->flip_x ? -1 : 1);
+                sy *= (swap_frame->flip_y ? -1 : 1);
+            } else {
+                vo->spr = sprite_templates[id].parent_template;
+            }
         } else {
-            int rel_index;
-            C2D_SpriteSheet *sheet = get_sprite_sheet(random_layer, &rel_index);
-            C2D_Sprite rnd = { 0 };
-            vo->spr = rnd;
-            C2D_SpriteFromSheet(&vo->spr, *sheet, rel_index);
-            C2D_SpriteSetCenter(&vo->spr, 0.5f, 0.5f);
+            int random_layer = get_obj_random_layer(obj_game, id);
+            if (random_layer < 0) {
+                vo->spr = sprite_templates[id].parent_template;
+            } else {
+                int rel_index;
+                C2D_SpriteSheet *sheet = get_sprite_sheet(random_layer, &rel_index);
+                C2D_Sprite rnd = { 0 };
+                vo->spr = rnd;
+                C2D_SpriteFromSheet(&vo->spr, *sheet, rel_index);
+                C2D_SpriteSetCenter(&vo->spr, 0.5f, 0.5f);
+            }
         }
 
         float pulse_scale = get_object_pulse(amplitude, id, 0);
@@ -672,21 +745,84 @@ void spawn_object_at(
             float c_x = x + c_rot_x * scale;
             float c_y = y + c_rot_y * scale;
 
-            int c_flip_x_mult = (c->flip_x ? -1 : 1);
-            int c_flip_y_mult = (c->flip_y ? -1 : 1);
+            
+            float c_rot = C3D_AngleFromDegrees(c->rot) + rad;
+            float c_sx = c->scale_x * sx;
+            float c_sy = c->scale_y * sy;
+            int c_flip_x = c->flip_x;
+            int c_flip_y = c->flip_y;
+            
+            // Handle movement animations
+            if (anim_keyframe) {
+                int group = get_child_group(obj, i);
+                if (group >= 0) {
+                    // Get the animated sprite for this group
+                    const AnimSprite* anim_sprite = NULL;
+                    for (int k = 0; k < anim_keyframe->sprite_count; k++) {
+                        if (anim_keyframe->sprites[k].child_slot == group) {
+                            anim_sprite = &anim_keyframe->sprites[k];
+                            break;
+                        }
+                    }
 
-            vo->spr = sprite_templates[id].child_templates[i]; 
+                    if (anim_sprite) {
+                        // Transform it
+                        float a_local_x = anim_sprite->x * flip_x_mult;
+                        float a_local_y = anim_sprite->y * flip_y_mult;
+
+                        float a_rot_x = a_local_x * m00 + a_local_y * m01;
+                        float a_rot_y = a_local_x * m10 + a_local_y * m11;
+
+                        c_x = x + a_rot_x * scale;
+                        c_y = y + a_rot_y * scale;
+
+                        c_rot = C3D_AngleFromDegrees(anim_sprite->rot) + rad;
+
+                        c_sx *= anim_sprite->scale_x;
+                        c_sy *= anim_sprite->scale_y;
+
+                        c_flip_x ^= anim_sprite->flip_x;
+                        c_flip_y ^= anim_sprite->flip_y;
+                    }
+                }
+            }
+            
+            int c_flip_x_mult = (c_flip_x ? -1 : 1);
+            int c_flip_y_mult = (c_flip_y ? -1 : 1);
+
+            // Handle frame swap animations
+            if (obj->animation_type == ANIMATION_FRAME_SWAP && obj->frame_count > 0) {
+                const SlotFrames* slot_frames = find_slot_frames(obj, i + 1);
+                if (slot_frames) {
+                    
+                    float time = frame_timer * slot_frames->fps;
+                    int index = (int)time % slot_frames->count;
+                    const SwapFrame* swap_frame = &obj->swap_frames[slot_frames->start + index];
+
+                    int rel_index;
+                    C2D_SpriteSheet *sheet = get_sprite_sheet(swap_frame->texture, &rel_index);
+                    C2D_SpriteFromSheet(&vo->spr, *sheet, rel_index);
+                    C2D_SpriteSetCenter(&vo->spr, 0.5f, 0.5f);
+                    
+                    sx *= (swap_frame->flip_x ? -1 : 1);
+                    sy *= (swap_frame->flip_y ? -1 : 1);
+                } else {
+                    vo->spr = sprite_templates[id].parent_template;
+                }
+            } else {
+                vo->spr = sprite_templates[id].child_templates[i]; 
+            }
 
             float pulse_scale = get_object_pulse(amplitude, id, i + 2);
 
             C2D_SpriteSetPos(&vo->spr, c_x, c_y);
             if (id < 15 || id > 17) {
-                C2D_SpriteSetScale(&vo->spr, c->scale_x * c_flip_x_mult * sx * pulse_scale,
-                                          c->scale_y * c_flip_y_mult * sy * pulse_scale);
-                C2D_SpriteSetRotation(&vo->spr, C3D_AngleFromDegrees(c->rot) + rad);
+                C2D_SpriteSetScale(&vo->spr, c_sx * c_flip_x_mult * pulse_scale,
+                                          c_sy * c_flip_y_mult * pulse_scale);
+                C2D_SpriteSetRotation(&vo->spr, c_rot);
             } else {
-                C2D_SpriteSetScale(&vo->spr, fabsf(c->scale_x * c_flip_x_mult * sx * pulse_scale),
-                                          fabsf(c->scale_y * c_flip_y_mult * sy * pulse_scale));
+                C2D_SpriteSetScale(&vo->spr, fabsf(c_sx * c_flip_x_mult * pulse_scale),
+                                          fabsf(c_sy * c_flip_y_mult * pulse_scale));
             }
 
             vo->obj = obj_game;

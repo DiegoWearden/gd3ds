@@ -5,6 +5,7 @@
 
 #define SPRITESHEET2_START 767
 #define SPRITESHEET3_START (SPRITESHEET2_START + 64)
+#define ANIMATEDSHEET_START (SPRITESHEET3_START + 599)
 
 typedef enum {
    COLLISION_NONE = 0,
@@ -27,6 +28,12 @@ typedef enum {
    HITBOX_HAZARD
 } HitboxType;
 
+typedef enum {
+   ANIMATION_NONE = 0,
+   ANIMATION_MOVEMENT,
+   ANIMATION_FRAME_SWAP
+} AnimationType;
+
 typedef struct {
     int texture;
     float x, y;
@@ -38,6 +45,23 @@ typedef struct {
     int color_type;
     float opacity;
 } ChildSprite;
+
+typedef struct {
+    int start;
+    int count;
+} ChildGroup;
+
+typedef struct {
+    int texture;
+    int flip_x, flip_y;
+} SwapFrame;
+
+typedef struct {
+    int slot;
+    float fps;
+    int start;
+    int count;
+} SlotFrames;
 
 typedef struct {
    int collision_type;
@@ -56,13 +80,20 @@ typedef struct {
     int detail_color;
     int color_type;
     int swap_base_detail;
+    int animation_type;
     float opacity;
     int child_count;
     const ChildSprite* children;
+    int group_count;
+    const ChildGroup* groups;
+    int frame_count;
+    const SwapFrame*  swap_frames;
+    int slot_count;
+    const SlotFrames* slot_frames;
     const ObjectHitbox* hitbox;
 } GameObject;
 
-#define TEXTURE_COUNT 1429
+#define TEXTURE_COUNT 1562
 #define GAME_OBJECT_COUNT 1330
 
 extern const GameObject game_objects[GAME_OBJECT_COUNT];

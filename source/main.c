@@ -191,6 +191,7 @@ float triggers_time = 0;
 float delta = 0;
 unsigned int level_frame = 0;
 unsigned int frame_counter = 0;
+float frame_timer = 0;
 
 bool exiting_level = false;
 
@@ -472,6 +473,8 @@ void game_loop() {
         level_info.level_name = main_levels[curr_level_id].level_name;
     }
 
+    frame_timer = 0;
+
     play_level_song();
 
     if (song_loaded) pause_playback_mp3();
@@ -662,6 +665,7 @@ void game_loop() {
 
         if (!game_paused) {
             frame_counter++;
+            frame_timer += delta;
 
             if (state.dead && state.death_timer <= 0.f) {
                 state.death_timer = (quickRetry ? 0.5f : 1.f);
@@ -1045,6 +1049,9 @@ void game_assets_init() {
     
     spriteSheet3 = C2D_SpriteSheetLoad("romfs:/gfx/sprites_2p0.t3x");
     if (!spriteSheet3) svcBreak(USERBREAK_PANIC);
+    
+    animatedSheet = C2D_SpriteSheetLoad("romfs:/gfx/animated.t3x");
+    if (!animatedSheet) svcBreak(USERBREAK_PANIC);
 
     glowSheet = C2D_SpriteSheetLoad("romfs:/gfx/glow.t3x");
     if (!glowSheet) svcBreak(USERBREAK_PANIC);
@@ -1245,6 +1252,7 @@ int main(int argc, char* argv[]) {
     C2D_SpriteSheetFree(spriteSheet);
     C2D_SpriteSheetFree(spriteSheet2);
     C2D_SpriteSheetFree(spriteSheet3);
+    C2D_SpriteSheetFree(animatedSheet);
     C2D_SpriteSheetFree(glowSheet);
     C2D_SpriteSheetFree(bgSheet);
     C2D_SpriteSheetFree(iconSheet);

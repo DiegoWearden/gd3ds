@@ -90,6 +90,7 @@ extern int sprite_count;
 extern C2D_SpriteSheet spriteSheet;
 extern C2D_SpriteSheet spriteSheet2;
 extern C2D_SpriteSheet spriteSheet3;
+extern C2D_SpriteSheet animatedSheet;
 extern C2D_SpriteSheet glowSheet;
 extern C2D_SpriteSheet bgSheet;
 extern C2D_SpriteSheet groundSheet;
