@@ -729,6 +729,8 @@ void spawn_object_at(
     // Spawn children
     for (int i = 0; i < obj->child_count; i++) {
         const ChildSprite* c = &obj->children[i];
+
+        if (c->color_type == COLOR_TYPE_GLOW && !glowEnabled) continue;
         
         if (sprite_count >= MAX_SPRITES - 1) return;
         
