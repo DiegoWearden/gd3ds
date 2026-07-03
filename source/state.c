@@ -13,6 +13,7 @@
 #include "level/main_levels.h"
 #include "menus/level_select.h"
 #include "save/saving.h"
+#include "practice.h"
 
 #include "new_best.h"
 #include "endwall.h"
@@ -382,7 +383,9 @@ void init_variables() {
 
 void handle_death(Player *player, bool pause_song) {
     play_sfx(&explode_sound, 1);
-    if (song_loaded && pause_song && !state.practice_mode) {
+    if (pause_song && practice_uses_level_music()) {
+        pause_playback_mp3();
+    } else if (song_loaded && pause_song && !state.practice_mode) {
         pause_playback_mp3();
         seek_mp3(level_info.song_offset);
     }
@@ -463,17 +466,29 @@ void clear_bg_flash() {
     state.flash_data.use_lbg = false;
 }
 
-void play_level_song() {
+bool play_level_song_at(float seek) {
+    if (seek < 0) seek = 0;
+
     if (level_info.custom_song_id > 0) {
-        char full_path[273];
+        static char full_path[273];
         snprintf(full_path, sizeof(full_path), "%s/%d.mp3", USER_SONGS_DIR, level_info.custom_song_id);
-        song_loaded = play_mp3(full_path, false, level_info.song_offset);
+        song_loaded = play_mp3(full_path, false, seek);
     } else {
         if (state.custom_level) {
-            song_loaded = play_mp3(main_levels[level_info.song_id].song_path, false, level_info.song_offset);
+            song_loaded = play_mp3(main_levels[level_info.song_id].song_path, false, seek);
         } else {
-            song_loaded = play_mp3(main_levels[curr_level_id].song_path, false, 0);
+            song_loaded = play_mp3(main_levels[curr_level_id].song_path, false, seek);
         }
+    }
+
+    return song_loaded;
+}
+
+void play_level_song() {
+    if (level_info.custom_song_id > 0 || state.custom_level) {
+        play_level_song_at(level_info.song_offset);
+    } else {
+        play_level_song_at(0);
     }
 }
 

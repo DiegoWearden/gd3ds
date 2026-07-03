@@ -10,6 +10,11 @@
 
 #define MAX_CHECKPOINTS 100
 #define CHECKPOINT_GFX_ID 6
+#define PRACTICE_SONG_PATH "romfs:/songs/StayInsideMe.mp3"
+#define AUTO_CHECKPOINT_INTERVAL 1.25f
+#define AUTO_CHECKPOINT_FLYING_INTERVAL 1.0f
+#define AUTO_CHECKPOINT_MIN_DISTANCE (3.5f * 30.f)
+#define AUTO_CHECKPOINT_FLYING_MIN_DISTANCE (5.0f * 30.f)
 
 typedef struct CheckpointData {
     Player p1;
@@ -52,8 +57,16 @@ typedef struct CheckpointData {
 CheckpointData checkpoints[MAX_CHECKPOINTS];
 int checkpoint_count = 0;
 int checkpoint_pointer = 0;
+static bool practice_level_music_active = false;
+static float auto_checkpoint_timer = 0.f;
+static float last_auto_checkpoint_x = 0.f;
 
 // static const int checkpoint_size = sizeof(checkpoints);
+
+static void reset_auto_checkpoint_timer() {
+    auto_checkpoint_timer = 0.f;
+    last_auto_checkpoint_x = state.player.x;
+}
 
 void new_checkpoint() {
     if (state.dead) return;
@@ -98,6 +111,8 @@ void new_checkpoint() {
 
     memcpy(check->channels, channels, sizeof(channels));
     memcpy(check->col_trigger_buffer, col_trigger_buffer, sizeof(col_trigger_buffer));
+
+    reset_auto_checkpoint_timer();
 }
 
 void restore_checkpoint() {
@@ -136,6 +151,7 @@ void restore_checkpoint() {
     memcpy(col_trigger_buffer, check->col_trigger_buffer, sizeof(col_trigger_buffer));
 
     update_attempt_text_pos();
+    reset_auto_checkpoint_timer();
 }
 
 void delete_last_checkpoint() {
@@ -147,28 +163,96 @@ void delete_last_checkpoint() {
             checkpoint_pointer = MAX_CHECKPOINTS - 1;
         }
     }
+
+    reset_auto_checkpoint_timer();
 }
 
 void clear_practice_mode() {
     checkpoint_count = 0;
     checkpoint_pointer = 0;
     state.practice_mode = false;
+    practice_level_music_active = false;
+    reset_auto_checkpoint_timer();
+}
+
+static float get_practice_level_music_time() {
+    return level_info.song_offset + state.player.timeElapsed;
+}
+
+static void play_original_practice_song() {
+    practice_level_music_active = false;
+    song_loaded = false;
+    play_mp3(PRACTICE_SONG_PATH, true, 0);
+}
+
+bool practice_uses_level_music() {
+    return state.practice_mode && practiceLevelMusic && practice_level_music_active;
+}
+
+void apply_practice_music_mode() {
+    if (!state.practice_mode) return;
+
+    stop_mp3();
+
+    if (practiceLevelMusic && play_level_song_at(get_practice_level_music_time())) {
+        practice_level_music_active = true;
+    } else {
+        play_original_practice_song();
+    }
+}
+
+void sync_practice_level_music() {
+    if (!practice_uses_level_music()) return;
+    seek_mp3(get_practice_level_music_time());
 }
 
 void start_practice_mode() {
     checkpoint_count = 0;
     checkpoint_pointer = 0;
     state.practice_mode = true;
-    stop_mp3();
-    play_mp3("romfs:/songs/StayInsideMe.mp3", true, 0);
+    reset_auto_checkpoint_timer();
+    apply_practice_music_mode();
 }
 
 void exit_practice_mode() {
     state.practice_mode = false;
+    practice_level_music_active = false;
     init_variables();
     reload_level(); 
     stop_mp3();
     play_level_song();
+}
+
+static bool auto_checkpoint_is_flying_mode(Player *player) {
+    return player->gamemode == GAMEMODE_SHIP ||
+           player->gamemode == GAMEMODE_BIRD ||
+           player->gamemode == GAMEMODE_DART;
+}
+
+static bool auto_checkpoint_is_safe_surface(Player *player) {
+    return player->on_ground ||
+           player->on_ceiling ||
+           player->slope_data.slope_id >= 0;
+}
+
+static void handle_auto_checkpoint() {
+    if (!autoCheckpoints || state.dead || level_info.completing) {
+        reset_auto_checkpoint_timer();
+        return;
+    }
+
+    Player *player = &state.player;
+    bool flying = auto_checkpoint_is_flying_mode(player);
+    float interval = flying ? AUTO_CHECKPOINT_FLYING_INTERVAL : AUTO_CHECKPOINT_INTERVAL;
+    float min_distance = flying ? AUTO_CHECKPOINT_FLYING_MIN_DISTANCE : AUTO_CHECKPOINT_MIN_DISTANCE;
+
+    auto_checkpoint_timer += delta;
+
+    if (auto_checkpoint_timer < interval) return;
+    if (player->x - last_auto_checkpoint_x < min_distance) return;
+    if (!flying && !auto_checkpoint_is_safe_surface(player)) return;
+
+    new_checkpoint();
 }
 
 void handle_practice_mode() {
@@ -184,6 +268,8 @@ void handle_practice_mode() {
     if (((kDown & KEY_R) && !((kHeld & KEY_B) && enableDebugBindings)) || (kDown & KEY_ZR)) {
         delete_last_checkpoint();
     }
+
+    handle_auto_checkpoint();
 }
 
 static void draw_checkpoint(float x, float y) {

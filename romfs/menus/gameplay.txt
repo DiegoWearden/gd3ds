@@ -27,3 +27,6 @@ label x=88 y=38 text="Music" scale=0.5 tag="paused"
 slider x=180 y=50 max_value=1 scale=0.9 tag="paused,music_slider"
 label x=88 y=88 text="Sounds" scale=0.5 tag="paused"
 slider x=180 y=100 max_value=1 scale=0.9 tag="paused,sound_slider"
+
+checkbox x=64 y=135 tag="paused,practice_options,auto_checkpoint_toggle" scale=0.6 action="auto_checkpoint"
+label x=82 y=135 text="Auto checkpoints" scale=0.38 tag="paused,practice_options"

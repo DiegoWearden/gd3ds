@@ -17,6 +17,8 @@
 #include "level_select.h"
 #include "settings.h"
 #include "info_card.h"
+#include "practice.h"
+#include "state.h"
 
 #include "save/config.h"
 
@@ -45,6 +47,8 @@ bool ultraDecimalPercent = false;
 bool switchTrailColor = false;
 bool switchWaveTrailColor = false;
 bool quickRetry = false;
+bool practiceLevelMusic = false;
+bool autoCheckpoints = false;
 bool solidWaveTrail = false;
 bool noPlayerTrail = false;
 bool noWaveTrailBehind = false;
@@ -98,6 +102,12 @@ static Setting settings[] = {
     },
     {
         "chk_quickretry", &quickRetry
+    },
+    {
+        "chk_practice_level_music", &practiceLevelMusic
+    },
+    {
+        "chk_auto_checkpoints", &autoCheckpoints
     },
     {
         "chk_solidwavetrail", &solidWaveTrail
@@ -208,6 +218,18 @@ void quickRetry_settings(UIElement* e) {
     quickRetry = e->checkbox.checked;
 }
 
+void practiceLevelMusic_settings(UIElement* e) {
+    practiceLevelMusic = e->checkbox.checked;
+
+    if (game_state == STATE_GAME && state.practice_mode) {
+        apply_practice_music_mode();
+    }
+}
+
+void autoCheckpoints_settings(UIElement* e) {
+    autoCheckpoints = e->checkbox.checked;
+}
+
 void solidWaveTrail_settings(UIElement* e) {
     solidWaveTrail = e->checkbox.checked;
 }
@@ -282,6 +304,14 @@ void action_info_quick_retry(UIElement *e) {
     action_open_info_card(10);
 }
 
+void action_info_practice_level_music(UIElement *e) {
+    action_open_info_card(14);
+}
+
+void action_info_auto_checkpoints(UIElement *e) {
+    action_open_info_card(15);
+}
+
 void action_info_solid_wave_trail(UIElement *e) {
     action_open_info_card(11);
 }
@@ -313,6 +343,8 @@ static UIAction actions[] = {
     { "switchTrailColor", switchTrailColor_settings},
     { "switchWaveTrailColor", switchWaveTrailColor_settings},
     { "quickRetry", quickRetry_settings},
+    { "practiceLevelMusic", practiceLevelMusic_settings},
+    { "autoCheckpoints", autoCheckpoints_settings},
     { "solidWaveTrail", solidWaveTrail_settings},
     { "noPlayerTrail", noPlayerTrail_settings},
     { "noWaveTrailBehind", noWaveTrailBehind_settings},
@@ -329,6 +361,8 @@ static UIAction actions[] = {
     { "trailcolorinfo", action_info_trail},
     { "wavetrailcolorinfo", action_info_wave_trail},
     { "quickretryinfo", action_info_quick_retry},
+    { "practicelevelmusicinfo", action_info_practice_level_music},
+    { "autocheckpointsinfo", action_info_auto_checkpoints},
     { "solidwavetrailinfo", action_info_solid_wave_trail},
     { "nowavetrailbehindinfo", action_info_no_wave_trail_behind},
     { "donotinfo", action_info_do_not}

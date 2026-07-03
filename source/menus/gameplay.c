@@ -53,6 +53,7 @@ static UIElement *practice_progress_val;
 
 static UIElement *music_slider_bar;
 static UIElement *sound_slider_bar;
+static UIElement *auto_checkpoint_toggle;
 
 static UIElement *coin_1;
 static UIElement *coin_2;
@@ -177,6 +178,7 @@ static void restart_level() {
         if (checkpoint_count > 0) {
             restore_checkpoint();
         }
+        sync_practice_level_music();
     } else if (song_loaded) seek_mp3(level_info.song_offset);
 
     reset_coins();
@@ -226,6 +228,11 @@ static void action_remove_checkpoint(UIElement *e) {
     delete_last_checkpoint();
 }
 
+static void action_auto_checkpoint(UIElement *e) {
+    autoCheckpoints = e->checkbox.checked;
+    cfg_save();
+}
+
 static UIAction actions[] = {
     {"pause", action_pause },
     {"unpause", action_unpause },
@@ -235,6 +242,7 @@ static UIAction actions[] = {
     {"practice", action_practice_mode },
     {"add_check", action_add_checkpoint },
     {"remove_check", action_remove_checkpoint },
+    {"auto_checkpoint", action_auto_checkpoint },
 };
 
 void gameplay_screen_init() {
@@ -276,6 +284,7 @@ void gameplay_screen_init() {
     ui_run_func_on_tag(&default_screen_top, "pause_menu", ui_disable_element);
     ui_run_func_on_tag(&default_screen, "paused", ui_disable_element);
     ui_run_func_on_tag(&default_screen, "practice_buttons", ui_disable_element);
+    ui_run_func_on_tag(&default_screen, "practice_options", ui_disable_element);
 
     coin_1 = ui_get_element_by_tag(&default_screen, "coin_1");
     coin_2 = ui_get_element_by_tag(&default_screen, "coin_2");
@@ -293,6 +302,7 @@ void gameplay_screen_init() {
 
     music_slider_bar = ui_get_element_by_tag(&default_screen, "music_slider");
     sound_slider_bar = ui_get_element_by_tag(&default_screen, "sound_slider");
+    auto_checkpoint_toggle = ui_get_element_by_tag(&default_screen, "auto_checkpoint_toggle");
 
     if (music_slider_bar) music_slider_bar->slider.value = music_volume;
     if (sound_slider_bar) sound_slider_bar->slider.value = sound_volume;
@@ -408,6 +418,13 @@ int gameplay_screen_bot_loop() {
     } else {
         ui_run_func_on_tag(&default_screen, "practice_buttons", ui_disable_element);
         ui_button_set_image(ui_get_element_by_tag(&default_screen, "practice_mode"), 146, 0);
+    }
+
+    if (game_paused && state.practice_mode) {
+        ui_run_func_on_tag(&default_screen, "practice_options", ui_enable_element);
+        if (auto_checkpoint_toggle) auto_checkpoint_toggle->checkbox.checked = autoCheckpoints;
+    } else {
+        ui_run_func_on_tag(&default_screen, "practice_options", ui_disable_element);
     }
 
     touch.touchPosition = touchPos;

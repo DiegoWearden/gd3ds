@@ -769,7 +769,9 @@ void game_loop() {
                         restore_checkpoint();
                     }
 
-                    if (song_loaded) unpause_playback_mp3();
+                    sync_practice_level_music();
+
+                    if (song_loaded || state.practice_mode) unpause_playback_mp3();
                     fixed_dt = true; 
                     state.dead = false;
                     state.hitbox_display = 0;

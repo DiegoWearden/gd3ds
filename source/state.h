@@ -183,6 +183,7 @@ void init_trails(int trail);
 void init_wave_trails();
 
 void play_level_song();
+bool play_level_song_at(float seek);
 void update_attempt_text_pos();
 
 bool is_coin_collected(int obj);

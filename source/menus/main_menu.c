@@ -149,6 +149,14 @@ void action_open_info_card(int id, UIElement* e) {
             // do not info
             set_info_content("Doesn't do anything...<p>Well, nothing useful.");
             break;
+        case 14:
+            // practice level music info
+            set_info_content("Uses the level's song in practice<p>and syncs it to checkpoints.");
+            break;
+        case 15:
+            // auto checkpoints info
+            set_info_content("Automatically creates checkpoints<p>while playing in practice mode.");
+            break;
     }
     in_info_card = true;
 }
