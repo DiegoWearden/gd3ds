@@ -134,7 +134,7 @@ void cube_gamemode(Player *player) {
     if (player->vel_y > 1080) player->vel_y = 1080;
 
     // If player fell above the level, die
-    if (player->y > 2794.f) state.dead = true;
+    if (player->y > 2794.f) kill_player(DEATH_FELL_OFF_LEVEL);
 
     if (player->snap_rotation) {
         player->cube_target_rotation = player->rotation;
@@ -538,7 +538,7 @@ void clamp_player_ground(Player *player) {
     // Check for ground collision
     if (getGroundBottom(player) < state.ground_y) {
         if (player->ceiling_inv_time <= 0 && player->gravObj_id < 0 && player->gamemode == GAMEMODE_PLAYER && player->upside_down) {
-            state.dead = true;
+            kill_player(DEATH_CEILING);
         }
 
         if (slopeCheck) {
@@ -553,7 +553,7 @@ void clamp_player_ground(Player *player) {
     // Check for ceiling collision
     if (getGroundTop(player) > state.ceiling_y) {
         if (player->ceiling_inv_time <= 0  && player->gravObj_id < 0 && player->gamemode == GAMEMODE_PLAYER && !player->upside_down) {
-            state.dead = true;
+            kill_player(DEATH_CEILING);
         }
 
         if (slopeCheck) {

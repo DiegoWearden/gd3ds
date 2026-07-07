@@ -423,7 +423,7 @@ void main_menu_loop() {
 
         // Ded
         if (kill && !state.dead && !in_menu) {
-            state.dead = true;
+            kill_player(DEATH_TITLE_SCREEN_KILL);
             players_destroyed++;
             handle_death(&title_screen_player, false);
             death_wait_timer = DEATH_WAITING_TIME;

@@ -32,6 +32,17 @@ typedef struct {
 #define RESPAWN_EFFECT_DURATION (12.f / STEPS_HZ)
 
 typedef enum {
+    DEATH_TITLE_SCREEN_KILL,
+    DEATH_SPIKE,
+    DEATH_SAW,
+    DEATH_BLOCK,
+    DEATH_SLOPE,
+    DEATH_FELL_OFF_LEVEL,
+    DEATH_CEILING,
+    DEATH_REASON_COUNT
+} DeathReason;
+
+typedef enum {
     FLASH_NONE,
     FLASH_FIRST_LIGHT,
     FLASH_UNLIGHTED,
@@ -154,6 +165,8 @@ typedef struct {
 
     KeyInput input;
     KeyInput old_input;
+
+    DeathReason death_reason;
 } GameState;
 
 #define CEILING_INVUL_TIME 0.15f
@@ -186,5 +199,7 @@ void play_level_song();
 void update_attempt_text_pos();
 
 bool is_coin_collected(int obj);
+
+void kill_player(DeathReason reason);
 
 extern bool disableHitboxesAfterRespawn;

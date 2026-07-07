@@ -247,6 +247,8 @@ static float get_image_tag_length(const Charset *font, const float zoom_x, char 
         }
 
         C2D_Image image = C2D_SpriteSheetGetImage(*get_sheet(image_sheet), image_index);
+        if (!image.subtex) return 0;
+
         float tex_w = image.subtex->width;
         float tex_h = image.subtex->height;
 
@@ -473,36 +475,39 @@ void draw_text(const Charset *font, C2D_SpriteSheet *sheet, const float x, const
             C2D_Sprite sprite = { 0 };
 
             if (image_index >= 0) { 
-                C2D_SpriteFromSheet(&sprite, *get_sheet(image_sheet), image_index);
-                C3D_TexSetFilter(sprite.image.tex, GPU_LINEAR, GPU_LINEAR);
-            
-                float tex_w = sprite.image.subtex->width;
-                float tex_h = sprite.image.subtex->height;
-
-                float image_scale = height / tex_h;
+                C2D_Image image = C2D_SpriteSheetGetImage(*get_sheet(image_sheet), image_index);
+                if (image.subtex) {
+                    C2D_SpriteFromSheet(&sprite, *get_sheet(image_sheet), image_index);
+                    C3D_TexSetFilter(sprite.image.tex, GPU_LINEAR, GPU_LINEAR);
                 
-                float image_scale_x = scaleX * image_scale;
-                float image_scale_y = scaleY * image_scale;
+                    float tex_w = sprite.image.subtex->width;
+                    float tex_h = sprite.image.subtex->height;
 
-                float image_width = tex_w * image_scale_x;
-                float image_height = tex_h * image_scale_y;
+                    float image_scale = height / tex_h;
+                    
+                    float image_scale_x = scaleX * image_scale;
+                    float image_scale_y = scaleY * image_scale;
 
-                float xadvance = image_width;
-                
-                float base_y = y - total_height / 2.f;
-                float final_x = x + offset_x - line_length * alignment;
-                float final_y = base_y + offset_y - image_height * 0.5f;
+                    float image_width = tex_w * image_scale_x;
+                    float image_height = tex_h * image_scale_y;
 
-                final_x += image_width * 0.5f;
-                final_y += image_height * 0.5f;
+                    float xadvance = image_width;
+                    
+                    float base_y = y - total_height / 2.f;
+                    float final_x = x + offset_x - line_length * alignment;
+                    float final_y = base_y + offset_y - image_height * 0.5f;
 
-                // Draw image so its center is at (final_x, final_y)
-                C2D_SpriteSetCenter(&sprite, 0.5f, 0.5f);
-                C2D_SpriteSetPos(&sprite, final_x, final_y);
-                C2D_SpriteSetScale(&sprite, image_scale_x, image_scale_y);
-                C2D_DrawSpriteTinted(&sprite, &tint);
-                
-                offset_x += xadvance;
+                    final_x += image_width * 0.5f;
+                    final_y += image_height * 0.5f;
+
+                    // Draw image so its center is at (final_x, final_y)
+                    C2D_SpriteSetCenter(&sprite, 0.5f, 0.5f);
+                    C2D_SpriteSetPos(&sprite, final_x, final_y);
+                    C2D_SpriteSetScale(&sprite, image_scale_x, image_scale_y);
+                    C2D_DrawSpriteTinted(&sprite, &tint);
+                    
+                    offset_x += xadvance;
+                }
             }
         }
     }

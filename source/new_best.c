@@ -16,10 +16,16 @@
 
 #include "utils/string_helpers.h"
 
+#define NOT_100_ID 0
+#define IMPOSSIBLE_TIMING_ID 1
+#define STORY_MADNESS_ID 2
+#define DIED_TO_ID 3
+
 char *new_best_text[] = {
     "Not 100%",
     "Impossible timing",
     "Have you tried Story Madness yet?",
+    "<DIED TO X>",
     "Not GG",
     "GGWP",
     "Git gud nub",
@@ -42,6 +48,16 @@ char *new_best_text[] = {
     "Blame it on RobTop",
     "Do you have muscle dementia",
     "New worst!"
+};
+
+char *died_to_text[DEATH_REASON_COUNT] = {
+    "Bro died magically",
+    "Bro died to a <i646s3>spike",
+    "Bro died to a <#000000><i639s3></>saw",
+    "Bro died to a <i650s3>block",
+    "Bro died to a <i758s3>slope",
+    "Bro fell out of the level",
+    "Bro died to the ground",
 };
 
 #define NUM_NEW_BEST_TEXT (sizeof(new_best_text) / sizeof(char *))
@@ -82,19 +98,19 @@ void init_new_best_popup(int progress) {
 
     // 50% chance on >95% death to say "not 100%"
     if (progress >= 95 && random_int(0, 100) <= 50) {
-        new_best_popup.text_id = 0;
+        new_best_popup.text_id = NOT_100_ID;
     }
 
     // Cycles impossible timing
     if (progress == 42 && !state.custom_level && curr_level_id == 8 && state.player.y > 140) {
-        new_best_popup.text_id = 1;
+        new_best_popup.text_id = IMPOSSIBLE_TIMING_ID;
     }
 
     // If on story madness, reroll to not say the story madness line
-    if (new_best_popup.text_id == 2 && contains(level_info.level_name, "story madness")) {
+    if (new_best_popup.text_id == STORY_MADNESS_ID && contains(level_info.level_name, "story madness")) {
         do {
             new_best_popup.text_id = random_int(0, NUM_NEW_BEST_TEXT - 1);
-        } while(new_best_popup.text_id == 2);
+        } while(new_best_popup.text_id == STORY_MADNESS_ID);
     }
 
     new_best_popup.timer = 0;
@@ -149,7 +165,13 @@ void draw_new_best_popup() {
         float scale = new_best_popup.scale;
 
         if (doNot) {
-            draw_text(&goldFont_fontCharset, &goldFont_sheet, SCREEN_WIDTH_AREA / 2, (SCREEN_HEIGHT_AREA / 2) - (NEW_BEST_SEPARATION * scale), scale, scale, 0.5f, true, "%s", new_best_text[new_best_popup.text_id]);
+            char *text = new_best_text[new_best_popup.text_id];
+
+            if (new_best_popup.text_id == DIED_TO_ID) {
+                text = died_to_text[state.death_reason];
+            }
+
+            draw_text(&goldFont_fontCharset, &goldFont_sheet, SCREEN_WIDTH_AREA / 2, (SCREEN_HEIGHT_AREA / 2) - (NEW_BEST_SEPARATION * scale), scale, scale, 0.5f, true, "%s", text);
         } else {
             C2D_Sprite text = { 0 };
             C2D_SpriteFromSheet(&text, ui_sheet, (NEW_BEST_IMAGE_ID));

@@ -580,3 +580,8 @@ bool is_coin_collected(int obj) {
 
     return false;
 }
+
+void kill_player(DeathReason reason) {
+    state.dead = true;
+    state.death_reason = reason;
+}
