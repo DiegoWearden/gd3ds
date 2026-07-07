@@ -16,7 +16,7 @@ static void ui_label_draw(UIElement* e) {
     if (font_id >= NUM_FONTS) font_id = 0;
 
     const LabelFont *font = &fonts[font_id];
-    draw_text(font->charset, font->sheet, e->x, e->y, e->label.scale, e->label.scale, e->label.alignment, "%s", e->label.text);
+    draw_text(font->charset, font->sheet, e->x, e->y, e->label.scale, e->label.scale, e->label.alignment, e->label.parse_tags, "%s", e->label.text);
 }
 
 void ui_label_set_text(UIElement *e, const char *text) {
@@ -49,7 +49,7 @@ void ui_label_set_scale_from_width(UIElement *e, const char *text, float width) 
     e->label.scale = text_scale;
 }
 
-UIElement ui_create_label(int x, int y, float scale, char *text, int font, float alignment, char (*tag)[TAG_LENGTH]) {
+UIElement ui_create_label(int x, int y, float scale, char *text, int font, float alignment, bool parse_tags, char (*tag)[TAG_LENGTH]) {
     UIElement e = {0};
 
     e.type = UI_LABEL;
@@ -62,6 +62,7 @@ UIElement ui_create_label(int x, int y, float scale, char *text, int font, float
     e.label.font = font;
     e.label.alignment = alignment;
     e.label.scale = scale;
+    e.label.parse_tags = parse_tags;
     
     // Copy tag
     copy_tag_array(&e, tag);

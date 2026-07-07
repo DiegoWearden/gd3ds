@@ -149,7 +149,7 @@ void draw_new_best_popup() {
         float scale = new_best_popup.scale;
 
         if (doNot) {
-            draw_text(&goldFont_fontCharset, &goldFont_sheet, SCREEN_WIDTH_AREA / 2, (SCREEN_HEIGHT_AREA / 2) - (NEW_BEST_SEPARATION * scale), scale, scale, 0.5f, "%s", new_best_text[new_best_popup.text_id]);
+            draw_text(&goldFont_fontCharset, &goldFont_sheet, SCREEN_WIDTH_AREA / 2, (SCREEN_HEIGHT_AREA / 2) - (NEW_BEST_SEPARATION * scale), scale, scale, 0.5f, true, "%s", new_best_text[new_best_popup.text_id]);
         } else {
             C2D_Sprite text = { 0 };
             C2D_SpriteFromSheet(&text, ui_sheet, (NEW_BEST_IMAGE_ID));
@@ -161,6 +161,6 @@ void draw_new_best_popup() {
         }
 
         
-        draw_text(&bigFont_fontCharset, &bigFont_sheet, SCREEN_WIDTH_AREA / 2, (SCREEN_HEIGHT_AREA / 2) + (NEW_BEST_SEPARATION * scale), scale, scale, 0.5f, "%d%%", new_best_popup.progress);
+        draw_text(&bigFont_fontCharset, &bigFont_sheet, SCREEN_WIDTH_AREA / 2, (SCREEN_HEIGHT_AREA / 2) + (NEW_BEST_SEPARATION * scale), scale, scale, 0.5f, true, "%d%%", new_best_popup.progress);
     }
 }

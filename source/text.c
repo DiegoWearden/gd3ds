@@ -209,10 +209,10 @@ char *wrap_text(const Charset *font, float zoom_x, const char *text, float max_w
         word[len] = '\0';
 
         float word_width =
-            get_text_length(font, zoom_x, word);
+            get_text_length(font, zoom_x, true, word);
 
         float space_width =
-            get_text_length(font, zoom_x, " ");
+            get_text_length(font, zoom_x, true, " ");
 
         // Wrap if needed
         if (line_width > 0 && line_width + space_width + word_width > max_width) {
@@ -235,20 +235,48 @@ char *wrap_text(const Charset *font, float zoom_x, const char *text, float max_w
     return wrap_buffer;
 }
 
-float get_line_length(const Charset *font, const float zoom_x, const char *text, int start) {
+static float get_image_tag_length(const Charset *font, const float zoom_x, char *tag) {
+    int image_index = -1;
+    int image_sheet = 0;
+    if (parse_image_tag(tag, &image_index, &image_sheet)) {
+        float height = HEIGHT_OFFSET;
+
+        const Glyph *aCharacter = get_glyph(font, 'A');
+        if (aCharacter) {
+            height = aCharacter->height * HEIGHT_OFFSET_MULT;
+        }
+
+        C2D_Image image = C2D_SpriteSheetGetImage(*get_sheet(image_sheet), image_index);
+        float tex_w = image.subtex->width;
+        float tex_h = image.subtex->height;
+
+        float image_scale = height / tex_h;
+        
+        float image_scale_x = zoom_x * image_scale;
+
+        float image_width = tex_w * image_scale_x;
+        return image_width;
+    }
+
+    return 0;
+}
+
+float get_line_length(const Charset *font, const float zoom_x, bool parse_tags, const char *text, int start) {
     float text_length = 0;
 
     for (int i = start; text[i]; i++) {
         const Glyph *character = get_glyph(font, text[i]);
 
         // Skip tags
-        if (text[i] == '<') {
+        if (text[i] == '<' && parse_tags) {
             char tag[64];
 
             if (read_tag(text, &i, tag, sizeof(tag))) {
                 if (strcmp(tag, "p") == 0) {
                     break;
                 }
+
+                text_length += get_image_tag_length(font, zoom_x, tag);
 
                 continue;
             }
@@ -286,7 +314,7 @@ float get_longest_line_length(const Charset *font, const float zoom_x, const cha
 
             // Measure line
             if (newline || text[i] == '\0') {
-                float length = get_line_length(font, zoom_x, text, start);
+                float length = get_line_length(font, zoom_x, true, text, start);
 
                 // Set if longer than last saved line
                 if (length > longest) {
@@ -308,17 +336,22 @@ float get_longest_line_length(const Charset *font, const float zoom_x, const cha
     return longest;
 }
 
-float get_text_length(const Charset *font, const float zoom_x, const char *text) {
+float get_text_length(const Charset *font, const float zoom_x, bool parse_tags, const char *text) {
     float text_length = 0;
     int size = strlen(text);
     for (int i = 0; i < size; i++) {
         const Glyph *character = get_glyph(font, text[i]);
         
         // Skip tags
-        if (text[i] == '<') {
+        if (text[i] == '<' && parse_tags) {
             char tag[64];
 
             if (read_tag(text, &i, tag, sizeof(tag))) {
+                if (strcmp(tag, "p") == 0) {
+                    continue;
+                }
+
+                text_length += get_image_tag_length(font, zoom_x, tag);
                 continue;
             }
         }
@@ -334,7 +367,7 @@ float get_text_length(const Charset *font, const float zoom_x, const char *text)
 
 #define SPACING 6.f
 
-void draw_text(const Charset *font, C2D_SpriteSheet *sheet, const float x, const float y, const float scaleX, const float scaleY, float alignment, const char *text, ...) {
+void draw_text(const Charset *font, C2D_SpriteSheet *sheet, const float x, const float y, const float scaleX, const float scaleY, float alignment, bool parse_tags, const char *text, ...) {
     if (!text || !sheet) {
         return;
     }
@@ -353,7 +386,7 @@ void draw_text(const Charset *font, C2D_SpriteSheet *sheet, const float x, const
         height = aCharacter->height * HEIGHT_OFFSET_MULT;
     }
 
-    float line_length = get_line_length(font, fabsf(scaleX), tmp, 0);
+    float line_length = get_line_length(font, fabsf(scaleX), parse_tags, tmp, 0);
 
     float offset_x = 0;
     float offset_y = 0;
@@ -372,7 +405,7 @@ void draw_text(const Charset *font, C2D_SpriteSheet *sheet, const float x, const
         int image_sheet = 0;
         
         // Parse tags
-        if (tmp[i] == '<') {
+        if (tmp[i] == '<' && parse_tags) {
             char tag[64];
 
             if (read_tag(tmp, &i, tag, sizeof(tag))) {   
@@ -388,6 +421,7 @@ void draw_text(const Charset *font, C2D_SpriteSheet *sheet, const float x, const
                         line_length = get_line_length(
                             font,
                             fabsf(scaleX),
+                            true,
                             tmp,
                             i + 1
                         );

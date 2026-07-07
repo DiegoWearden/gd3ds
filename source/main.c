@@ -485,7 +485,7 @@ void game_loop() {
     C2D_TargetClear(top, C2D_Color32(0, 0, 0, 255));
 
     C2D_Fade(0);
-    draw_text(&bigFont_fontCharset, &bigFont_sheet, SCREEN_WIDTH - 10, SCREEN_HEIGHT - 10, 0.5f, 0.5f, 1.0f, "Loading...");
+    draw_text(&bigFont_fontCharset, &bigFont_sheet, SCREEN_WIDTH - 10, SCREEN_HEIGHT - 10, 0.5f, 0.5f, 1.0f, true, "Loading...");
     C3D_FrameEnd(0);
     
     char *path;
@@ -990,44 +990,44 @@ void game_loop() {
 
                 #define DEBUG_TEXT_SCALE 0.4f, 0.4f
                 
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0, 6,  DEBUG_TEXT_SCALE, 0, "CPU: %6.2f%% (%6.2f%% %6.2f%%)", (C3D_GetProcessingTime() * 6) + processingTime, C3D_GetProcessingTime() * 6, processingTime);
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0, 18, DEBUG_TEXT_SCALE, 0, "GPU: %6.2f%%", drawingTime);
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0, 30, DEBUG_TEXT_SCALE, 0, "FPS: %6.1f", fps);
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0, 42, DEBUG_TEXT_SCALE, 0, "Linear free: %d", linearSpaceFree());
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 42, DEBUG_TEXT_SCALE, 0, "CMDBuf: %6.2f%%", C3D_GetCmdBufUsage()*100.0f);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0, 6,  DEBUG_TEXT_SCALE, 0, true, "CPU: %6.2f%% (%6.2f%% %6.2f%%)", (C3D_GetProcessingTime() * 6) + processingTime, C3D_GetProcessingTime() * 6, processingTime);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0, 18, DEBUG_TEXT_SCALE, 0, true, "GPU: %6.2f%%", drawingTime);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0, 30, DEBUG_TEXT_SCALE, 0, true, "FPS: %6.1f", fps);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0, 42, DEBUG_TEXT_SCALE, 0, true, "Linear free: %d", linearSpaceFree());
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 42, DEBUG_TEXT_SCALE, 0, true, "CMDBuf: %6.2f%%", C3D_GetCmdBufUsage()*100.0f);
 
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 66,  DEBUG_TEXT_SCALE, 0, "%d steps", steps);
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 54,  DEBUG_TEXT_SCALE, 0, "Particle: %6.2f%%", particle_calc_time * 6);
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 78,  DEBUG_TEXT_SCALE, 0, "Triggers: %6.2f%%", triggers_time * 6);
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 90,  DEBUG_TEXT_SCALE, 0, "Collision %d/%d", number_of_collisions, number_of_collisions_checks);
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 102, DEBUG_TEXT_SCALE, 0, "Physics: %6.2f%%", physics_calc_time * 6);
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 114, DEBUG_TEXT_SCALE, 0, " - Coll: %6.2f%%", collision_time * 6);
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 126, DEBUG_TEXT_SCALE, 0, " - Play: %6.2f%%", player_time * 6);
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 138, DEBUG_TEXT_SCALE, 0, " - Hndl: %6.2f%%", handle_player_time * 6);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 66,  DEBUG_TEXT_SCALE, 0, true, "%d steps", steps);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 54,  DEBUG_TEXT_SCALE, 0, true, "Particle: %6.2f%%", particle_calc_time * 6);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 78,  DEBUG_TEXT_SCALE, 0, true, "Triggers: %6.2f%%", triggers_time * 6);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 90,  DEBUG_TEXT_SCALE, 0, true, "Collision %d/%d", number_of_collisions, number_of_collisions_checks);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 102, DEBUG_TEXT_SCALE, 0, true, "Physics: %6.2f%%", physics_calc_time * 6);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 114, DEBUG_TEXT_SCALE, 0, true, " - Coll: %6.2f%%", collision_time * 6);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 126, DEBUG_TEXT_SCALE, 0, true, " - Play: %6.2f%%", player_time * 6);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 138, DEBUG_TEXT_SCALE, 0, true, " - Hndl: %6.2f%%", handle_player_time * 6);
 
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   54,  DEBUG_TEXT_SCALE, 0, "SprDraw:  %6.2f%%", (sprite_drawing_time) * 6);
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   66,  DEBUG_TEXT_SCALE, 0, " - Creating: %6.2f%%", (object_creating_time) * 6);
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   78,  DEBUG_TEXT_SCALE, 0, " - Sorting:  %6.2f%%", (object_sorting_time) * 6);
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   102,  DEBUG_TEXT_SCALE, 0, "Drawing:  %6.2f%%", (object_drawing_time) * 6);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   54,  DEBUG_TEXT_SCALE, 0, true, "SprDraw:  %6.2f%%", (sprite_drawing_time) * 6);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   66,  DEBUG_TEXT_SCALE, 0, true, " - Creating: %6.2f%%", (object_creating_time) * 6);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   78,  DEBUG_TEXT_SCALE, 0, true, " - Sorting:  %6.2f%%", (object_sorting_time) * 6);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   102,  DEBUG_TEXT_SCALE, 0, true, "Drawing:  %6.2f%%", (object_drawing_time) * 6);
 
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   114,  DEBUG_TEXT_SCALE, 0, "Touch:  %d, %d", touchPos.px, touchPos.py);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   114,  DEBUG_TEXT_SCALE, 0, true, "Touch:  %d, %d", touchPos.px, touchPos.py);
 
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   138,  DEBUG_TEXT_SCALE, 0, "Player");
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   150,  DEBUG_TEXT_SCALE, 0, "- Tick: %d", state.player.frame);
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   162,  DEBUG_TEXT_SCALE, 0, "- X: %.2f", state.player.x);
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   174,  DEBUG_TEXT_SCALE, 0, "- Y: %.2f", state.player.y);
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   186,  DEBUG_TEXT_SCALE, 0, "- VX: %.2f", state.player.vel_x * STEPS_DT);
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   198,  DEBUG_TEXT_SCALE, 0, "- VY: %.2f", state.player.vel_y * STEPS_DT);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   138,  DEBUG_TEXT_SCALE, 0, true, "Player");
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   150,  DEBUG_TEXT_SCALE, 0, true, "- Tick: %d", state.player.frame);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   162,  DEBUG_TEXT_SCALE, 0, true, "- X: %.2f", state.player.x);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   174,  DEBUG_TEXT_SCALE, 0, true, "- Y: %.2f", state.player.y);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   186,  DEBUG_TEXT_SCALE, 0, true, "- VX: %.2f", state.player.vel_x * STEPS_DT);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   198,  DEBUG_TEXT_SCALE, 0, true, "- VY: %.2f", state.player.vel_y * STEPS_DT);
 
                 
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 110,   138,  DEBUG_TEXT_SCALE, 0, "Camera");
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 110,   150,  DEBUG_TEXT_SCALE, 0, "- X: %.2f", state.camera_x);
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 110,   162,  DEBUG_TEXT_SCALE, 0, "- Y: %.2f", state.camera_y);
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 110,   174,  DEBUG_TEXT_SCALE, 0, "- IntY: %.2f", state.camera_intended_y);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 110,   138,  DEBUG_TEXT_SCALE, 0, true, "Camera");
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 110,   150,  DEBUG_TEXT_SCALE, 0, true, "- X: %.2f", state.camera_x);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 110,   162,  DEBUG_TEXT_SCALE, 0, true, "- Y: %.2f", state.camera_y);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 110,   174,  DEBUG_TEXT_SCALE, 0, true, "- IntY: %.2f", state.camera_intended_y);
             }
 
             if (state.noclip) {
-                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0, 234, 0.5f, 0.5f, 0, "Noclip Activated");
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 0, 234, 0.5f, 0.5f, 0, true, "Noclip Activated");
             }
             C2D_ViewReset();
 

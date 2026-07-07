@@ -26,8 +26,8 @@ static void ui_statistic_card_draw(UIElement* e) {
     
     C2D_DrawRectSolid(left_side, top_side, 0, e->w, e->h, (e->statistic_card.swap_color ? C2D_Color32(194,114,62,255) :  C2D_Color32(161,88,48,255)));
 
-    draw_text(&goldFont_fontCharset, &goldFont_sheet, name_pos, e->y+1, e->statistic_card.stat_name.scale, e->statistic_card.stat_name.scale, e->statistic_card.stat_name.alignment, "%s", e->statistic_card.stat_name.text);
-    draw_text(&goldFont_fontCharset, &goldFont_sheet, value_pos, e->y+1, e->statistic_card.stat_name.scale, e->statistic_card.stat_name.scale, 1.f, "%d", e->statistic_card.value);
+    draw_text(&goldFont_fontCharset, &goldFont_sheet, name_pos, e->y+1, e->statistic_card.stat_name.scale, e->statistic_card.stat_name.scale, e->statistic_card.stat_name.alignment, true, "%s", e->statistic_card.stat_name.text);
+    draw_text(&goldFont_fontCharset, &goldFont_sheet, value_pos, e->y+1, e->statistic_card.stat_name.scale, e->statistic_card.stat_name.scale, 1.f, true, "%d", e->statistic_card.value);
 }
 
 UIElement ui_create_statistic_card(int x, int y, bool swap_color, char *name, int value, char (*tag)[TAG_LENGTH]) {

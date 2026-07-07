@@ -184,7 +184,7 @@ void update_level_name(int level, int card) {
 
     UIElement *e = (card) ? level_card_2_title : level_card_title;
     level_card_title_top = ui_get_element_by_tag(&default_screen_top, "levelname");
-    float length = get_text_length(&bigFont_fontCharset, 1 / 0.85f, main_levels[level].level_name);
+    float length = get_text_length(&bigFont_fontCharset, 1 / 0.85f, false, main_levels[level].level_name);
 
     float txt_scale;
     if (level_card_window->w < length) {

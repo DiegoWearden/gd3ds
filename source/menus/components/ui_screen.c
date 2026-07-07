@@ -34,6 +34,8 @@
 #include "fonts/chatFont.h"
 #include "fonts/goldFont.h"
 
+#include "utils/string_helpers.h"
+
 C2D_SpriteSheet ui_sheet;
 C2D_SpriteSheet ui_2_sheet;
 C2D_SpriteSheet window_sheet;
@@ -452,6 +454,8 @@ void ui_load_screen(UIScreen* screen,
         float b = -1.f;
         const ParticleDefinition *particleDef = &firework;
 
+        bool parse_tags = true;
+
         u32 keyBinds = 0;
 
         float darkenTime = 0.1f;
@@ -598,6 +602,8 @@ void ui_load_screen(UIScreen* screen,
                 }
             } else if(strcmp(key, "darkenTime") == 0){
                 darkenTime = atof(value);
+            } else if (strcmp(key, "parseTags") == 0) {
+                parse_tags = parse_bool(value);
             }
         }
 
@@ -622,7 +628,7 @@ void ui_load_screen(UIScreen* screen,
                 ui_create_image(x, y, id, sheet, sx, sy, tag);
         } else if (strcmp(type, "label") == 0) {
             screen->elements[screen->count++] =
-                ui_create_label(x, y, scale, text, font, align, tag);
+                ui_create_label(x, y, scale, text, font, align, parse_tags, tag);
         } else if (strcmp(type, "checkbox") == 0) {
             screen->elements[screen->count++] =
                 ui_create_checkbox(

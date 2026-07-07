@@ -23,3 +23,7 @@ bool contains(const char *first, const char *second) {
 
     return false;
 }
+
+bool parse_bool(const char *str) {
+    return (str[0] == '1' && str[1] == '\0');
+}

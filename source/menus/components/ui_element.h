@@ -95,6 +95,7 @@ typedef struct {
     float alignment;
     float scale;
     int font;
+    bool parse_tags;
 } UILabelData;
 
 typedef struct {

@@ -22,7 +22,7 @@ typedef struct {
     unsigned int count;
 } Charset;
 
-void draw_text(const Charset *font, C2D_SpriteSheet *sheet, const float x, const float y, const float scaleX, const float scaleY, float alignment, const char *text, ...);
-float get_text_length(const Charset *font, const float zoom_x, const char *text);
+void draw_text(const Charset *font, C2D_SpriteSheet *sheet, const float x, const float y, const float scaleX, const float scaleY, float alignment, bool parse_tags, const char *text, ...);
+float get_text_length(const Charset *font, const float zoom_x, bool parse_tags, const char *text);
 float get_longest_line_length(const Charset *font, const float zoom_x, const char *text);
 char *wrap_text(const Charset *font, float zoom_x, const char *text, float max_width);

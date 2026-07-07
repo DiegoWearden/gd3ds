@@ -13,6 +13,8 @@
 #include "utils/json_config.h"
 #include "state.h"
 
+#include "utils/string_helpers.h"
+
 #include "player/collision.h"
 
 ObjectsArray objects = { 0 };
@@ -384,11 +386,6 @@ void free_string_array(char **arr, int count) {
     for (int i = 0; i < count; i++) free(arr[i]);
     free(arr);
 }
-
-bool parse_bool(const char *str) {
-    return (str[0] == '1' && str[1] == '\0');
-}
-
 
 void parse_color_channel(GDColorChannel *channels, int i, char *channel_string) {
     GDColorChannel channel = {0};  // Zero-initialize

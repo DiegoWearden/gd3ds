@@ -1115,7 +1115,7 @@ void draw_attempt_text() {
     float calc_y = SCREEN_HEIGHT - ((state.attempt_text_pos.y - state.camera_y));  
 
     if (calc_x > -200) {
-        draw_text(&bigFont_fontCharset, &bigFont_sheet, get_mirror_x(calc_x, state.mirror_factor), calc_y, 1, (doNot ? -1 : 1), 0.5f, "Attempt %d", attempts);
+        draw_text(&bigFont_fontCharset, &bigFont_sheet, get_mirror_x(calc_x, state.mirror_factor), calc_y, 1, (doNot ? -1 : 1), 0.5f, true, "Attempt %d", attempts);
     }
 }
 

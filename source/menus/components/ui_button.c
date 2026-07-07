@@ -123,7 +123,7 @@ static void ui_button_draw(UIElement* e) {
 
     if (e->button.textScale == 0){
         // Get text length in pixels
-        float length = get_text_length(font->charset, 1 / 0.85f, e->button.text);
+        float length = get_text_length(font->charset, 1 / 0.85f, true, e->button.text);
     
         if (e->w < length) {
             text_scale = scale * (e->w / length);
@@ -134,7 +134,7 @@ static void ui_button_draw(UIElement* e) {
         text_scale = (e->button.textScale * scale);
     }
 
-    draw_text(font->charset, font->sheet, e->x, e->y, text_scale, text_scale, 0.5f, "%s", e->button.text);
+    draw_text(font->charset, font->sheet, e->x, e->y, text_scale, text_scale, 0.5f, true, "%s", e->button.text);
 }
 
 void ui_button_set_image(UIElement *e, int sprite_index, int sheet) {
