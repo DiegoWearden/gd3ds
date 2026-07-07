@@ -179,6 +179,10 @@ static float get_practice_level_music_time() {
     return level_info.song_offset + state.player.timeElapsed;
 }
 
+static float get_level_music_start_time() {
+    return (level_info.custom_song_id > 0 || state.custom_level) ? level_info.song_offset : 0.f;
+}
+
 static void play_original_practice_song() {
     practice_level_music_active = false;
     song_loaded = false;
@@ -192,13 +196,29 @@ bool practice_uses_level_music() {
 void apply_practice_music_mode() {
     if (!state.practice_mode) return;
 
-    stop_mp3();
+    if (practiceLevelMusic) {
+        if (practice_level_music_active) {
+            sync_practice_level_music();
+            return;
+        }
 
-    if (practiceLevelMusic && play_level_song_at(get_practice_level_music_time())) {
-        practice_level_music_active = true;
-    } else {
-        play_original_practice_song();
+        if (song_loaded) {
+            practice_level_music_active = true;
+            return;
+        }
+
+        stop_mp3();
+
+        if (play_level_song_at(get_practice_level_music_time())) {
+            practice_level_music_active = true;
+        } else {
+            play_original_practice_song();
+        }
+        return;
     }
+
+    stop_mp3();
+    play_original_practice_song();
 }
 
 void sync_practice_level_music() {
@@ -215,12 +235,19 @@ void start_practice_mode() {
 }
 
 void exit_practice_mode() {
+    bool was_using_level_music = practice_uses_level_music();
+
     state.practice_mode = false;
     practice_level_music_active = false;
     init_variables();
     reload_level(); 
-    stop_mp3();
-    play_level_song();
+
+    if (was_using_level_music && song_loaded) {
+        seek_mp3(get_level_music_start_time());
+    } else {
+        stop_mp3();
+        play_level_song();
+    }
 }
 
 static bool auto_checkpoint_is_flying_mode(Player *player) {
