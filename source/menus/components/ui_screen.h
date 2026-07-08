@@ -2,7 +2,6 @@
 #include "ui_element.h"
 #include "text.h"
 
-#define UI_MAX_ELEMENTS 128
 #define UI_MAX_PARTICLE_SYSTEMS 32
 
 typedef enum {
@@ -13,9 +12,11 @@ typedef enum {
     NUM_OPEN_ANIMS
 } ScreenOpenAnim;
 
-typedef struct {
-    UIElement elements[UI_MAX_ELEMENTS];
-    int count;
+typedef struct UIScreen {
+    UIElement **elements;
+    size_t count;
+    size_t capacity;
+
     float open_anim_time;
     bool open_anim_done;
     ScreenOpenAnim open_anim;

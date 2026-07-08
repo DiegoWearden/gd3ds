@@ -2,21 +2,9 @@
 #include <citro2d.h>
 #include "menus/components/ui_element.h"
 #include "menus/components/ui_screen.h"
-#include "math_helpers.h"
 #include "menus/components/ui_list.h"
-#include "menus/components/ui_window.h"
-#include "menus/components/ui_textbox.h"
-#include "menus/components/ui_image.h"
-#include "fonts/bigFont.h"
-#include "main.h"
-#include "easing.h"
-#include "color_channels.h"
-#include "mp3_player.h"
-#include "graphics.h"
 #include "main_menu.h"
-#include "level_select.h"
 #include "settings.h"
-#include "info_card.h"
 
 #include "save/config.h"
 
@@ -145,83 +133,83 @@ void exit_settings(UIElement* e) {
 }
 
 void wide_settings(UIElement* e) {
-    wideEnabled = e->checkbox.checked;
+    wideEnabled = ((UICheckBox *)e)->checked;
 }
 
 void particles_settings(UIElement* e) {
-    particlesDisabled = e->checkbox.checked;
+    particlesDisabled = ((UICheckBox *)e)->checked;
 }
 
 void glow_settings(UIElement* e) {
-    glowEnabled = e->checkbox.checked;
+    glowEnabled = ((UICheckBox *)e)->checked;
 }
 
 void y_button_settings(UIElement* e) {
-    yJump = e->checkbox.checked;
+    yJump = ((UICheckBox *)e)->checked;
 }
 
 void touch_effect_settings(UIElement* e) {
-    touchEffectEverywhere = e->checkbox.checked;
+    touchEffectEverywhere = ((UICheckBox *)e)->checked;
 }
 
 void debug_settings(UIElement* e) {
-    enableDebugBindings = e->checkbox.checked;
+    enableDebugBindings = ((UICheckBox *)e)->checked;
 }
 
 void hitboxes_settings(UIElement* e) {
-    hitboxesEnabled = e->checkbox.checked;
+    hitboxesEnabled = ((UICheckBox *)e)->checked;
 }
 
 void hitbox_trail_settings(UIElement* e) {
-    hitboxTrail = e->checkbox.checked;
+    hitboxTrail = ((UICheckBox *)e)->checked;
 }
 
 void hitboxes_on_death_settings(UIElement* e) {
-    hitboxesOnDeath = e->checkbox.checked;
+    hitboxesOnDeath = ((UICheckBox *)e)->checked;
 }
 
 void progressbar_settings(UIElement* e) {
-    showProgressBar = e->checkbox.checked;
+    showProgressBar = ((UICheckBox *)e)->checked;
 }
 
 void progresspercent_settings(UIElement* e) {
-    showProgressPercent = e->checkbox.checked;
+    showProgressPercent = ((UICheckBox *)e)->checked;
 }
 
 void decimalpercent_settings(UIElement* e) {
-    decimalPercent = e->checkbox.checked;
+    decimalPercent = ((UICheckBox *)e)->checked;
 }
 
 void ultradecimalpercent_settings(UIElement* e) {
-    ultraDecimalPercent = e->checkbox.checked;
+    ultraDecimalPercent = ((UICheckBox *)e)->checked;
 }
 
 void switchTrailColor_settings(UIElement* e) {
-    switchTrailColor = e->checkbox.checked;
+    switchTrailColor = ((UICheckBox *)e)->checked;
 }
 
 void switchWaveTrailColor_settings(UIElement* e) {
-    switchWaveTrailColor = e->checkbox.checked;
+    switchWaveTrailColor = ((UICheckBox *)e)->checked;
 }
 
 void quickRetry_settings(UIElement* e) {
-    quickRetry = e->checkbox.checked;
+    quickRetry = ((UICheckBox *)e)->checked;
 }
 
 void solidWaveTrail_settings(UIElement* e) {
-    solidWaveTrail = e->checkbox.checked;
+    solidWaveTrail = ((UICheckBox *)e)->checked;
 }
 
 void noPlayerTrail_settings(UIElement* e) {
-    noPlayerTrail = e->checkbox.checked;
+    noPlayerTrail = ((UICheckBox *)e)->checked;
 }
 
 void noWaveTrailBehind_settings(UIElement* e) {
-    noWaveTrailBehind = e->checkbox.checked;
+    noWaveTrailBehind = ((UICheckBox *)e)->checked;
 }
 
 void doNot_settings(UIElement* e) {
-    doNot = e->checkbox.checked;
+    doNot = ((UICheckBox *)e)->checked;
 }
 
 void action_left_page(UIElement *e) {
@@ -339,7 +327,7 @@ void settings_init() {
     yes_exit = false;
 
     for (int i = 0; i < NUMBER_SETTINGS; i++) {
-        ui_get_element_by_tag(&screen, settings[i].chk_name)->checkbox.checked = *settings[i].var;
+        ((UICheckBox *)ui_get_element_by_tag(&screen, settings[i].chk_name))->checked = *settings[i].var;
     }
 
     current_page = 0;

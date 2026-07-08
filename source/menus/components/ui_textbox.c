@@ -12,6 +12,8 @@
 #include "utils/keyboard.h"
 
 static void ui_textbox_update(UIElement* e, UIInput* touch) {
+    UITextbox *textbox = (UITextbox *) e;
+
     bool inside = touch->touchPosition.px >= e->x - (e->w / 2) && touch->touchPosition.px < e->x + (e->w / 2) &&
                   touch->touchPosition.py >= e->y - (e->h / 2) && touch->touchPosition.py < e->y + (e->h / 2);
     
@@ -21,16 +23,18 @@ static void ui_textbox_update(UIElement* e, UIInput* touch) {
         touch->interacted = true;
 
         if (hidKeysDown() & KEY_TOUCH) {
-            read_text(e->textbox.text, e->textbox.title, e->textbox.character_limit);
+            read_text(textbox->text, textbox->title, textbox->character_limit);
         }
     }
 }
 
 static void ui_textbox_draw(UIElement* e) {
-    draw_9_slice(e->textbox.atlas, e->x, e->y, e->w, e->h, e->textbox.border, C2D_Color32(0, 0, 0, 127));
+    UITextbox *textbox = (UITextbox *) e;
+
+    draw_9_slice(textbox->atlas, e->x, e->y, e->w, e->h, textbox->border, C2D_Color32(0, 0, 0, 127));
     
     // Get text length in pixels
-    float length = get_text_length(&bigFont_fontCharset, 1.f, false, e->textbox.text);
+    float length = get_text_length(&bigFont_fontCharset, 1.f, false, textbox->text);
 
     // Resize it to fit the button bounds
     float txt_scale;
@@ -40,29 +44,43 @@ static void ui_textbox_draw(UIElement* e) {
         txt_scale = 1.0f;
     }
 
-    draw_text(&bigFont_fontCharset, &bigFont_sheet, e->x - e->w / 2 + (TEXTBOX_MARGIN / 2), e->y, txt_scale, txt_scale, 0.f, false, "%s", e->textbox.text);
+    draw_text(&bigFont_fontCharset, &bigFont_sheet, e->x - e->w / 2 + (TEXTBOX_MARGIN / 2), e->y, txt_scale, txt_scale, 0.f, false, "%s", textbox->text);
 }
 
-UIElement ui_create_textbox(
+static void ui_textbox_destroy(UIElement *e) {
+    if (e) {
+        free(e);
+        e = NULL;
+    }
+}
+
+UITextbox *ui_create_textbox(
     int x, int y, int w, int limit, char *title,
     char (*tag)[TAG_LENGTH]
 ) {
-    UIElement e = {
-        .type = UI_TEXTBOX,
-        .x = x, .y = y,
-        .w = w, .h = 30,
-        .enabled = true,
-        .update = ui_textbox_update,
-        .draw = ui_textbox_draw
-    };
+    UITextbox *e = malloc(sizeof(UITextbox));
 
-    strncpy(e.textbox.title, title, 63);
+    if (!e) return NULL;
+
+    memset(e, 0, sizeof(UITextbox));
+    e->base.type = UI_TEXTBOX;
+    e->base.x = x;
+    e->base.y = y;
+    e->base.w = w;
+    e->base.h = 30;
+    e->base.enabled = true;
+    e->base.update = ui_textbox_update;
+    e->base.draw = ui_textbox_draw;
+    e->base.destroy = ui_textbox_destroy;
+
+    strncpy(e->title, title, 63);
 
     // Copy tag
-    copy_tag_array(&e, tag);
-    e.textbox.atlas = C2D_SpriteSheetGetImage(window_sheet, TEXTBOX_STYLE);
-    e.textbox.border = e.textbox.atlas.subtex->width / 3;
+    copy_tag_array(&e->base, tag);
 
-    e.textbox.character_limit = limit;
+    e->atlas = C2D_SpriteSheetGetImage(window_sheet, TEXTBOX_STYLE);
+    e->border = e->atlas.subtex->width / 3;
+
+    e->character_limit = limit;
     return e;
 }

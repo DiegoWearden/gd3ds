@@ -2,21 +2,7 @@
 #include <citro2d.h>
 #include "menus/components/ui_element.h"
 #include "menus/components/ui_screen.h"
-#include "math_helpers.h"
 #include "menus/components/ui_list.h"
-#include "menus/components/ui_window.h"
-#include "menus/components/ui_textbox.h"
-#include "menus/components/ui_image.h"
-#include "menus/components/ui_label.h"
-#include "menus/components/ui_statistic_card.h"
-#include "fonts/bigFont.h"
-#include "main.h"
-#include "easing.h"
-#include "color_channels.h"
-#include "mp3_player.h"
-#include "graphics.h"
-#include "main_menu.h"
-#include "level_select.h"
 #include "statistics.h"
 #include "menus/components/ui_darken.h"
 
@@ -29,7 +15,7 @@ static UIScreen screen = {
     .isBottom = true
 };
 
-static UIElement *list;
+static UIList *list;
 
 typedef struct StatisticEntries {
     char *name;
@@ -67,14 +53,14 @@ static UIAction actions[] = {
 void statistics_init() {
     ui_load_screen(&screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/statistics.txt");
 
-    list = ui_get_element_by_tag(&screen, "list");
+    list = (UIList *) ui_get_element_by_tag(&screen, "list");
 
     if (list) {
         for (int i = 0; i < NUM_STATS_ENTRIES; i++) {
             char *name = stats[i].name;
             int value = *stats[i].value;
 
-            entries[i] = ui_create_statistic_card(0, 0, i & 1, name, value, NULL);
+            //entries[i] = ui_create_statistic_card(0, 0, i & 1, name, value, NULL);
             ui_list_add(list, &entries[i]);
         }
     }
@@ -85,8 +71,8 @@ void statistics_init() {
 
 int statistics_loop() {
     if(exiting){
-        UIElement *darken = ui_get_element_by_tag(&screen, "darken");
-        darken->opacity = ((0.5f - screen.open_anim_time) * 2.f) * darken->darken.targetOpacity;
+        UIDarken *darken = (UIDarken *) ui_get_element_by_tag(&screen, "darken");
+        darken->base.opacity = ((0.5f - screen.open_anim_time) * 2.f) * darken->targetOpacity;
         ui_darken_reset_opacity(darken);
         if(screen.open_anim_done){
             yes_exit = true;

@@ -7,23 +7,14 @@
 #include "menus/components/ui_screen.h"
 #include "math_helpers.h"
 #include "menus/components/ui_list.h"
-#include "menus/components/ui_window.h"
-#include "menus/components/ui_textbox.h"
 #include "menus/components/ui_image.h"
 #include "menus/components/ui_label.h"
 #include "fonts/bigFont.h"
-#include "fonts/chatFont.h"
-#include "fonts/goldFont.h"
 #include "main.h"
 #include "easing.h"
-#include "color_channels.h"
 #include "mp3_player.h"
-#include "graphics.h"
-#include "main_menu.h"
 #include "level_select.h"
-#include "info_card.h"
 #include "state.h"
-#include "endwall.h"
 #include "menus/components/ui_darken.h"
 #include "main.h"
 #include "particles/circles.h"
@@ -62,14 +53,14 @@ static UIScreen screen = {
     .isBottom = true
 };
 
-static UIElement *attempt_text;
-static UIElement *jumps_text;
-static UIElement *time_text;
+static UILabel *attempt_text;
+static UILabel *jumps_text;
+static UILabel *time_text;
 
-static UIElement *completion_text;
+static UILabel *completion_text;
 
-static UIElement *coins_full[3];
-static UIElement *particles[4];
+static UIImage *coins_full[3];
+static UIParticle *particles[4];
 
 char *practice_completion_text = "Well done... Now try to complete it<p>without any checkpoints!";
 
@@ -138,9 +129,11 @@ static void restart_level(UIElement* e) {
 }
 
 static void scale_bottom_buttons_anim(UIElement* e){
+    UIButton *button = (UIButton *) e;
+
     float fade_value_scale = easeValue(ELASTIC_OUT, 0, 1, anim_time, ANIM_DURATION, 1.f);
-    e->button.scaleX = fade_value_scale;
-    e->button.scaleY = fade_value_scale;
+    button->scaleX = fade_value_scale;
+    button->scaleY = fade_value_scale;
 }
 
 static UIAction actions[] = {
@@ -154,8 +147,8 @@ static void run_start_animation(float delta) {
     window_y_pos = -120 + fade_value;
     up_y_start = fade_value;
 
-    UIElement *darken = ui_get_element_by_tag(&screen, "endDarken");
-    darken->opacity = clampf(anim_time, 0.f, 0.6f);
+    UIDarken *darken = (UIDarken *) ui_get_element_by_tag(&screen, "endDarken");
+    darken->base.opacity = clampf(anim_time, 0.f, 0.6f);
     ui_darken_reset_opacity(darken);
 
     ui_run_func_on_tag(&screen, "bottomWindow", scale_bottom_buttons_anim);
@@ -175,15 +168,16 @@ static void run_start_animation(float delta) {
     anim_time += delta;
 }
 
-static void spawn_reward_firework(UIElement* e){
-    float x = e->x;
-    float y = e->y;
-    UIElement *particle = particles[rewardAnimPhase];
+static void spawn_reward_firework(UIImage* e){
+    float x = e->base.x;
+    float y = e->base.y;
+
+    UIParticle *particle = particles[rewardAnimPhase];
     ui_particle_emit(particle, 60);
 
     ui_set_use_effect_col(
         ui_add_use_effect(
-            ui_get_element_by_tag(&screen_top, "rewardCircle"),
+            (UIUseEffect *) ui_get_element_by_tag(&screen_top, "rewardCircle"),
         x, y, &death_effect),
     1.f, 0.75f, 0.f);
 }
@@ -198,11 +192,11 @@ static void run_rewards_animation(float delta){
     //move particles and use effects to align with coin when still animating the window coming onscreen
     if(animating_down || animating_up){
         ui_particle_update_pos(particles[rewardAnimPhase]);
-        ui_use_effect_update_pos(ui_get_element_by_tag(&screen_top, "rewardCircle"));
+        ui_use_effect_update_pos((UIUseEffect *) ui_get_element_by_tag(&screen_top, "rewardCircle"));
     }
 
     LevelData *level_data_sel = (state.custom_level ? &level_data : &main_level_data[curr_level_id]);
-    UIElement *rewardCenter = NULL;
+    UIImage *rewardCenter = NULL;
 
     float scale_value = easeValue(BOUNCE_OUT, 3.f, 1.f, rewardAnimTime, 0.35f, 1.f);
     float opacity_value = easeValue(EASE_LINEAR, 0.f, 1.f, rewardAnimTime, 0.1f, 1.f);
@@ -217,34 +211,34 @@ static void run_rewards_animation(float delta){
             return;
         }
 
-        UIElement* coin = coins_full[rewardAnimPhase];
+        UIImage* coin = coins_full[rewardAnimPhase];
         rewardCenter = coin;
         
-        coin->enabled = true;
-        coin->image.scaleX = scale_value * 0.88f;
-        coin->image.scaleY = scale_value * 0.88f;
+        coin->base.enabled = true;
+        coin->scaleX = scale_value * 0.88f;
+        coin->scaleY = scale_value * 0.88f;
 
         ui_image_set_tint(coin, C2D_Color32f(1, 1, 1, opacity_value));
     } else{
         if(showStars) {
-            UIElement* star = ui_get_element_by_tag(&screen_top, "star");
-            UIElement* star_text = ui_get_element_by_tag(&screen_top, "startext");
+            UIImage* star = (UIImage *) ui_get_element_by_tag(&screen_top, "star");
+            UILabel* star_text = (UILabel *) ui_get_element_by_tag(&screen_top, "startext");
             rewardCenter = star;
 
-            star->enabled = true;
-            star_text->enabled = true;
+            star->base.enabled = true;
+            star_text->base.enabled = true;
 
             //scale around y = 128 (relative to window)
             int center = up_y_start - 128;
-            star->y = ((scale_value * 0.7f) * (up_y_start - 127 - center) + center);
-            star_text->y = ((scale_value * 0.55f) * (up_y_start - 83 - center) + center);
+            star->base.y = ((scale_value * 0.7f) * (up_y_start - 127 - center) + center);
+            star_text->base.y = ((scale_value * 0.55f) * (up_y_start - 83 - center) + center);
 
-            star->image.scaleX = scale_value * 0.7f;
-            star->image.scaleY = scale_value * 0.7f;
-            star_text->label.scale = scale_value * 0.55f;
+            star->scaleX = scale_value * 0.7f;
+            star->scaleY = scale_value * 0.7f;
+            star_text->scale = scale_value * 0.55f;
 
             ui_image_set_tint(star, C2D_Color32f(1, 1, 1, opacity_value));
-            star_text->opacity = opacity_value;
+            star_text->base.opacity = opacity_value;
         } else {
             return;
         }
@@ -313,13 +307,13 @@ void level_complete_init() {
         snprintf(time, sizeof(time), "Time: %02d:%02d", minutes, seconds);
     }
 
-    attempt_text = ui_get_element_by_tag(&screen_top, "attempts");
+    attempt_text = (UILabel *) ui_get_element_by_tag(&screen_top, "attempts");
     if (attempt_text) ui_label_set_text(attempt_text, attempts);
 
-    jumps_text = ui_get_element_by_tag(&screen_top, "jumps");
+    jumps_text = (UILabel *) ui_get_element_by_tag(&screen_top, "jumps");
     if (jumps_text) ui_label_set_text(jumps_text, jumps);
 
-    time_text = ui_get_element_by_tag(&screen_top, "time");
+    time_text = (UILabel *) ui_get_element_by_tag(&screen_top, "time");
     if (time_text) ui_label_set_text(time_text, time);
 
     yes_exit = false;
@@ -334,23 +328,23 @@ void level_complete_init() {
     rewardAnimTime = 0.f;
     playedRewardSFX = false;
 
-    coins_full[0] = ui_get_element_by_tag(&screen_top, "coin1full");
-    coins_full[1] = ui_get_element_by_tag(&screen_top, "coin2full");
-    coins_full[2] = ui_get_element_by_tag(&screen_top, "coin3full");
+    coins_full[0] = (UIImage *) ui_get_element_by_tag(&screen_top, "coin1full");
+    coins_full[1] = (UIImage *) ui_get_element_by_tag(&screen_top, "coin2full");
+    coins_full[2] = (UIImage *) ui_get_element_by_tag(&screen_top, "coin3full");
 
     ui_run_func_on_tag(&screen_top, "coinfull", ui_disable_element);
 
-    particles[0] = ui_get_element_by_tag(&screen_top, "coinParticle1");
-    particles[1] = ui_get_element_by_tag(&screen_top, "coinParticle2");
-    particles[2] = ui_get_element_by_tag(&screen_top, "coinParticle3");
-    particles[3] = ui_get_element_by_tag(&screen_top, "starParticle");
+    particles[0] = (UIParticle *) ui_get_element_by_tag(&screen_top, "coinParticle1");
+    particles[1] = (UIParticle *) ui_get_element_by_tag(&screen_top, "coinParticle2");
+    particles[2] = (UIParticle *) ui_get_element_by_tag(&screen_top, "coinParticle3");
+    particles[3] = (UIParticle *) ui_get_element_by_tag(&screen_top, "starParticle");
 
     // Set completion text
-    completion_text = ui_get_element_by_tag(&screen_top, "funnytext");
+    completion_text = (UILabel *) ui_get_element_by_tag(&screen_top, "funnytext");
     
     LevelData *level_data_sel = (state.custom_level ? &level_data : &main_level_data[curr_level_id]);
 
-    UIElement *star_text = ui_get_element_by_tag(&screen_top, "startext");
+    UILabel *star_text = (UILabel *) ui_get_element_by_tag(&screen_top, "startext");
 
     char star_count[4];
     int stars = state.custom_level ? level_data_sel->stars : main_levels[curr_level_id].stars;
@@ -358,7 +352,7 @@ void level_complete_init() {
     ui_label_set_text(star_text, star_count);
 
     ui_disable_element(ui_get_element_by_tag(&screen_top, "star"));
-    ui_disable_element(star_text);
+    ui_disable_element((UIElement *) star_text);
 
     showStars = stars > 0 && level_data_sel->normal_progress < 100;
 
@@ -421,7 +415,7 @@ void level_complete_init() {
         ui_label_set_text(completion_text, text);
 
         float text_scale;
-        float scale = completion_text->label.scale;
+        float scale = completion_text->scale;
 
         // Get text length in pixels
         float length = get_longest_line_length(&bigFont_fontCharset, scale, text);
@@ -432,7 +426,7 @@ void level_complete_init() {
             text_scale = scale;
         }
 
-        completion_text->label.scale = text_scale;
+        completion_text->scale = text_scale;
     } else {
         ui_run_func_on_tag(&screen_top, "funnytext", ui_disable_element);
 
@@ -444,23 +438,23 @@ void level_complete_init() {
                 alreadyCollectedCoin = true;
             }
             
-            UIElement* coin = coins_full[i];
+            UIImage* coin = coins_full[i];
 
             if(alreadyCollectedCoin){
-                coin->enabled = true;
-                coin->opacity = 1.f;
-                coin->image.scaleX = 0.88f;
-                coin->image.scaleY = 0.88f;
+                coin->base.enabled = true;
+                coin->base.opacity = 1.f;
+                coin->scaleX = 0.88f;
+                coin->scaleY = 0.88f;
             }
         }
     }
 
     if (state.practice_mode) {
         ui_run_func_on_tag(&screen_top, "levelcomplete", ui_disable_element);
-        if (doNot) ui_get_element_by_tag(&screen_top, "practicecomplete")->image.scaleX *= -1.f;
+        if (doNot) ((UIImage *) ui_get_element_by_tag(&screen_top, "practicecomplete"))->scaleX *= -1.f;
     } else {
         ui_run_func_on_tag(&screen_top, "practicecomplete", ui_disable_element);
-        if (doNot) ui_get_element_by_tag(&screen_top, "levelcomplete")->image.scaleX *= -1.f;
+        if (doNot) ((UIImage *) ui_get_element_by_tag(&screen_top, "levelcomplete"))->scaleX *= -1.f;
     }
 
     ui_get_element_by_tag(&screen, "endDarken")->opacity = 0.f;

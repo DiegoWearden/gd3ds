@@ -19,7 +19,7 @@
 #include "ui_use_effect.h"
 #include "ui_slider.h"
 #include "particles/particle_definitions.h"
-#include "ui_pallete_icons.h"
+#include "ui_palette_icons.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -29,7 +29,6 @@
 
 #include "graphics.h"
 
-#include "text.h"
 #include "fonts/bigFont.h"
 #include "fonts/chatFont.h"
 #include "fonts/goldFont.h"
@@ -124,7 +123,7 @@ void run_animation_slide(UIScreen *screen, bool go_up) {
     bool found_parent = false;
     float movement_y = 0;
     for (int i = 0; i < screen->count; i++) {
-        UIElement *e = &screen->elements[i];
+        UIElement *e = screen->elements[i];
 
         if (!found_parent) {
             found_parent = true;
@@ -152,7 +151,7 @@ void ui_screen_update(UIScreen* s, UIInput* touch) {
     if(s->disable_element_update) return;
 
     for (int i = s->count - 1; i >= 0; i--) {
-        UIElement *e = &s->elements[i];
+        UIElement *e = s->elements[i];
         if (e->enabled) e->update(e, touch);
     }
 }
@@ -191,7 +190,7 @@ void ui_screen_draw(UIScreen* s) {
     C2D_ViewSave(&newMat);
 
     for (int i = 0; i < s->count; i++) {
-        UIElement *e = &s->elements[i];
+        UIElement *e = s->elements[i];
 
         if(e->type == UI_DARKEN) {
             C2D_ViewRestore(&originalMat);
@@ -209,7 +208,7 @@ void ui_screen_draw(UIScreen* s) {
 
 void finish_animation(UIScreen *screen) {
     // Surely no animation lasts more than 31 years
-    screen->open_anim_time = 999999999;
+    screen->open_anim_time = 999999999.f;
     screen->open_anim_done = true;
 }
 
@@ -288,10 +287,11 @@ static bool get_bool(char *value) {
 // Get element by its tag, returns NULL if there is no elements with that tag
 UIElement *ui_get_element_by_tag(UIScreen *screen, const char *tag) {
     for (int i = 0; i < screen->count; i++) {
+        UIElement *e = screen->elements[i];
         for (int j = 0; j < TAGS_PER_ELEMENT; j++) {
             // Check for element with this tag
-            if (strcmp(screen->elements[i].tag[j], tag) == 0) {
-                return &screen->elements[i];
+            if (strcmp(e->tag[j], tag) == 0) {
+                return e;
             }
         }
     }
@@ -302,10 +302,11 @@ UIElement *ui_get_element_by_tag(UIScreen *screen, const char *tag) {
 // Run a function on each element with an specific tag
 void ui_run_func_on_tag(UIScreen *screen, const char *tag, void (*func)(UIElement *e)) {
     for (int i = 0; i < screen->count; i++) {
+        UIElement *e = screen->elements[i];
         for (int j = 0; j < TAGS_PER_ELEMENT; j++) {
             // Check for element with this tag
-            if (strcmp(screen->elements[i].tag[j], tag) == 0) {
-                func(&screen->elements[i]);
+            if (strcmp(e->tag[j], tag) == 0) {
+                func(e);
             }
         }
     }
@@ -318,7 +319,7 @@ void ui_set_pos_on_tag(UIScreen *screen, float x, float y, const char *tag) {
     float movement_y = 0;
     for (int i = 0; i < screen->count; i++) {
         for (int j = 0; j < TAGS_PER_ELEMENT; j++) {
-            UIElement *e = &screen->elements[i];
+            UIElement *e = screen->elements[i];
             // Check for element with this tag
             if (strcmp(e->tag[j], tag) == 0) {
                 if (!found_parent) {
@@ -336,20 +337,17 @@ void ui_set_pos_on_tag(UIScreen *screen, float x, float y, const char *tag) {
 
 void ui_enable_element(UIElement *e) { 
     e->enabled = true;
+
+    if (e->on_enable) {
+        e->on_enable(e);
+    }
 };
 
 void ui_disable_element(UIElement *e) { 
     e->enabled = false;
-    if (e->type == UI_BUTTON) {
-        e->button.hovered = false;
-        e->button.hoverScale = 1.f;
-        e->button.hoverTimer = 0.f;
-    }
-
-    if (e->type == UI_CHECKBOX) {
-        e->checkbox.hovered = false;
-        e->checkbox.hoverScale = 1.f;
-        e->checkbox.hoverTimer = 0.f;
+    
+    if (e->on_disable) {
+        e->on_disable(e);
     }
 };
 
@@ -375,20 +373,18 @@ static void split_tags(char *input, char tag[][TAG_LENGTH]) {
     }
 }
 
-void add_ui_particle_system(ParticleSystem *particle){
-    uiParticleSystems[uiParticleSystemCount++] = particle;
-}
+void ui_screen_add_element(UIScreen *screen, UIElement *element) {
+    if (screen->count == screen->capacity) {
+        screen->capacity *= 2;
 
-void free_ui_particle_systems(){
-    for (int i = 0; i < uiParticleSystemCount; i++)
-    {
-        if (uiParticleSystems[i]) {
-            freeParticleData(&(uiParticleSystems[i]->data));
-            uiParticleSystems[i] = NULL;
-        }
+        screen->elements = realloc(
+            screen->elements,
+            screen->capacity * sizeof(*screen->elements)
+        );
     }
 
-    uiParticleSystemCount = 0;
+    screen->elements[screen->count++] = element;
+    element->screen = screen;
 }
 
 // Load a screen from its file, needs a pointer to the actions table and the action count
@@ -404,6 +400,8 @@ void ui_load_screen(UIScreen* screen,
     screen->open_anim_done = false;
 
     screen->count = 0;
+    screen->capacity = 16;
+    screen->elements = calloc(screen->capacity, sizeof(*screen->elements));
 
     char line[512];
 
@@ -607,14 +605,10 @@ void ui_load_screen(UIScreen* screen,
             }
         }
 
-        // There is a limit of elements on an screen, exit if reached
-        if (screen->count >= UI_MAX_ELEMENTS)
-            break;
-
         // Elements
         if (strcmp(type, "button") == 0) {
-            screen->elements[screen->count++] =
-                ui_create_button(
+            ui_screen_add_element(screen,
+                (UIElement *) ui_create_button(
                     x, y, sx, sy, id, sheet, opacity,
                     ui_find_action(actions, actionCount, actionName),
                     text,
@@ -622,50 +616,55 @@ void ui_load_screen(UIScreen* screen,
                     tag,
                     textScale,
                     keyBinds
-                );
+                )
+            );
         } else if (strcmp(type, "image") == 0) {
-            screen->elements[screen->count++] =
-                ui_create_image(x, y, id, sheet, sx, sy, tag);
+            ui_screen_add_element(screen, (UIElement *) ui_create_image(x, y, id, sheet, sx, sy, tag));
         } else if (strcmp(type, "label") == 0) {
-            screen->elements[screen->count++] =
-                ui_create_label(x, y, scale, text, font, align, parse_tags, tag);
+            ui_screen_add_element(screen, (UIElement *) ui_create_label(x, y, scale, text, font, align, parse_tags, tag));
         } else if (strcmp(type, "checkbox") == 0) {
-            screen->elements[screen->count++] =
-                ui_create_checkbox(
+            ui_screen_add_element(screen,
+                (UIElement *) ui_create_checkbox(
                     x, y, sx, sy, checked,
                     ui_find_action(actions, actionCount, actionName),
                     tag
-                );
+                )
+            );
         } else if (strcmp(type, "window") == 0) {
-            screen->elements[screen->count++] =
-                ui_create_window(
+            ui_screen_add_element(screen,
+                (UIElement *) ui_create_window(
                     x, y, w, h, style,
                     tag
-                );
+                )
+            );
         } else if (strcmp(type, "textbox") == 0) {
-            screen->elements[screen->count++] =
-                ui_create_textbox(
+            ui_screen_add_element(screen,
+                (UIElement *) ui_create_textbox(
                     x, y, w, limit, text,
                     tag
-                );
+                )
+            );
         } else if (strcmp(type, "list") == 0) {
-            screen->elements[screen->count++] =
-                ui_create_list(
+            ui_screen_add_element(screen,
+                (UIElement *) ui_create_list(
                     x, y, w, h,
                     tag
-                );
+                )
+            );
         } else if (strcmp(type, "bggradient") == 0) {
-            screen->elements[screen->count++] =
-                ui_create_bg_gradient(
+            ui_screen_add_element(screen,
+                (UIElement *) ui_create_bg_gradient(
                     tag
-                );
+                )
+            );
         } else if (strcmp(type, "actionarea") == 0) {
-            screen->elements[screen->count++] =
-                ui_create_action_area(
+            ui_screen_add_element(screen,
+                (UIElement *) ui_create_action_area(
                     x, y, w, h,
                     ui_find_action(actions, actionCount, actionName),
                     tag
-                );
+                )
+            );
         } else if (strcmp(type, "darken") == 0) {
             bool fullScreen = false;
             if (w == 0 || h == 0) {
@@ -675,27 +674,30 @@ void ui_load_screen(UIScreen* screen,
                 h = SCREEN_HEIGHT;
                 fullScreen = true;
             }
-            screen->elements[screen->count++] =
-                ui_create_darken(
+            ui_screen_add_element(screen,
+                (UIElement *) ui_create_darken(
                     x, y, w, h, opacity, darkenTime, fullScreen, tag
-                );
+                )
+            );
         } else if (strcmp(type, "icon") == 0) {
-            screen->elements[screen->count++] =
-                ui_create_icon(
+            ui_screen_add_element(screen,
+                (UIElement *) ui_create_icon(
                     x, y, scale, index, gamemode,
                     ui_find_action(actions, actionCount, actionName),
                     tag
-                );
+                )
+            );
         } else if (strcmp(type, "colorbutton") == 0) {
-            screen->elements[screen->count++] =
-                ui_create_color_button(
+            ui_screen_add_element(screen,
+                (UIElement *) ui_create_color_button(
                     x, y, scale, index, color_index,
                     ui_find_action(actions, actionCount, actionName),
                     tag
-                );
+                )
+            );
         } else if (strcmp(type, "windowbutton") == 0) {
-            screen->elements[screen->count++] =
-                ui_create_window_button(
+            ui_screen_add_element(screen,
+                (UIElement *) ui_create_window_button(
                     x, y, w, h, style,
                     ui_find_action(actions, actionCount, actionName),
                     text,
@@ -703,32 +705,32 @@ void ui_load_screen(UIScreen* screen,
                     tag,
                     textScale,
                     keyBinds
-                );
+                )
+            );
         } else if (strcmp(type, "progressbar") == 0) {
-            screen->elements[screen->count++] =
-                ui_create_progress_bar(
+            ui_screen_add_element(screen,
+                (UIElement *) ui_create_progress_bar(
                     x, y, style, scale, max_value,
                     tag
-                );
+                )
+            );
         } else if (strcmp(type, "particle") == 0) {
-            int i = screen->count++;
-            screen->elements[i] = 
-                ui_create_particle(
+            ui_screen_add_element(screen,
+                (UIElement *) ui_create_particle(
                     x, y, scale, r, g, b, particleDef, tag
-                );
-            add_ui_particle_system(&screen->elements[i].particle.particle);
+                )
+            );
         } else if (strcmp(type, "useeffect") == 0) {
-            screen->elements[screen->count++] =
-                ui_create_use_effect(tag);
+            ui_screen_add_element(screen, (UIElement *) ui_create_use_effect(tag));
         } else if (strcmp(type, "palleteicons") == 0) {
-            screen->elements[screen->count++] =
-                ui_create_pallete_icons(tag);
+            ui_screen_add_element(screen, (UIElement *) ui_create_palette_icons(tag));
         } else if (strcmp(type, "slider") == 0) {
-            screen->elements[screen->count++] =
-                ui_create_slider(
+            ui_screen_add_element(screen,
+                (UIElement *) ui_create_slider(
                     x, y, scale, max_value,
                     tag
-                );
+                )
+            );
         }
     }
 
@@ -736,14 +738,13 @@ void ui_load_screen(UIScreen* screen,
 }
 
 void ui_unload_screen(UIScreen *screen) {
-    for (int i = screen->count - 1; i >= 0; i--) {
-        UIElement *e = &screen->elements[i];
-        if (e->type == UI_USE_EFFECT) {
-            // Free pool
-            if (e->use_effect.useEffects.pool) {
-                free(e->use_effect.useEffects.pool);
-                e->use_effect.useEffects.pool = NULL;
-            }
+    for (int i = 0; i < screen->count; i++) {
+        UIElement *e = screen->elements[i];
+        if (e->destroy) {
+            e->destroy(e);
         }
     }
+
+    free(screen->elements);
+    screen->elements = NULL;
 }

@@ -26,7 +26,7 @@ static UIScreen screen = {
     .isBottom = true,
     .open_anim = ANIM_ZOOM
 };
-static UIElement *content;
+static UILabel *content;
 
 void exit_info_card(UIElement* e) {
     yes_exit = true;
@@ -37,7 +37,7 @@ static UIAction actions[] = {
 };
 
 void set_info_content(char *text) {
-    content = ui_get_element_by_tag(&screen, "content");
+    content = (UILabel *) ui_get_element_by_tag(&screen, "content");
     ui_label_set_text(content, text);
 }
 

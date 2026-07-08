@@ -9,6 +9,7 @@
 #include "ui_screen.h"
 
 static void ui_action_area_update(UIElement* e, UIInput* touch) {
+    UIActionArea *area = (UIActionArea *) e;
     bool pressedTouch = hidKeysDown() & KEY_TOUCH;
     bool releasedTouch = hidKeysUp() & KEY_TOUCH;
 
@@ -17,25 +18,25 @@ static void ui_action_area_update(UIElement* e, UIInput* touch) {
 
     // Check if pressed the button
     if (inside && pressedTouch && !touch->did_something) {
-        e->action_area.hovered = true;
-        e->action_area.pressed = true;
+        area->hovered = true;
+        area->pressed = true;
     }
 
     // If previously pressed on it, hover
-    if (inside && e->action_area.pressed) {
-        e->action_area.hovered = true;
+    if (inside && area->pressed) {
+        area->hovered = true;
     }
 
     // If released on button, do its action
-    if (e->action_area.hovered && releasedTouch) {
-        e->action_area.pressed = false;
+    if (area->hovered && releasedTouch) {
+        area->pressed = false;
         if (e->action)
             e->action(e);
     }
     
     // Unpress the button
     if (!inside) {
-        e->action_area.hovered = false;
+        area->hovered = false;
     }
     
     // Mask background elements
@@ -49,26 +50,36 @@ static void ui_action_area_draw(UIElement* e) {
     (void)e;
 }
 
-UIElement ui_create_action_area(
+static void ui_action_area_destroy(UIElement *e) {
+    if (e) {
+        free(e);
+        e = NULL;
+    }
+}
+
+UIActionArea *ui_create_action_area(
     int x, int y, float w, float h, 
     UIActionFn action,
     char (*tag)[TAG_LENGTH]
 ) {
-    UIElement e = {
-        .type = UI_ACTION_AREA,
-        .x = x, .y = y,
-        .w = 0, .h = 0,
-        .enabled = true,
-        .action = action,
-        .update = ui_action_area_update,
-        .draw = ui_action_area_draw
-    };
+    UIActionArea *e = malloc(sizeof(UIActionArea));
+
+    if (!e) return NULL;
+
+    memset(e, 0, sizeof(UIActionArea));
+    e->base.type = UI_ACTION_AREA;
+    e->base.x = x;
+    e->base.y = y;
+    e->base.w = w;
+    e->base.h = h;
+    e->base.enabled = true;
+    e->base.action = action;
+    e->base.update = ui_action_area_update;
+    e->base.draw = ui_action_area_draw;
+    e->base.destroy = ui_action_area_destroy;
 
     // Copy tag
-    copy_tag_array(&e, tag);
-    
-    e.w = w;
-    e.h = h;
+    copy_tag_array(&e->base, tag);
 
     return e;
 }

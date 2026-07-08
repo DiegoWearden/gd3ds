@@ -20,31 +20,33 @@
 static int pressedKey;
 
 static void ui_window_button_update(UIElement* e, UIInput* touch) {
+    UIWindowButton *window_button = (UIWindowButton *) e;
+
     //Keybinds logic
-    u32 validKeybinds = e->window_button.keyBinds;
+    u32 validKeybinds = window_button->keyBinds;
 
     if(enableDebugBindings && game_state == STATE_GAME && !game_paused && !in_level_complete){
         validKeybinds &= ~(KEY_B | KEY_X | KEY_L | KEY_R);
     }
 
     if((hidKeysDown() & validKeybinds) > 0){
-        e->window_button.pressed = true;
-        e->window_button.hovered = true;
-        e->window_button.hoverTimer = 0.2f;
-        e->window_button.keyPressTimer = 45;
+        window_button->pressed = true;
+        window_button->hovered = true;
+        window_button->hoverTimer = 0.2f;
+        window_button->keyPressTimer = 45;
         pressedKey = true;
     }
 
-    if(e->window_button.keyPressTimer > 0){
-        if(e->window_button.keyPressTimer == 44){
+    if(window_button->keyPressTimer > 0){
+        if(window_button->keyPressTimer == 44){
             pressedKey = false;
             if (e->action){
                 e->action(e);
             }
         }
-        if(--(e->window_button.keyPressTimer) == 0){
-            e->window_button.pressed = false;
-            e->window_button.hovered = false;
+        if(--(window_button->keyPressTimer) == 0){
+            window_button->pressed = false;
+            window_button->hovered = false;
         }
     }
 
@@ -57,28 +59,28 @@ static void ui_window_button_update(UIElement* e, UIInput* touch) {
 
     // Check if pressed the button
     if (inside && pressedTouch && !touch->did_something) {
-        e->window_button.hovered = true;
-        e->window_button.pressed = true;
+        window_button->hovered = true;
+        window_button->pressed = true;
     }
 
     // If previously pressed on it, hover
     if (inside && !sliding) {
-        e->window_button.hovered = true;
+        window_button->hovered = true;
     }
     
     // If released on button, do its action
-    if (e->window_button.hovered && releasedTouch) {
-        e->window_button.pressed = false;
-        e->window_button.hovered = false;
-        e->window_button.hoverTimer = 0.f;
-        e->window_button.hoverScale = 1.f;
+    if (window_button->hovered && releasedTouch) {
+        window_button->pressed = false;
+        window_button->hovered = false;
+        window_button->hoverTimer = 0.f;
+        window_button->hoverScale = 1.f;
         if (e->action)
             e->action(e);
     }
     
     // Unpress the button
     if (!inside) {
-        e->window_button.hovered = false;
+        window_button->hovered = false;
     }
     
     // Mask background elements
@@ -89,35 +91,37 @@ static void ui_window_button_update(UIElement* e, UIInput* touch) {
 }
 
 static void ui_window_button_draw(UIElement* e) {
+    UIWindowButton *window_button = (UIWindowButton *) e;
+
     EaseTypes bounce_type;
     // Animation
-    if (e->window_button.hovered) {
-        e->window_button.hoverTimer += DT * (e->window_button.keyPressTimer > 0 ? 2 : 1);
-        bounce_type = (e->window_button.keyPressTimer > 0 ? EASE_OUT : BOUNCE_OUT);
+    if (window_button->hovered) {
+        window_button->hoverTimer += DT * (window_button->keyPressTimer > 0 ? 2 : 1);
+        bounce_type = (window_button->keyPressTimer > 0 ? EASE_OUT : BOUNCE_OUT);
     } else {
-        e->window_button.hoverTimer -= DT;
+        window_button->hoverTimer -= DT;
         // As the animation plays in reverse, we just use bounce in
         bounce_type = BOUNCE_IN;
     }
 
-    e->window_button.hoverTimer = clampf(e->window_button.hoverTimer, 0.f, WINDOW_BUTTON_HOVER_ANIM_TIME);
-    e->window_button.hoverScale = easeValue(bounce_type, 1.0f, WINDOW_BUTTON_HOVER_SCALE, e->window_button.hoverTimer, WINDOW_BUTTON_HOVER_ANIM_TIME, 0);
+    window_button->hoverTimer = clampf(window_button->hoverTimer, 0.f, WINDOW_BUTTON_HOVER_ANIM_TIME);
+    window_button->hoverScale = easeValue(bounce_type, 1.0f, WINDOW_BUTTON_HOVER_SCALE, window_button->hoverTimer, WINDOW_BUTTON_HOVER_ANIM_TIME, 0);
 
-    int font_id = e->window_button.font;
+    int font_id = window_button->font;
 
     // Set to pusab if invalid
     if (font_id >= NUM_FONTS) font_id = 0;
 
     const LabelFont *font = &fonts[font_id];
 
-    float scale = e->window_button.hoverScale;
+    float scale = window_button->hoverScale;
     float text_scale;
 
-    draw_9_slice(e->window_button.window.atlas, e->x, e->y, e->w * scale, e->h * scale, e->window_button.window.border, e->window_button.window.color);
+    draw_9_slice(window_button->atlas, e->x, e->y, e->w * scale, e->h * scale, window_button->border, window_button->color);
 
-    if (e->window_button.textScale == 0){
+    if (window_button->textScale == 0){
         // Get text length in pixels
-        float length = get_text_length(font->charset, 1 / 0.85f, true, e->window_button.text);
+        float length = get_text_length(font->charset, 1 / 0.85f, true, window_button->text);
     
         if (e->w < length) {
             text_scale = scale * (e->w / length);
@@ -125,21 +129,28 @@ static void ui_window_button_draw(UIElement* e) {
             text_scale = scale * 0.85f;
         }
     } else {
-        text_scale = (e->window_button.textScale * scale);
+        text_scale = (window_button->textScale * scale);
     }
 
-    draw_text(font->charset, font->sheet, e->x, e->y, text_scale, text_scale, 0.5f, true, "%s", e->window_button.text);
+    draw_text(font->charset, font->sheet, e->x, e->y, text_scale, text_scale, 0.5f, true, "%s", window_button->text);
 }
 
-void ui_window_button_set_style(UIElement *e, int style) {
-    if (e->type != UI_WINDOW_BUTTON) return;
-
-    e->window_button.window.atlas = C2D_SpriteSheetGetImage(window_sheet, style);
-
-    e->window_button.window.border = e->window_button.window.atlas.subtex->width / 3;
+static void ui_window_button_destroy(UIElement *e) {
+    if (e) {
+        free(e);
+        e = NULL;
+    }
 }
 
-UIElement ui_create_window_button(
+void ui_window_button_set_style(UIWindowButton *e, int style) {
+    if (!e) return;
+
+    e->atlas = C2D_SpriteSheetGetImage(window_sheet, style);
+
+    e->border = e->atlas.subtex->width / 3;
+}
+
+UIWindowButton *ui_create_window_button(
     int x, int y, float w, float h, int style,
     UIActionFn action,
     char *text,
@@ -148,32 +159,38 @@ UIElement ui_create_window_button(
     float textScale,
     u32 keyBinds
 ){
-    UIElement e = {
-        .type = UI_WINDOW_BUTTON,
-        .x = x, .y = y,
-        .w = w, .h = h,
-        .enabled = true,
-        .action = action,
-        .update = ui_window_button_update,
-        .draw = ui_window_button_draw
-    };
+    UIWindowButton *e = malloc(sizeof(UIWindowButton));
 
+    if (!e) return NULL;
+
+    memset(e, 0, sizeof(UIWindowButton));
+    e->base.type = UI_WINDOW_BUTTON;
+    e->base.x = x;
+    e->base.y = y;
+    e->base.w = w;
+    e->base.h = h;
+    e->base.enabled = true;
+    e->base.action = action;
+    e->base.update = ui_window_button_update;
+    e->base.draw = ui_window_button_draw;
+    e->base.destroy = ui_window_button_destroy;
+    
     // Copy tag
-    copy_tag_array(&e, tag);
+    copy_tag_array(&e->base, tag);
 
     // Copy text
-    strncpy(e.window_button.text, text, 63);
+    strncpy(e->text, text, 63);
 
-    e.window_button.window.color = C2D_Color32(255, 255, 255, 255);
+    e->color = C2D_Color32(255, 255, 255, 255);
 
-    ui_window_button_set_style(&e, style);
+    ui_window_button_set_style(e, style);
     
-    e.window_button.hoverScale = 1.f;
+    e->hoverScale = 1.f;
 
-    e.window_button.font = font;
-    e.window_button.textScale = textScale;
+    e->font = font;
+    e->textScale = textScale;
 
-    e.window_button.keyBinds = keyBinds;
+    e->keyBinds = keyBinds;
 
     return e;
 }

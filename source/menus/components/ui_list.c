@@ -11,31 +11,27 @@
 #include "utils/gfx.h"
 #include <stdlib.h>
 
-void ui_list_reset(UIElement *list) {
-    UIList* l = &list->list;
-    l->scrollY = 0;
-    l->itemCount = 0;
-    l->contentHeight = 0;
-    l->lastTouchY = 0;
+void ui_list_reset(UIList *list) {
+    list->scrollY = 0;
+    list->itemCount = 0;
+    list->contentHeight = 0;
+    list->lastTouchY = 0;
 }
 
-void ui_list_add(UIElement* list, UIElement* item) {
-    UIList* l = &list->list;
-
-    if (l->itemCount >= UI_LIST_MAX_ITEMS) return;
+void ui_list_add(UIList* list, UIElement* item) {
+    if (list->itemCount >= UI_LIST_MAX_ITEMS) return;
 
     // Add item and increase content height
-    l->items[l->itemCount++] = item;
-    l->contentHeight += item->h;
+    list->items[list->itemCount++] = item;
+    list->contentHeight += item->h;
 }
 
-static void ui_list_forward_touch(UIElement* list, UIInput* touch) {
-    UIList* l = &list->list;
+static void ui_list_forward_touch(UIList* list, UIInput* touch) {
 
-    float initial_y = list->y - (list->h / 2) + l->scrollY;
+    float initial_y = list->base.y - (list->base.h / 2) + list->scrollY;
     
-    for (int i = 0; i < l->itemCount; i++) {
-        UIElement* item = l->items[i];
+    for (int i = 0; i < list->itemCount; i++) {
+        UIElement* item = list->items[i];
         // Set position
         item->y = initial_y + (item->h / 2) + (item->h) * i;
 
@@ -46,12 +42,12 @@ static void ui_list_forward_touch(UIElement* list, UIInput* touch) {
 }
 
 static void ui_list_update(UIElement* e, UIInput* touch) {
-    UIList* l = &e->list;
+    UIList* l = (UIList *) e;
 
     bool inside = touch->touchPosition.px >= e->x - (e->w / 2) && touch->touchPosition.px < e->x + (e->w / 2) &&
                   touch->touchPosition.py >= e->y - (e->h / 2) && touch->touchPosition.py < e->y + (e->h / 2);
 
-    ui_list_forward_touch(e, touch);
+    ui_list_forward_touch(l, touch);
     if (inside) {  
         touch->did_something = true;
 
@@ -121,7 +117,7 @@ static void ui_list_update(UIElement* e, UIInput* touch) {
 }
 
 static void ui_list_draw(UIElement* e) {
-    UIList* l = &e->list;
+    UIList* l = (UIList *) e;
 
     float x = e->x - (e->w / 2);
     float y = e->y - (e->h / 2);
@@ -153,26 +149,37 @@ static void ui_list_draw(UIElement* e) {
     C2D_Prepare();
 }
 
-UIElement ui_create_list(
+static void ui_list_destroy(UIElement *e) {
+    if (e) {
+        free(e);
+        e = NULL;
+    }
+}
+
+UIList *ui_create_list(
     int x, int y, int w, int h,
     char (*tag)[TAG_LENGTH]
 ) {
-    UIElement e = {0};
+    UIList *e = malloc(sizeof(UIList));
 
-    e.type = UI_LIST;
-    e.x = x;
-    e.y = y;
-    e.w = w;
-    e.h = h;
-    e.enabled = true;
+    if (!e) return NULL;
+
+    memset(e, 0, sizeof(UIList));
+    e->base.type = UI_LIST;
+    e->base.x = x;
+    e->base.y = y;
+    e->base.w = w;
+    e->base.h = h;
+    e->base.enabled = true;
 
     // Copy tag
-    copy_tag_array(&e, tag);
+    copy_tag_array(&e->base, tag);
 
-    e.update = ui_list_update;
-    e.draw = ui_list_draw;
+    e->base.update = ui_list_update;
+    e->base.draw = ui_list_draw;
+    e->base.destroy = ui_list_destroy;
     
-    ui_list_reset(&e);
+    ui_list_reset(e);
 
     return e;
 }

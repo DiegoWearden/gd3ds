@@ -7,15 +7,9 @@
 #include "menus/components/ui_screen.h"
 #include "math_helpers.h"
 #include "menus/components/ui_list.h"
-#include "menus/components/ui_window.h"
-#include "menus/components/ui_textbox.h"
 #include "menus/components/ui_image.h"
-#include "menus/components/ui_button.h"
 #include "menus/palette_kit.h"
-#include "fonts/bigFont.h"
-#include "fonts/chatFont.h"
 #include "main.h"
-#include "easing.h"
 #include "color_channels.h"
 #include "mp3_player.h"
 #include "graphics.h"
@@ -25,13 +19,10 @@
 #include "settings.h"
 #include "statistics.h"
 #include "credits.h"
-#include "creator_menu.h"
-#include "external_levels.h"
 #include "first_boot_disclaimer.h"
 #include "info_card.h"
 #include "state.h"
 #include "particles/object_particles.h"
-#include "save/config.h"
 #include "particles/circles.h"
 
 #include "save/saving.h"
@@ -94,7 +85,7 @@ void action_open_credits(UIElement* e) {
     credits_init();
 }
 
-void action_open_info_card(int id, UIElement* e) {
+void action_open_info_card(int id) {
     info_card_init();
     switch (id) {
         case 1:
@@ -310,7 +301,7 @@ void main_menu_loop() {
     channels[chan_ground].color = col;
     channels[chan_line].color = white;
 
-    UIElement *title = ui_get_element_by_tag(&default_screen_top, "title");
+    UIImage *title = (UIImage *) ui_get_element_by_tag(&default_screen_top, "title");
 
     if (title && alt_title_screen) {
         ui_image_set_image(title, 3, 1);

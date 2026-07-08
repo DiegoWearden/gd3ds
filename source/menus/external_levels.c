@@ -9,7 +9,6 @@
 #include "menus/components/ui_image.h"
 #include "menus/components/ui_progress_bar.h"
 #include "menus/components/ui_label.h"
-#include "menus/components/ui_external_level_card.h"
 #include "fonts/bigFont.h"
 #include "main.h"
 #include "easing.h"
@@ -53,10 +52,10 @@ static UIScreen screen = {
     .isBottom = true
 };
 static UIScreen screen_top;
-static UIElement *bg_gradient;
-static UIElement *bg_gradient_top;
-static UIElement *list;
-static UIElement *path_label;
+static UIImage *bg_gradient;
+static UIImage *bg_gradient_top;
+static UIList *list;
+static UILabel *path_label;
 
 UIElement texts[UI_LIST_MAX_ITEMS];
 
@@ -72,7 +71,7 @@ static void action_exit(UIElement *e) {
 }
 
 static void open_external_popup(UIElement *e) {
-    strncpy(state.custom_level_path, e->external_level_card.path, sizeof(state.custom_level_path));
+    //strncpy(state.custom_level_path, e->external_level_card.path, sizeof(state.custom_level_path));
     external_popup_init();
     in_external_popup = true;
 }
@@ -80,7 +79,7 @@ static void open_external_popup(UIElement *e) {
 void load_level_folder(char *folder) {
     if (strncmp(last_path, current_path, sizeof(last_path)) == 0) return;
     ui_list_reset(list);
-    path_label = ui_get_element_by_tag(&screen, "path");
+    path_label = (UILabel *) ui_get_element_by_tag(&screen, "path");
     ui_run_func_on_tag(&screen, "no_levels", ui_disable_element);
 
     char path[320+5];
@@ -96,6 +95,7 @@ void load_level_folder(char *folder) {
         for (int i = 0; i < count && i < UI_LIST_MAX_ITEMS; i++) {
             FileOrFolder *entry = &entries[i];
             strncpy(level_name, entry->name, sizeof(level_name) - 1);
+            /*
             if (entry->is_dir) {
                 // Folder
                 char *name = strip_filename(level_name);
@@ -110,6 +110,7 @@ void load_level_folder(char *folder) {
                 texts[i] = ui_create_external_level_card(0, 0, i & 1, 420, 0, name, entry->name, open_external_popup, NULL);
                 ui_list_add(list, &texts[i]);
             }
+            */  
         }
 
         if (count == 0) {
@@ -138,9 +139,9 @@ static void open_folder(UIElement *e) {
 
     if (current_path[0] == '\0') {
         // First level: no leading slash
-        snprintf(tmp, sizeof(tmp), "%s", e->external_level_card.path);
+        //snprintf(tmp, sizeof(tmp), "%s", e->external_level_card.path);
     } else {
-        snprintf(tmp, sizeof(tmp), "%s/%s", current_path, e->external_level_card.path);
+        //snprintf(tmp, sizeof(tmp), "%s/%s", current_path, e->external_level_card.path);
     }
 
     strncpy(current_path, tmp, sizeof(current_path) - 1);
@@ -189,10 +190,10 @@ void external_levels_loop() {
     exit_flag = false;
     if (first_time_loaded) {
         ui_load_screen(&screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/external_levels.txt");
-        bg_gradient = ui_get_element_by_tag(&screen, "gradient");
+        bg_gradient = (UIImage *) ui_get_element_by_tag(&screen, "gradient");
         ui_load_screen(&screen_top, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/external_levels_top.txt");
-        bg_gradient_top = ui_get_element_by_tag(&screen_top, "gradient_top");
-        list = ui_get_element_by_tag(&screen, "list");
+        bg_gradient_top = (UIImage *) ui_get_element_by_tag(&screen_top, "gradient_top");
+        list = (UIList *) ui_get_element_by_tag(&screen, "list");
         first_time_loaded = false;
     }
 

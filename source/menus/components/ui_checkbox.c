@@ -10,25 +10,29 @@
 
 #include "main.h"
 
-static void set_checkbox_texture(UIElement* e, bool enabled) {
-    int tex = enabled ? 28 : 27;
-    C2D_SpriteFromSheet(&e->checkbox.image.sprite, ui_sheet, tex);
-    C3D_TexSetFilter(e->checkbox.image.sprite.image.tex, GPU_LINEAR, GPU_LINEAR);
+static void set_checkbox_texture(UICheckBox* e, bool enabled) {
+    if (!e) return;
 
-    e->w = fabsf(e->checkbox.image.sprite.image.subtex->width * e->checkbox.scaleX);
-    e->h = fabsf(e->checkbox.image.sprite.image.subtex->height * e->checkbox.scaleY);
+    int tex = enabled ? 28 : 27;
+    C2D_SpriteFromSheet(&e->image.sprite, ui_sheet, tex);
+    C3D_TexSetFilter(e->image.sprite.image.tex, GPU_LINEAR, GPU_LINEAR);
+
+    e->base.w = fabsf(e->image.sprite.image.subtex->width * e->scaleX);
+    e->base.h = fabsf(e->image.sprite.image.subtex->height * e->scaleY);
 }
 
 // Set checkbox checked state
-void set_checkbox_enabled(UIElement *e, bool enabled) {
-    if (e->type != UI_CHECKBOX) return;
+void set_checkbox_enabled(UICheckBox *e, bool enabled) {
+    if (!e) return;
 
     set_checkbox_texture(e, enabled);
-    e->checkbox.checked = enabled;
+    e->checked = enabled;
 }
 
 
 static void ui_checkbox_update(UIElement* e, UIInput* touch) {
+    UICheckBox *checkbox = (UICheckBox *) e;
+
     bool pressedTouch = hidKeysDown() & KEY_TOUCH;
     bool releasedTouch = hidKeysUp() & KEY_TOUCH;
 
@@ -37,44 +41,44 @@ static void ui_checkbox_update(UIElement* e, UIInput* touch) {
 
     // Check if pressed the checkbox
     if (inside && pressedTouch && !touch->did_something) {
-        e->checkbox.hovered = true;
-        e->checkbox.pressed = true;
+        checkbox->hovered = true;
+        checkbox->pressed = true;
     }
 
     // If previously pressed on it, hover
-    if (inside && e->checkbox.pressed) {
-        e->checkbox.hovered = true;
+    if (inside && checkbox->pressed) {
+        checkbox->hovered = true;
     }
     
     EaseTypes bounce_type;
     // Animation
-    if (e->checkbox.hovered) {
-        e->checkbox.hoverTimer += DT;
+    if (checkbox->hovered) {
+        checkbox->hoverTimer += DT;
         bounce_type = BOUNCE_OUT;
     } else {
-        e->checkbox.hoverTimer -= DT;
+        checkbox->hoverTimer -= DT;
         // As the animation plays in reverse, we just use bounce in
         bounce_type = BOUNCE_IN;
     }
 
-    e->checkbox.hoverTimer = clampf(e->checkbox.hoverTimer, 0.f, CHECKBOX_HOVER_ANIM_TIME);
+    checkbox->hoverTimer = clampf(checkbox->hoverTimer, 0.f, CHECKBOX_HOVER_ANIM_TIME);
     
-    e->checkbox.hoverScale = easeValue(bounce_type, 1.0f, CHECKBOX_HOVER_SCALE, e->checkbox.hoverTimer, CHECKBOX_HOVER_ANIM_TIME, 0);
+    checkbox->hoverScale = easeValue(bounce_type, 1.0f, CHECKBOX_HOVER_SCALE, checkbox->hoverTimer, CHECKBOX_HOVER_ANIM_TIME, 0);
 
     // If released on checkbox, do its action
-    if (e->checkbox.hovered && releasedTouch) {
-        e->checkbox.checked ^= 1;
-        e->checkbox.pressed = false;
-        e->checkbox.hovered = false;
-        e->checkbox.hoverTimer = 0.f;
-        e->checkbox.hoverScale = 1.f;
+    if (checkbox->hovered && releasedTouch) {
+        checkbox->checked ^= 1;
+        checkbox->pressed = false;
+        checkbox->hovered = false;
+        checkbox->hoverTimer = 0.f;
+        checkbox->hoverScale = 1.f;
         if (e->action)
             e->action(e);
     }
     
     // Unpress the checkbox
     if (!inside) {
-        e->checkbox.hovered = false;
+        checkbox->hovered = false;
     }
                       
     // Mask background elements
@@ -83,44 +87,69 @@ static void ui_checkbox_update(UIElement* e, UIInput* touch) {
         touch->did_something = true;
     }
 
-    if (e->checkbox.checked != e->checkbox.image_id) {
-        set_checkbox_texture(e, e->checkbox.checked);
-        e->checkbox.image_id = e->checkbox.checked;
+    if (checkbox->checked != checkbox->image_id) {
+        set_checkbox_texture(checkbox, checkbox->checked);
+        checkbox->image_id = checkbox->checked;
     }
 }
 
 static void ui_checkbox_draw(UIElement* e) {
-    float scale = e->checkbox.hoverScale;
+    UICheckBox *checkbox = (UICheckBox *) e;
 
+    float scale = checkbox->hoverScale;
 
-    C2D_SpriteSetCenter(&e->checkbox.image.sprite, 0.5f, 0.5f);
-    C2D_SpriteSetPos(&e->checkbox.image.sprite, e->x, e->y);
-    C2D_SpriteSetScale(&e->checkbox.image.sprite, scale * e->checkbox.scaleX, scale * e->checkbox.scaleY);
-    C2D_DrawSprite(&e->checkbox.image.sprite);
+    C2D_SpriteSetCenter(&checkbox->image.sprite, 0.5f, 0.5f);
+    C2D_SpriteSetPos(&checkbox->image.sprite, e->x, e->y);
+    C2D_SpriteSetScale(&checkbox->image.sprite, scale * checkbox->scaleX, scale * checkbox->scaleY);
+    C2D_DrawSprite(&checkbox->image.sprite);
 }
 
-UIElement ui_create_checkbox(
+static void ui_checkbox_destroy(UIElement *e) {
+    if (e) {
+        free(e);
+        e = NULL;
+    }
+}
+
+
+
+static void ui_checkbox_on_disable(UIElement *e) {
+    UICheckBox *checkbox = (UICheckBox *) e;
+    checkbox->hovered = false;
+    checkbox->hoverScale = 1.f;
+    checkbox->hoverTimer = 0.f;
+}
+
+UICheckBox *ui_create_checkbox(
     int x, int y, float sx, float sy, bool enabled,
     UIActionFn action,
     char (*tag)[TAG_LENGTH]
 ) {
-    UIElement e = {
-        .type = UI_CHECKBOX,
-        .x = x, .y = y,
-        .w = 0, .h = 0,
-        .enabled = true,
-        .action = action,
-        .update = ui_checkbox_update,
-        .draw = ui_checkbox_draw
-    };
+    UICheckBox *e = malloc(sizeof(UICheckBox));
+
+    if (!e) return NULL;
+    
+    memset(e, 0, sizeof(UICheckBox));
+    e->base.type = UI_CHECKBOX;
+    e->base.x = x;
+    e->base.y = y;
+    e->base.w = 0;
+    e->base.h = 0;
+    e->base.enabled = true;
+    e->base.action = action;
+    e->base.update = ui_checkbox_update;
+    e->base.draw = ui_checkbox_draw;
+    e->base.destroy = ui_checkbox_destroy;
+
+    e->base.on_disable = ui_checkbox_on_disable;
 
     // Copy tag
-    copy_tag_array(&e, tag);
+    copy_tag_array(&e->base, tag);
 
-    e.checkbox.scaleX = sx;
-    e.checkbox.scaleY = sy;
+    e->scaleX = sx;
+    e->scaleY = sy;
 
-    set_checkbox_texture(&e, enabled);
+    set_checkbox_texture(e, enabled);
 
     return e;
 }

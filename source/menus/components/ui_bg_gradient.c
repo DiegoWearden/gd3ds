@@ -12,37 +12,49 @@ static void ui_bg_gradient_update(UIElement* e, UIInput* touch) {
 }
 
 static void ui_bg_gradient_draw(UIElement* e) {
-    C2D_SpriteSetPos(&e->image.sprite, e->x, e->y);
-    C2D_SpriteSetScale(&e->image.sprite, e->image.scaleX, e->image.scaleY);
-    if (e->image.useTint) {
-        C2D_DrawSpriteTinted(&e->image.sprite, &e->image.tint);
+    UIImage *image = (UIImage *) e;
+    C2D_SpriteSetPos(&image->image.sprite, e->x, e->y);
+    C2D_SpriteSetScale(&image->image.sprite, image->scaleX, image->scaleY);
+    if (image->useTint) {
+        C2D_DrawSpriteTinted(&image->image.sprite, &image->image.tint);
     } else {
-        C2D_DrawSprite(&e->image.sprite);
+        C2D_DrawSprite(&image->image.sprite);
     }
 }
 
-UIElement ui_create_bg_gradient(char (*tag)[TAG_LENGTH]) {
-    UIElement e = {0};
+static void ui_bg_gradient_destroy(UIElement *e) {
+    if (e) {
+        free(e);
+        e = NULL;
+    }
+}
 
-    e.type = UI_IMAGE;
-    e.x = 0;
-    e.y = 0;
-    e.enabled = true;
-    e.image.useTint = false;
+UIImage *ui_create_bg_gradient(char (*tag)[TAG_LENGTH]) {
+    UIImage *e = malloc(sizeof(UIImage));
 
-    C2D_SpriteFromSheet(&e.image.sprite, bg_gradient_sheet, 0);
+    if (!e) return NULL;
+
+    memset(e, 0, sizeof(UI_IMAGE));
+    e->base.type = UI_IMAGE;
+    e->base.x = 0;
+    e->base.y = 0;
+    e->base.enabled = true;
+    e->useTint = false;
+
+    C2D_SpriteFromSheet(&e->image.sprite, bg_gradient_sheet, 0);
 
     // Copy tag
-    copy_tag_array(&e, tag);
+    copy_tag_array(&e->base, tag);
 
-    e.w = e.image.sprite.image.subtex->width * BG_GRADIENT_XSCALE;
-    e.h = e.image.sprite.image.subtex->height * BG_GRADIENT_YSCALE;
+    e->base.w = e->image.sprite.image.subtex->width * BG_GRADIENT_XSCALE;
+    e->base.h = e->image.sprite.image.subtex->height * BG_GRADIENT_YSCALE;
 
-    e.image.scaleX = BG_GRADIENT_XSCALE;
-    e.image.scaleY = BG_GRADIENT_YSCALE;
+    e->scaleX = BG_GRADIENT_XSCALE;
+    e->scaleY = BG_GRADIENT_YSCALE;
 
-    e.update = ui_bg_gradient_update;
-    e.draw = ui_bg_gradient_draw;
+    e->base.update = ui_bg_gradient_update;
+    e->base.draw = ui_bg_gradient_draw;
+    e->base.destroy = ui_bg_gradient_destroy;
 
     return e;
 }

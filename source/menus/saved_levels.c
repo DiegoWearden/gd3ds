@@ -2,27 +2,19 @@
 #include <citro2d.h>
 #include "menus/components/ui_element.h"
 #include "menus/components/ui_screen.h"
-#include "math_helpers.h"
 #include "menus/components/ui_list.h"
-#include "menus/components/ui_window.h"
 #include "menus/components/ui_image.h"
-#include "menus/components/ui_label.h"
-#include "menus/components/ui_online_level_card.h"
-#include "fonts/bigFont.h"
 #include "main.h"
 #include "mp3_player.h"
 #include "graphics.h"
-#include "state.h"
-#include "settings.h"
 #include "saved_levels.h"
-#include "save/config.h"
 
 static bool exit_flag = false;
 
-static UIElement *bg_gradient;
-static UIElement *bg_gradient_top;
+static UIImage *bg_gradient;
+static UIImage *bg_gradient_top;
 
-static UIElement *list;
+static UIList *list;
 
 typedef struct SavedLevelsEntries {
     char *name;
@@ -66,14 +58,14 @@ void saved_levels_loop() {
     exit_flag = false;
 
     ui_load_screen(&default_screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/saved_levels.txt");
-    bg_gradient = ui_get_element_by_tag(&default_screen, "gradient");
+    bg_gradient = (UIImage *) ui_get_element_by_tag(&default_screen, "gradient");
     ui_load_screen(&default_screen_top, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/saved_levels_top.txt");
-    bg_gradient_top = ui_get_element_by_tag(&default_screen_top, "gradient_top");
+    bg_gradient_top = (UIImage *) ui_get_element_by_tag(&default_screen_top, "gradient_top");
 
     ui_image_set_tint(bg_gradient, C2D_Color32(50, 110, 255, 255));
     ui_image_set_tint(bg_gradient_top, C2D_Color32(50, 110, 255, 255));
 
-    list = ui_get_element_by_tag(&default_screen, "list");
+    list = (UIList *) ui_get_element_by_tag(&default_screen, "list");
 
     for (int i = 0; i < NUM_SAVED_LEVELS_ENTRIES; i++) {
         char name[256];
@@ -88,7 +80,7 @@ void saved_levels_loop() {
         strncpy(creator, saved_levels[i].creator, sizeof(creator) - 1);
         strncpy(song, saved_levels[i].song, sizeof(song) - 1);
         strncpy(length, saved_levels[i].length, sizeof(length) - 1);
-        entries1[i] = ui_create_online_level_card(0, 0, i & 1, name, creator, song, length, downloads, likes, stars, NULL);
+        //entries1[i] = ui_create_online_level_card(0, 0, i & 1, name, creator, song, length, downloads, likes, stars, NULL);
         ui_list_add(list, &entries1[i]);
     }
 

@@ -10,8 +10,8 @@
 #include "color_channels.h"
 #include "graphics.h"
 
-static UIElement *progressbar;
-static UIElement *splashtext;
+static UIProgressBar *progressbar;
+static UILabel *splashtext;
 
 char *splash_texts[] = {
     "Welcome to robert game",
@@ -93,17 +93,17 @@ void loading_screen_init() {
 
     handle_col_channel(chan);
 
-    UIElement *title = ui_get_element_by_tag(&default_screen_top, "title");
+    UIImage *title = (UIImage *) ui_get_element_by_tag(&default_screen_top, "title");
 
     if (title && alt_title_screen) {
         ui_image_set_image(title, 3, 1);
     }
     
-    progressbar = ui_get_element_by_tag(&default_screen_top, "loadprogress");
+    progressbar = (UIProgressBar *) ui_get_element_by_tag(&default_screen_top, "loadprogress");
     ui_progress_bar_set_tint(progressbar, C2D_Color32(50, 190, 240, 255));
-    progressbar->progress_bar.max_value = 100;
+    progressbar->max_value = 100;
 
-    splashtext = ui_get_element_by_tag(&default_screen_top, "splashtext");
+    splashtext = (UILabel *) ui_get_element_by_tag(&default_screen_top, "splashtext");
     
     int text_index = random_int(0, NUM_SPLASH_TEXTS - 1);
 
@@ -113,7 +113,7 @@ void loading_screen_init() {
 }
 
 void loading_screen_update(float progress) {    
-    progressbar->progress_bar.value = progress;
+    progressbar->value = progress;
     UIInput touch;
     touchPosition touchPos;
     hidTouchRead(&touchPos);

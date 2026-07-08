@@ -8,6 +8,13 @@
 #include "ui_checkbox.h"
 #include "ui_screen.h"
 
+void ui_window_set_tint(UIWindow* e, u32 color) {
+    if (!e) return;
+
+    e->color = color;
+    e->useTint = true;
+}
+
 static void ui_window_update(UIElement* e, UIInput* touch) {
     bool inside = touch->touchPosition.px >= e->x - (e->w / 2) && touch->touchPosition.px < e->x + (e->w / 2) &&
                   touch->touchPosition.py >= e->y - (e->h / 2) && touch->touchPosition.py < e->y + (e->h / 2);
@@ -16,37 +23,45 @@ static void ui_window_update(UIElement* e, UIInput* touch) {
     if (inside) touch->did_something = true;
 }
 
-void ui_window_set_tint(UIElement* e, u32 color) {
-    if (e->type != UI_WINDOW) return;
-
-    e->window.color = color;
-    e->image.useTint = true;
-}
-
 static void ui_window_draw(UIElement* e) {
-    draw_9_slice(e->window.atlas, e->x, e->y, e->w, e->h, e->window.border, e->window.color);
+    UIWindow *window = (UIWindow *) e;
+
+    draw_9_slice(window->atlas, e->x, e->y, e->w, e->h, window->border, window->color);
 }
 
-UIElement ui_create_window(
+static void ui_window_destroy(UIElement *e) {
+    if (e) {
+        free(e);
+        e = NULL;
+    }
+}
+
+UIWindow *ui_create_window(
     int x, int y, int w, int h, int style,
     char (*tag)[TAG_LENGTH]
 ) {
-    UIElement e = {
-        .type = UI_WINDOW,
-        .x = x, .y = y,
-        .w = w, .h = h,
-        .enabled = true,
-        .update = ui_window_update,
-        .draw = ui_window_draw
-    };
+    UIWindow *e = malloc(sizeof(UIWindow));
 
-    e.window.color = C2D_Color32(255, 255, 255, 255);
+    if (!e) return NULL;
+
+    memset(e, 0, sizeof(UIWindow));
+    e->base.type = UI_WINDOW;
+    e->base.x = x;
+    e->base.y = y;
+    e->base.w = w;
+    e->base.h = h;
+    e->base.enabled = true;
+    e->base.update = ui_window_update;
+    e->base.draw = ui_window_draw;
+    e->base.destroy = ui_window_destroy;
+
+    e->color = C2D_Color32(255, 255, 255, 255);
 
     // Copy tag
-    copy_tag_array(&e, tag);
-    e.window.atlas = C2D_SpriteSheetGetImage(window_sheet, style);
+    copy_tag_array(&e->base, tag);
+    e->atlas = C2D_SpriteSheetGetImage(window_sheet, style);
 
-    e.window.border = e.window.atlas.subtex->width / 3;
+    e->border = e->atlas.subtex->width / 3;
 
     return e;
 }

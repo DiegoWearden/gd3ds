@@ -11,61 +11,73 @@ static void ui_image_update(UIElement* e, UIInput* touch) {
 }
 
 static void ui_image_draw(UIElement* e) {
-    C2D_SpriteSetCenter(&e->image.sprite, 0.5f, 0.5f);
-    C2D_SpriteSetPos(&e->image.sprite, e->x, e->y);
-    C2D_SpriteSetScale(&e->image.sprite, e->image.scaleX, e->image.scaleY);
-    if (e->image.useTint) {
-        C2D_DrawSpriteTinted(&e->image.sprite, &e->image.tint);
+    UIImage *image = (UIImage *) e;
+    C2D_SpriteSetCenter(&image->image.sprite, 0.5f, 0.5f);
+    C2D_SpriteSetPos(&image->image.sprite, e->x, e->y);
+    C2D_SpriteSetScale(&image->image.sprite, image->scaleX, image->scaleY);
+    if (image->useTint) {
+        C2D_DrawSpriteTinted(&image->image.sprite, &image->image.tint);
     } else {
-        C2D_DrawSprite(&e->image.sprite);
+        C2D_DrawSprite(&image->image.sprite);
     }
 }
 
-void ui_image_set_tint(UIElement* e, u32 color) {
-    if (e->type != UI_IMAGE) return;
+static void ui_image_destroy(UIElement* e) {
+    if (e) {
+        free(e);
+        e = NULL;
+    }
+}
+
+void ui_image_set_tint(UIImage* e, u32 color) {
+    if (!e) return;
 
     C2D_PlainImageTint(&e->image.tint, color, 1.0f);
-    e->image.useTint = true;
+    e->useTint = true;
 }
 
-void ui_image_clear_tint(UIElement* e) {
-    if (e->type != UI_IMAGE) return;
+void ui_image_clear_tint(UIImage* e) {
+    if (!e) return;
     
-    e->image.useTint = false;
+    e->useTint = false;
 }
 
-void ui_image_set_image(UIElement *e, int sprite_index, int sheet) {
-    if (e->type != UI_IMAGE) return;
+void ui_image_set_image(UIImage *e, int sprite_index, int sheet) {
+    if (!e) return;
 
     C2D_SpriteFromSheet(&e->image.sprite, *get_sheet(sheet), sprite_index);
     C3D_TexSetFilter(e->image.sprite.image.tex, GPU_LINEAR, GPU_LINEAR);
 
-    e->w = e->image.sprite.image.subtex->width * e->image.scaleX;
-    e->h = e->image.sprite.image.subtex->height * e->image.scaleY;
+    e->base.w = e->image.sprite.image.subtex->width * e->scaleX;
+    e->base.h = e->image.sprite.image.subtex->height * e->scaleY;
 
-    e->image.scaleX = e->image.scaleX;
-    e->image.scaleY = e->image.scaleY;
+    e->scaleX = e->scaleX;
+    e->scaleY = e->scaleY;
 }
 
-UIElement ui_create_image(int x, int y, int sprite_index, int sheet, float sx, float sy, char (*tag)[TAG_LENGTH]) {
-    UIElement e = {0};
+UIImage *ui_create_image(int x, int y, int sprite_index, int sheet, float sx, float sy, char (*tag)[TAG_LENGTH]) {
+    UIImage *e = malloc(sizeof(UIImage));
 
-    e.type = UI_IMAGE;
-    e.x = x;
-    e.y = y;
-    e.enabled = true;
-    e.image.useTint = false;
+    if (!e) return NULL;
 
-    e.image.scaleX = sx;
-    e.image.scaleY = sy;
+    memset(e, 0, sizeof(UIImage));
+    e->base.type = UI_IMAGE;
+    e->base.x = x;
+    e->base.y = y;
+    e->base.enabled = true;
+    e->useTint = false;
+
+    e->scaleX = sx;
+    e->scaleY = sy;
 
     // Copy tag
-    copy_tag_array(&e, tag);
+    copy_tag_array(&e->base, tag);
 
-    ui_image_set_image(&e, sprite_index, sheet);
+    ui_image_set_image(e, sprite_index, sheet);
 
-    e.update = ui_image_update;
-    e.draw = ui_image_draw;
+    e->base.update = ui_image_update;
+    e->base.draw = ui_image_draw;
+    e->base.destroy = ui_image_destroy;
 
     return e;
 }

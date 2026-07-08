@@ -24,10 +24,10 @@
 
 #include "save/config.h"
 
-static UIElement *bg_gradient = NULL;
-static UIElement *bg_gradient_top = NULL;
+static UIImage *bg_gradient = NULL;
+static UIImage *bg_gradient_top = NULL;
 
-static UIElement *bg_window = NULL;
+static UIWindow *bg_window = NULL;
 
 static bool exit_flag = false;
 
@@ -75,7 +75,7 @@ static int *current_pages[GAMEMODE_COUNT + 1] = {
     &current_trail_page
 };
 
-static UIElement *gamemode_btns[GAMEMODE_COUNT + 1];
+static UIButton *gamemode_btns[GAMEMODE_COUNT + 1];
 
 int *current_icons[GAMEMODE_COUNT + 1] = {
     &selected_cube,
@@ -109,7 +109,7 @@ static void set_icon_index(UIElement *e) {
     int new_index = (*current_pages[gamemode_page] * ICONS_PER_PAGE) + icon_counter;
     if (new_index < gamemode_icon_count[gamemode_page]) {
         e->enabled = true;
-        ui_icon_set_gamemode_index(e, gamemode_page, new_index);
+        ui_icon_set_gamemode_index((UIIcon *) e, gamemode_page, new_index);
         icon_counter++;
     } else {
         e->enabled = false;
@@ -120,7 +120,7 @@ static void set_trail_index(UIElement *e) {
     int new_index = icon_counter;
     if (new_index < gamemode_icon_count[gamemode_page]) {
         e->enabled = true;
-        ui_icon_set_gamemode_index(e, gamemode_page, new_index);
+        ui_icon_set_gamemode_index((UIIcon *) e, gamemode_page, new_index);
         icon_counter++;
     } else {
         e->enabled = false;
@@ -129,19 +129,19 @@ static void set_trail_index(UIElement *e) {
 
 static void disable_all_icon_buttons() {
     icon_counter = (gamemode_page == TRAIL ? 0 : 1);
-    ui_button_set_image(ui_get_element_by_tag(&default_screen, "cube"), button_images[0], 0);
-    ui_button_set_image(ui_get_element_by_tag(&default_screen, "ship"), button_images[1], 0);
-    ui_button_set_image(ui_get_element_by_tag(&default_screen, "ball"), button_images[2], 0);
-    ui_button_set_image(ui_get_element_by_tag(&default_screen, "ufo"),  button_images[3], 0);
-    ui_button_set_image(ui_get_element_by_tag(&default_screen, "dart"), button_images[4], 0);
-    ui_button_set_image(ui_get_element_by_tag(&default_screen, "trail"), button_images[5], 0);
+    ui_button_set_image((UIButton *) ui_get_element_by_tag(&default_screen, "cube"), button_images[0], 0);
+    ui_button_set_image((UIButton *) ui_get_element_by_tag(&default_screen, "ship"), button_images[1], 0);
+    ui_button_set_image((UIButton *) ui_get_element_by_tag(&default_screen, "ball"), button_images[2], 0);
+    ui_button_set_image((UIButton *) ui_get_element_by_tag(&default_screen, "ufo"),  button_images[3], 0);
+    ui_button_set_image((UIButton *) ui_get_element_by_tag(&default_screen, "dart"), button_images[4], 0);
+    ui_button_set_image((UIButton *) ui_get_element_by_tag(&default_screen, "trail"), button_images[5], 0);
 }
 
 static void set_cube_page(UIElement *e) {
     gamemode_page = 0;
     last_displayed_gamemode = 0;
     disable_all_icon_buttons();
-    ui_button_set_image(e, button_images[0] + 1, 0);
+    ui_button_set_image((UIButton *) e, button_images[0] + 1, 0);
     ui_run_func_on_tag(&default_screen, "icon", set_icon_index); 
 }
 
@@ -149,7 +149,7 @@ static void set_ship_page(UIElement *e) {
     gamemode_page = 1;
     last_displayed_gamemode = 1;
     disable_all_icon_buttons();
-    ui_button_set_image(e, button_images[1] + 1, 0);
+    ui_button_set_image((UIButton *) e, button_images[1] + 1, 0);
     ui_run_func_on_tag(&default_screen, "icon", set_icon_index); 
 }
 
@@ -157,7 +157,7 @@ static void set_ball_page(UIElement *e) {
     gamemode_page = 2;
     last_displayed_gamemode = 2;
     disable_all_icon_buttons();
-    ui_button_set_image(e, button_images[2] + 1, 0);
+    ui_button_set_image((UIButton *) e, button_images[2] + 1, 0);
     ui_run_func_on_tag(&default_screen, "icon", set_icon_index); 
 }
 
@@ -165,7 +165,7 @@ static void set_ufo_page(UIElement *e) {
     gamemode_page = 3;
     last_displayed_gamemode = 3;
     disable_all_icon_buttons();
-    ui_button_set_image(e, button_images[3] + 1, 0);
+    ui_button_set_image((UIButton *) e, button_images[3] + 1, 0);
     ui_run_func_on_tag(&default_screen, "icon", set_icon_index); 
 }
 
@@ -173,14 +173,14 @@ static void set_wave_page(UIElement *e) {
     gamemode_page = 4;
     last_displayed_gamemode = 4;
     disable_all_icon_buttons();
-    ui_button_set_image(e, button_images[4] + 1, 0);
+    ui_button_set_image((UIButton *) e, button_images[4] + 1, 0);
     ui_run_func_on_tag(&default_screen, "icon", set_icon_index); 
 }
 
 static void set_trail_page(UIElement *e) {
     gamemode_page = 5;
     disable_all_icon_buttons();
-    ui_button_set_image(e, button_images[5] + 1, 0);
+    ui_button_set_image((UIButton *) e, button_images[5] + 1, 0);
     ui_run_func_on_tag(&default_screen, "icon", set_trail_index); 
 }
 
@@ -208,7 +208,7 @@ static void move_index_right(UIElement* e) {
 }
 
 static void action_icon_selected(UIElement *e) {
-    *current_icons[e->icon.gamemode] = e->icon.index;
+    *current_icons[((UIIcon *) e)->gamemode] = ((UIIcon *) e)->index;
     icon_counter = (gamemode_page == TRAIL ? 0 : 1);
     ui_run_func_on_tag(&default_screen, "icon", set_icon_index); 
 }
@@ -242,10 +242,10 @@ void icon_kit_loop() {
     ui_load_screen(&default_screen_top, actions_top, sizeof(actions_top) / sizeof(actions_top[0]), "romfs:/menus/icon_kit_top.txt");
     
     // Set bg color
-    bg_gradient = ui_get_element_by_tag(&default_screen, "gradient");
-    bg_window = ui_get_element_by_tag(&default_screen, "bg_window");
+    bg_gradient = (UIImage *) ui_get_element_by_tag(&default_screen, "gradient");
+    bg_window = (UIWindow *) ui_get_element_by_tag(&default_screen, "bg_window");
 
-    bg_gradient_top = ui_get_element_by_tag(&default_screen_top, "gradient");
+    bg_gradient_top = (UIImage *) ui_get_element_by_tag(&default_screen_top, "gradient");
     
     ui_image_set_tint(bg_gradient, C2D_Color32(167, 167, 167, 255));
     ui_window_set_tint(bg_window, C2D_Color32(0, 0, 0, 64));
@@ -259,8 +259,8 @@ void icon_kit_loop() {
     char coins[32];
     snprintf(coins, sizeof(coins), "%d", total_coins);
 
-    ui_label_set_text(ui_get_element_by_tag(&default_screen_top, "star_text"), stars);
-    ui_label_set_text(ui_get_element_by_tag(&default_screen_top, "secretcoins_text"), coins);
+    ui_label_set_text((UILabel *) ui_get_element_by_tag(&default_screen_top, "star_text"), stars);
+    ui_label_set_text((UILabel *) ui_get_element_by_tag(&default_screen_top, "secretcoins_text"), coins);
 
     update_player_colors();
     set_fade_status(FADE_STATUS_IN);
@@ -270,12 +270,12 @@ void icon_kit_loop() {
         playing_menu_loop = true;
     }
 
-    gamemode_btns[0] = ui_get_element_by_tag(&default_screen, "cube");
-    gamemode_btns[1] = ui_get_element_by_tag(&default_screen, "ship");
-    gamemode_btns[2] = ui_get_element_by_tag(&default_screen, "ball");
-    gamemode_btns[3] = ui_get_element_by_tag(&default_screen, "ufo");
-    gamemode_btns[4] = ui_get_element_by_tag(&default_screen, "dart");
-    gamemode_btns[5] = ui_get_element_by_tag(&default_screen, "trail");
+    gamemode_btns[0] = (UIButton *) ui_get_element_by_tag(&default_screen, "cube");
+    gamemode_btns[1] = (UIButton *) ui_get_element_by_tag(&default_screen, "ship");
+    gamemode_btns[2] = (UIButton *) ui_get_element_by_tag(&default_screen, "ball");
+    gamemode_btns[3] = (UIButton *) ui_get_element_by_tag(&default_screen, "ufo");
+    gamemode_btns[4] = (UIButton *) ui_get_element_by_tag(&default_screen, "dart");
+    gamemode_btns[5] = (UIButton *) ui_get_element_by_tag(&default_screen, "trail");
 
     while (aptMainLoop()) {
         hidScanInput();
@@ -288,11 +288,11 @@ void icon_kit_loop() {
         touch.interacted = false;
 
         for(int i = 0; i < GAMEMODE_COUNT + 1; i++){
-            gamemode_btns[i]->button.keyBinds = 0;
+            gamemode_btns[i]->keyBinds = 0;
             if(i == gamemode_page - 1){
-                gamemode_btns[i]->button.keyBinds |= KEY_L | KEY_ZL;
+                gamemode_btns[i]->keyBinds |= KEY_L | KEY_ZL;
             } else if(i == gamemode_page + 1){
-                gamemode_btns[i]->button.keyBinds |= KEY_R | KEY_ZR;
+                gamemode_btns[i]->keyBinds |= KEY_R | KEY_ZR;
             } 
         }
 

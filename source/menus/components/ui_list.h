@@ -1,8 +1,8 @@
 #include "ui_element.h"
 
-UIElement ui_create_list(
+UIList *ui_create_list(
     int x, int y, int w, int h,
     char (*tag)[TAG_LENGTH]
 );
-void ui_list_add(UIElement* list, UIElement* item);
-void ui_list_reset(UIElement *list);
+void ui_list_add(UIList* list, UIElement* item);
+void ui_list_reset(UIList *list);

@@ -4,6 +4,7 @@
 #include <citro2d.h>
 #include "utils/gfx.h"
 #include "particles/circles.h"
+#include <malloc.h>
 
 #define TAGS_PER_ELEMENT 5
 #define TAG_LENGTH 32
@@ -26,22 +27,71 @@ typedef enum {
     UI_STATISTIC_CARD,
     UI_PARTICLE,
     UI_USE_EFFECT,
-    UI_PALLETE_ICONS,
+    UI_PALETTE_ICONS,
     UI_SLIDER,
     UI_ONLINE_LEVEL_CARD,
 } UIElementType;
 
+
+typedef struct {
+    touchPosition touchPosition;
+    bool did_something;
+    bool interacted;
+} UIInput;
+
+typedef struct UIElement UIElement;
+typedef struct UIScreen UIScreen;
+
+typedef void (*UIActionFn)(UIElement* e);
+
+struct UIElement {
+    UIElementType type;
+
+    float x, y;
+    int w, h;
+
+    float opacity;
+
+    bool enabled;
+
+    UIActionFn action;
+
+    UIScreen *screen;
+
+    UIElement *parent;
+    UIElement *first_child;
+    UIElement *next_sibling;
+
+    char tag[TAGS_PER_ELEMENT][TAG_LENGTH];
+
+    void (*update)(UIElement*, UIInput*);
+    void (*draw)(UIElement*);
+    void (*destroy)(UIElement*);
+
+    void (*on_enable)(UIElement*);
+    void (*on_disable)(UIElement*);
+};
+
 typedef struct {
     C2D_Sprite sprite;
+    C2D_ImageTint tint;
+} ImageData;
+
+typedef struct {
+    UIElement base;
+
+    ImageData image;
+
     float scaleX;
     float scaleY;
 
-    C2D_ImageTint tint;
     bool useTint;
-} UIImageData;
+} UIImage;
 
 typedef struct {
-    UIImageData image;
+    UIElement base;
+
+    ImageData image;
 
     bool hovered;
     bool pressed;
@@ -58,10 +108,12 @@ typedef struct {
 
     u32 keyBinds;
     int keyPressTimer;
-} UIButtonData;
+} UIButton;
 
 typedef struct {
-    UIImageData image;
+    UIElement base;
+    
+    ImageData image;
 
     bool checked;
     u8 image_id;
@@ -74,15 +126,21 @@ typedef struct {
 
     float hoverTimer;
     float hoverScale;
-} UICheckBoxData;
+} UICheckBox;
 
 typedef struct {
+    UIElement base;
+    
     C2D_Image atlas;
+
     u32 color;
+    bool useTint;
     int border;
-} UIWindowData;
+} UIWindow;
 
 typedef struct {
+    UIElement base;
+
     C2D_Image atlas;
 
     char title[64];
@@ -92,29 +150,29 @@ typedef struct {
 } UITextbox;
 
 typedef struct {
+    UIElement base;
+    
     char text[512];
     float alignment;
     float scale;
     int font;
     bool parse_tags;
-} UILabelData;
+} UILabel;
 
 typedef struct {
+    UIElement base;
+
     bool hovered;
     bool pressed;
-} UIActionAreaData;
+} UIActionArea;
 
 typedef struct {
-    touchPosition touchPosition;
-    bool did_something;
-    bool interacted;
-} UIInput;
+    UIElement base;
 
-typedef struct {
     int gamemode;
     int index;
 
-    UIImageData image;
+    ImageData image;
 
     bool hovered;
     bool pressed;
@@ -126,14 +184,16 @@ typedef struct {
     float scaleY;
 
     bool isSelected;
-} UIIconData;
+} UIIcon;
 
 typedef struct {
+    UIElement base;
+
     int index;
     int color_index;
 
-    UIImageData image;
-    UIImageData button;
+    ImageData image;
+    ImageData button;
 
     bool hovered;
     bool pressed;
@@ -145,10 +205,14 @@ typedef struct {
     float scaleY;
 
     bool isSelected;
-} UIColorData;
+} UIColor;
 
 typedef struct {
-    UIWindowData window;
+    UIElement base;
+
+    C2D_Image atlas;
+    u32 color;
+    int border;
 
     bool hovered;
     bool pressed;
@@ -165,11 +229,13 @@ typedef struct {
     
     u32 keyBinds;
     int keyPressTimer;
-} UIWindowButtonData;
+} UIWindowButton;
 
 typedef struct {
-    C2D_Sprite sprite;
-    C2D_ImageTint tint;
+    UIElement base;
+    
+    ImageData image;
+
     float targetOpacity;
     float darkenTime;
     float darkenTimeElapsed;
@@ -178,11 +244,11 @@ typedef struct {
 } UIDarken;
 
 typedef struct {
-    C2D_Sprite sprite_frame;
-    C2D_ImageTint tint_frame;
+    UIElement base;
 
-    C2D_Sprite sprite;
-    C2D_ImageTint tint;
+    ImageData frame;
+
+    ImageData bar;
 
     float scale;
     float fill_scaleX;
@@ -194,9 +260,59 @@ typedef struct {
 
     bool flip_order;
     bool useTint;
-} UIProgressBarData;
+} UIProgressBar;
+
+#define UI_LIST_MAX_ITEMS 256
 
 typedef struct {
+    UIElement base;
+    
+    UIElement* items[UI_LIST_MAX_ITEMS];
+
+    int itemCount;
+
+    int scrollY;
+    int contentHeight;
+    int lastTouchY;
+
+    bool dragging;
+
+    int dpadHeldTime;
+} UIList;
+
+typedef struct {
+    UIElement base;
+    
+    ParticleSystem particle;
+} UIParticle;
+
+typedef struct {
+    UIElement base;
+
+    UseEffectPool useEffects;
+    //Use effect original positions relative to (0, 0)
+    float xPos[MAX_USE_EFFECTS];
+    float yPos[MAX_USE_EFFECTS];
+} UIUseEffect;
+
+typedef struct {
+    UIElement base;
+
+    float max_value;
+    float value;
+
+    float scale;
+
+    bool dragging;
+
+    C2D_Sprite track_frame;
+    C2D_Sprite track;
+    C2D_Sprite button;
+} UISlider;
+
+/*
+typedef struct {
+    
     UIImageData icon;
     UILabelData label;
     UIButtonData button;
@@ -230,86 +346,4 @@ typedef struct {
     UIImageData likes_icon;
     UIImageData length_icon;
 } UIOnlineLevelCardData;
-
-typedef struct UIElement UIElement;
-
-#define UI_LIST_MAX_ITEMS 256
-
-typedef struct {
-    UIElement* items[UI_LIST_MAX_ITEMS];
-    int itemCount;
-
-    int scrollY;
-    int contentHeight;
-    int lastTouchY;
-
-    bool dragging;
-
-    int dpadHeldTime;
-} UIList;
-
-typedef struct {
-    ParticleSystem particle;
-} UIParticleData;
-
-typedef struct {
-    UseEffectPool useEffects;
-    //Use effect original positions relative to (0, 0)
-    float xPos[MAX_USE_EFFECTS];
-    float yPos[MAX_USE_EFFECTS];
-} UIUseEffectData;
-
-typedef struct {
-    float max_value;
-    float value;
-
-    float scale;
-
-    bool dragging;
-
-    C2D_Sprite track_frame;
-    C2D_Sprite track;
-    C2D_Sprite button;
-} UISliderData;
-
-typedef void (*UIActionFn)(UIElement* e);
-
-struct UIElement {
-    UIElementType type;
-
-    float x, y;
-    int w, h;
-
-    float opacity;
-
-    bool enabled;
-
-    UIActionFn action;
-
-    union {
-        UIImageData image;
-        UIButtonData button;
-        UILabelData label;
-        UICheckBoxData checkbox;
-        UIWindowData window;
-        UITextbox textbox;
-        UIList list;
-        UIActionAreaData action_area;
-        UIDarken darken;
-        UIIconData icon;
-        UIColorData color;
-        UIWindowButtonData window_button;
-        UIProgressBarData progress_bar;
-        UIExternalLevelCardData external_level_card;
-        UIStatisticCardData statistic_card;
-        UIOnlineLevelCardData online_level_card; 
-        UIParticleData particle;
-        UIUseEffectData use_effect;
-        UISliderData slider;
-    };
-
-    char tag[TAGS_PER_ELEMENT][TAG_LENGTH];
-
-    void (*update)(UIElement*, UIInput*);
-    void (*draw)(UIElement*);
-};
+*/
