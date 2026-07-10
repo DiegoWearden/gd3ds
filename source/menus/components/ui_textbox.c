@@ -12,11 +12,10 @@
 
 #include "utils/keyboard.h"
 
-static void ui_textbox_update(UIElement* e, UIInput* touch) {
+static void ui_textbox_update(UIElement* e, UIInput* touch, UITransform *transform) {
     UITextbox *textbox = (UITextbox *) e;
 
-    bool inside = touch->touchPosition.px >= e->x - (e->w / 2) && touch->touchPosition.px < e->x + (e->w / 2) &&
-                  touch->touchPosition.py >= e->y - (e->h / 2) && touch->touchPosition.py < e->y + (e->h / 2);
+    bool inside = ui_element_basic_bound_check(e, touch, transform);
     
     // Mask background elements
     if (inside) {
@@ -29,10 +28,10 @@ static void ui_textbox_update(UIElement* e, UIInput* touch) {
     }
 }
 
-static void ui_textbox_draw(UIElement* e) {
+static void ui_textbox_draw(UIElement* e, UITransform *transform) {
     UITextbox *textbox = (UITextbox *) e;
 
-    draw_9_slice(textbox->atlas, e->x, e->y, e->w, e->h, textbox->border, C2D_Color32(0, 0, 0, 127));
+    draw_9_slice(textbox->atlas, transform->x, transform->y, transform->scaleX, transform->scaleY, e->w, e->h, textbox->border, C2D_Color32(0, 0, 0, 127));
     
     // Get text length in pixels
     float length = get_text_length(&bigFont_fontCharset, 1.f, false, textbox->text);
@@ -45,7 +44,7 @@ static void ui_textbox_draw(UIElement* e) {
         txt_scale = 1.0f;
     }
 
-    draw_text(&bigFont_fontCharset, &bigFont_sheet, e->x - e->w / 2 + (TEXTBOX_MARGIN / 2), e->y, txt_scale, txt_scale, 0.f, false, "%s", textbox->text);
+    draw_text(&bigFont_fontCharset, &bigFont_sheet, transform->x - e->w / 2 + (TEXTBOX_MARGIN / 2), transform->y, txt_scale, txt_scale, 0.f, false, "%s", textbox->text);
 }
 
 static void ui_textbox_destroy(UIElement *e) {

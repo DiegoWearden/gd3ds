@@ -15,7 +15,7 @@
 //if a button has been pressed with a keybind, no other button should be pressed after
 static int pressedKey;
 
-void ui_button_update(UIElement* e, UIInput* touch) {
+void ui_button_update(UIElement* e, UIInput* touch, UITransform *transform) {
     UIButton *button = (UIButton *) e;
 
     //Keybinds logic
@@ -60,12 +60,13 @@ void ui_button_update(UIElement* e, UIInput* touch) {
     button->hoverTimer = clampf(button->hoverTimer, 0.f, BUTTON_HOVER_ANIM_TIME);
     button->hoverScale = easeValue(bounce_type, 1.0f, BUTTON_HOVER_SCALE, button->hoverTimer, BUTTON_HOVER_ANIM_TIME, 0);
 
+    // Apply hover factor
+    button->hoverScale = 1 + (button->hoverScale - 1) * button->hoverFactor;
+
     bool pressedTouch = hidKeysDown() & KEY_TOUCH;
     bool releasedTouch = hidKeysUp() & KEY_TOUCH;
 
-    bool inside = touch->touchPosition.px >= e->x - (e->w / 2) && touch->touchPosition.px < e->x + (e->w / 2) &&
-                  touch->touchPosition.py >= e->y - (e->h / 2) && touch->touchPosition.py < e->y + (e->h / 2) && 
-                  !pressedKey;
+    bool inside = ui_element_basic_bound_check(e, touch, transform) && !pressedKey;
 
     // Check if pressed the button
     if (inside && pressedTouch && !touch->did_something) {
@@ -106,7 +107,7 @@ void ui_button_update(UIElement* e, UIInput* touch) {
     }
 }
 
-void ui_button_draw_text(UIElement *e) {
+void ui_button_draw_text(UIElement *e, UITransform *transform) {
     UIButton *button = (UIButton *) e;
 
     int font_id = button->font;
@@ -116,39 +117,46 @@ void ui_button_draw_text(UIElement *e) {
 
     const LabelFont *font = &fonts[font_id];
 
-    float scale = button->hoverScale;
     float text_scale = button->textScale;
+
+    float width = e->w;
 
     if (button->textScale == 0){
         // Get text length in pixels
         float length = get_text_length(font->charset, 1 / 0.85f, true, button->text);
     
-        if (e->w < length) {
-            text_scale = scale * (e->w / length);
+        if (width < length) {
+            text_scale = width / length;
         } else {
-            text_scale = scale * 0.85f;
+            text_scale = 0.85f;
         }
     } else {
-        text_scale = (button->textScale * scale);
+        text_scale = button->textScale;
     }
 
-    draw_text(font->charset, font->sheet, e->x, e->y, text_scale, text_scale, 0.5f, true, "%s", button->text);
+    draw_text(font->charset, font->sheet, transform->x, transform->y, text_scale * transform->scaleX, text_scale * transform->scaleY, 0.5f, true, "%s", button->text);
 }
 
-static void ui_button_draw(UIElement* e) {
+void ui_button_modify_transform(UIElement *e, UITransform *t) {
+    UIButton *button = (UIButton *) e;
+
+    t->scaleX *= button->hoverScale;
+    t->scaleY *= button->hoverScale;
+}
+
+static void ui_button_draw(UIElement* e, UITransform *transform) {
     UIButton *button = (UIButton *) e;
 
     C2D_ImageTint tint;
-    float scale = button->hoverScale;
 
     C2D_PlainImageTint(&tint, C2D_Color32f(1, 1, 1, e->opacity), 1.f);
 
     C2D_SpriteSetCenter(&button->image.sprite, 0.5f, 0.5f);
-    C2D_SpriteSetPos(&button->image.sprite, e->x, e->y);
-    C2D_SpriteSetScale(&button->image.sprite, scale * e->scaleX, scale * e->scaleY);
+    C2D_SpriteSetPos(&button->image.sprite, transform->x, transform->y);
+    C2D_SpriteSetScale(&button->image.sprite, transform->scaleX, transform->scaleY);
     C2D_DrawSpriteTinted(&button->image.sprite, &tint);
 
-    ui_button_draw_text(e);
+    ui_button_draw_text(e, transform);
 }
 
 static void ui_button_destroy(UIElement *e) {
@@ -165,14 +173,20 @@ static void ui_button_on_disable(UIElement *e) {
     button->hoverTimer = 0.f;
 }
 
+void ui_button_set_text(UIButton *e, const char *text) {
+    if (!e || !text) return;
+
+    strncpy(e->text, text, sizeof(e->text) - 1);
+}
+
 void ui_button_set_image(UIButton *e, int sprite_index, int sheet) {
     if (!e) return;
 
     C2D_SpriteFromSheet(&e->image.sprite, *get_sheet(sheet), sprite_index);
     C3D_TexSetFilter(e->image.sprite.image.tex, GPU_LINEAR, GPU_LINEAR);
 
-    e->base.w = fabsf(e->image.sprite.image.subtex->width * e->base.scaleX);
-    e->base.h = fabsf(e->image.sprite.image.subtex->height * e->base.scaleY);
+    e->base.w = e->image.sprite.image.subtex->width;
+    e->base.h = e->image.sprite.image.subtex->height;
 }
 
 UIButton *ui_create_button(const UIContext *ctx) {
@@ -187,12 +201,15 @@ UIButton *ui_create_button(const UIContext *ctx) {
     e->base.update = ui_button_update;
     e->base.draw = ui_button_draw;
     e->base.destroy = ui_button_destroy;
+    
+    e->base.modify_transform = ui_button_modify_transform;
 
     e->base.on_disable = ui_button_on_disable;
 
     ui_element_apply_default_properties(&e->base, ctx);
 
     e->hoverScale = 1.f;
+    e->hoverFactor = 1.f;
 
     pressedKey = false;
 
@@ -216,6 +233,8 @@ UIElement *ui_create_button_from_props(const UIContext *ctx, const UIPropertyLis
 
     button->font = ui_prop_int(props, "font", 0);
     button->textScale = ui_prop_float(props, "textScale", 0);
+
+    button->hoverFactor = ui_prop_float(props, "hoverFactor", 1);
 
     button->keyBinds = ui_prop_bitfield(props, "keyBinds", keybind_table, ARRAY_LEN(keybind_table));
     

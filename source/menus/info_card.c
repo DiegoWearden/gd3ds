@@ -23,8 +23,7 @@
 static bool yes_exit = false;
 
 static UIScreen screen = {
-    .isBottom = true,
-    .open_anim = ANIM_ZOOM
+    .isBottom = true
 };
 static UILabel *content;
 
@@ -43,6 +42,7 @@ void set_info_content(char *text) {
 
 void info_card_init() {
     ui_load_screen(&screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/info_card.txt");
+    ui_screen_open(&screen, ANIM_ZOOM);
     yes_exit = false;
 }
 

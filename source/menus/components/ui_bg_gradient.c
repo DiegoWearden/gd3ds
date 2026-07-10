@@ -6,17 +6,16 @@
 #include "menus/core/ui_props.h"
 #include "ui_bg_gradient.h"
 
-static void ui_bg_gradient_update(UIElement* e, UIInput* touch) {
-    bool inside = touch->touchPosition.px >= e->x - (e->w / 2) && touch->touchPosition.px < e->x + (e->w / 2) &&
-                  touch->touchPosition.py >= e->y - (e->h / 2) && touch->touchPosition.py < e->y + (e->h / 2);
+static void ui_bg_gradient_update(UIElement* e, UIInput* touch, UITransform *transform) {
+    bool inside = ui_element_basic_bound_check(e, touch, transform);
     
     // Mask background elements
     if (inside) touch->did_something = true;
 }
 
-static void ui_bg_gradient_draw(UIElement* e) {
+static void ui_bg_gradient_draw(UIElement* e, UITransform *transform) {
     UIImage *image = (UIImage *) e;
-    C2D_SpriteSetPos(&image->image.sprite, e->x, e->y);
+    C2D_SpriteSetPos(&image->image.sprite, transform->x, transform->y);
     C2D_SpriteSetScale(&image->image.sprite, image->base.scaleX, image->base.scaleY);
     C2D_DrawSpriteTinted(&image->image.sprite, &image->image.tint);
 }
@@ -33,7 +32,7 @@ UIImage *ui_create_bg_gradient(const UIContext *ctx) {
 
     if (!e) return NULL;
 
-    memset(e, 0, sizeof(UI_IMAGE));
+    memset(e, 0, sizeof(UIImage));
     e->base.type = UI_IMAGE;
     e->base.x = 0;
     e->base.y = 0;

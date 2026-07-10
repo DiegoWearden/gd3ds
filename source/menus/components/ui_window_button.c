@@ -27,19 +27,16 @@ void ui_window_button_set_tint(UIWindowButton* e, u32 color) {
     e->color = color;
 }
 
-static void ui_window_button_update(UIElement* e, UIInput* touch) {
-    ui_button_update(e, touch);
+static void ui_window_button_update(UIElement* e, UIInput* touch, UITransform *transform) {
+    ui_button_update(e, touch, transform);
 }
 
-static void ui_window_button_draw(UIElement* e) {
+static void ui_window_button_draw(UIElement* e, UITransform *transform) {
     UIWindowButton *window_button = (UIWindowButton *) e;
-    UIButton *button = (UIButton *) e;
 
-    float scale = button->hoverScale;
+    draw_9_slice(window_button->atlas, transform->x, transform->y, transform->scaleX, transform->scaleY, e->w, e->h, window_button->border, window_button->color);
 
-    draw_9_slice(window_button->atlas, e->x, e->y, e->w * scale, e->h * scale, window_button->border, window_button->color);
-
-    ui_button_draw_text(e);
+    ui_button_draw_text(e, transform);
 }
 
 static void ui_window_button_destroy(UIElement *e) {
@@ -77,12 +74,15 @@ UIWindowButton *ui_create_window_button(const UIContext *ctx) {
     button->base.update = ui_window_button_update;
     button->base.draw = ui_window_button_draw;
     button->base.destroy = ui_window_button_destroy;
+    
+    button->base.modify_transform = ui_button_modify_transform;
 
     button->base.on_disable = ui_window_button_on_disable;
 
     ui_element_apply_default_properties(&button->base, ctx);
     
-    button->hoverScale = 1.f;
+    button->hoverScale = 1;
+    button->hoverFactor = 1;
 
     ui_window_button_set_tint(e, C2D_Color32(255, 255, 255, 255));
 
@@ -114,6 +114,8 @@ UIElement *ui_create_window_button_from_props(const UIContext *ctx, const UIProp
         ui_prop_int(props, "b", 255), 
         ui_prop_int(props, "a", 255)
     ));
+
+    button->hoverFactor = ui_prop_float(props, "hoverFactor", 1);
 
     button->keyBinds = ui_prop_bitfield(props, "keyBinds", keybind_table, ARRAY_LEN(keybind_table));
 

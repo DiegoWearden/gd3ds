@@ -9,6 +9,13 @@
 #define TAGS_PER_ELEMENT 5
 #define TAG_LENGTH 32
 
+typedef struct {
+    float x;
+    float y;
+    float scaleX;
+    float scaleY;
+} UITransform;
+
 typedef enum {
     UI_BUTTON,
     UI_IMAGE,
@@ -30,6 +37,7 @@ typedef enum {
     UI_PALETTE_ICONS,
     UI_SLIDER,
     UI_ONLINE_LEVEL_CARD,
+    UI_RECTANGLE,
 } UIElementType;
 
 
@@ -56,20 +64,32 @@ struct UIElement {
 
     bool enabled;
 
+    bool draws_children;
+
     UIActionFn action;
 
     UIScreen *screen;
 
-    UIElement *parent;
-    UIElement *first_child;
-    UIElement *next_sibling;
+    // Useful for storing data inside an element
+    void *userdata;
+    void (*userdata_destroy)(void *);
+
+    struct UIElement *parent;
+
+    struct UIElement *first_child;
+    struct UIElement *last_child;
+
+    struct UIElement *next_sibling;
+    struct UIElement *prev_sibling;
 
     char tag[TAGS_PER_ELEMENT][TAG_LENGTH];
 
-    void (*update)(UIElement*, UIInput*);
-    void (*draw)(UIElement*);
+    void (*update)(UIElement*, UIInput*, UITransform *);
+    void (*draw)(UIElement*, UITransform *);
     void (*destroy)(UIElement*);
 
+    void (*modify_transform)(UIElement *, UITransform *);
+    
     void (*on_enable)(UIElement*);
     void (*on_disable)(UIElement*);
 };
@@ -97,6 +117,7 @@ typedef struct {
 
     float hoverTimer;
     float hoverScale;
+    float hoverFactor;
 
     int font;
     char text[64];
@@ -210,11 +231,6 @@ typedef struct {
 
 typedef struct {
     UIElement base;
-    
-    UIElement **items;
-
-    size_t count;
-    size_t capacity;
 
     int scrollY;
     int contentHeight;
@@ -258,6 +274,12 @@ typedef struct {
 
     float spacing;
 } UIPaletteIcons;
+
+typedef struct {
+    UIElement base;
+
+    u32 color;
+} UIRectangle;
 /*
 typedef struct {
     

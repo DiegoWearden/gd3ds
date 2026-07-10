@@ -13,7 +13,7 @@ void ui_use_effect_clear(UIUseEffect* e){
 
 void ui_use_effect_update_pos(UIUseEffect* e) {
     if (!e) return;
-    
+
     UseEffectPool *pool = &(e->useEffects);
     if (!pool->pool) return;
 
@@ -41,14 +41,14 @@ void ui_set_use_effect_col(UseEffect *effect, float r, float g, float b) {
     effect->def.colorB = b;
 }
 
-static void ui_use_effect_update(UIElement* e, UIInput* touch) {
+static void ui_use_effect_update(UIElement* e, UIInput* touch, UITransform *transform) {
     UIUseEffect *useEffect = (UIUseEffect *) e;
 
     UseEffectPool *pool = &(useEffect->useEffects);
     update_use_effects(delta, pool);
 }
 
-static void ui_use_effect_draw(UIElement* e) {
+static void ui_use_effect_draw(UIElement* e, UITransform *transform) {
     UIUseEffect *useEffect = (UIUseEffect *) e;
 
     UseEffectPool *pool = &(useEffect->useEffects);

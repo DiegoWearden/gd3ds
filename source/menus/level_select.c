@@ -7,7 +7,7 @@
 #include "math_helpers.h"
 #include "menus/components/ui_list.h"
 #include "menus/components/ui_window.h"
-#include "menus/components/ui_textbox.h"
+#include "menus/components/ui_window_button.h"
 #include "menus/components/ui_image.h"
 #include "menus/components/ui_label.h"
 #include "menus/components/ui_progress_bar.h"
@@ -46,14 +46,14 @@ static bool cardCorrection;
 
 static UIImage *bg_gradient = NULL;
 static UIImage *bg_gradient_top = NULL;
-static UIWindow *level_card_window = NULL;
+static UIWindowButton *level_card_window = NULL;
 static UILabel *level_card_title_top = NULL;
 
 static UILabel *level_card_title = NULL;
 static UILabel *level_card_stars = NULL;
 static UIImage *level_card_face = NULL;
 
-static UIWindow *level_card_2_window = NULL;
+static UIWindowButton *level_card_2_window = NULL;
 
 static UILabel *level_card_2_title = NULL;
 static UILabel *level_card_2_stars = NULL;
@@ -189,8 +189,8 @@ void update_level_name(int level, int card) {
     float length = get_text_length(&bigFont_fontCharset, 1 / 0.85f, false, main_levels[level].level_name);
 
     float txt_scale;
-    if (level_card_window->base.w < length) {
-        txt_scale = (level_card_window->base.w / length);
+    if (level_card_window->base.base.w < length) {
+        txt_scale = (level_card_window->base.base.w / length);
     } else {
         txt_scale = 0.85f;
     }
@@ -398,11 +398,11 @@ void level_select_loop() {
     ui_load_screen(&default_screen_top, actions_top, sizeof(actions_top) / sizeof(actions_top[0]), "romfs:/menus/level_select_top.txt");
 
     // Set window color
-    level_card_window = (UIWindow *) ui_get_element_by_tag(&default_screen, "card_window");
-    ui_window_set_tint(level_card_window, C2D_Color32(0, 0, 0, 127));
+    level_card_window = (UIWindowButton *) ui_get_element_by_tag(&default_screen, "card_window");
+    ui_window_button_set_tint(level_card_window, C2D_Color32(0, 0, 0, 127));
 
-    level_card_2_window = (UIWindow *) ui_get_element_by_tag(&default_screen, "card_window_2");
-    ui_window_set_tint(level_card_2_window, C2D_Color32(0, 0, 0, 127));
+    level_card_2_window = (UIWindowButton *) ui_get_element_by_tag(&default_screen, "card_window_2");
+    ui_window_button_set_tint(level_card_2_window, C2D_Color32(0, 0, 0, 127));
     
     ui_window_set_tint((UIWindow *) ui_get_element_by_tag(&default_screen_top, "face_card"), C2D_Color32(0, 0, 0, 127));
 

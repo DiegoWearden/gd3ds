@@ -3,22 +3,21 @@
 #include "menus/core/ui_screen.h"
 #include "menus/core/ui_props.h"
 
-static void ui_progress_bar_update(UIElement* e, UIInput* touch) {
-    bool inside = touch->touchPosition.px >= e->x - (e->w / 2) && touch->touchPosition.px < e->x + (e->w / 2) &&
-                  touch->touchPosition.py >= e->y - (e->h / 2) && touch->touchPosition.py < e->y + (e->h / 2);
+static void ui_progress_bar_update(UIElement* e, UIInput* touch, UITransform *transform) {
+    bool inside = ui_element_basic_bound_check(e, touch, transform);
     
     // Mask background elements
     if (inside) touch->did_something = true;
 }
 
-static void draw_frame(UIProgressBar *e) {
+static void draw_frame(UIProgressBar *e, UITransform *transform) {
     C2D_SpriteSetCenter(&e->frame.sprite, 0.5f, 0.5f);
-    C2D_SpriteSetPos(&e->frame.sprite, e->base.x, e->base.y);
-    C2D_SpriteSetScale(&e->frame.sprite, e->base.scaleX, e->base.scaleY);
+    C2D_SpriteSetPos(&e->frame.sprite, transform->x, transform->y);
+    C2D_SpriteSetScale(&e->frame.sprite, transform->scaleX, transform->scaleY);
     C2D_DrawSpriteTinted(&e->frame.sprite, &e->frame.tint);
 }
 
-static void draw_bar(UIProgressBar *e) {
+static void draw_bar(UIProgressBar *e, UITransform *transform) {
     float bar_width = e->bar.sprite.image.subtex->width;
     
     int pixels = (e->value / e->max_value) * bar_width;
@@ -32,9 +31,8 @@ static void draw_bar(UIProgressBar *e) {
         Tex3DS_SubTexture sub;
         C2D_Image img;
 
-
-        float sx = e->base.scaleX;
-        float sy = e->base.scaleY;
+        float sx = transform->scaleX;
+        float sy = transform->scaleY;
 
         if (e->style == 0) {
             // Add 1 pixel of margin
@@ -42,7 +40,7 @@ static void draw_bar(UIProgressBar *e) {
             sy *= ((float)(e->base.h - 2) / (float)e->base.h);
         }
         
-        float x = e->base.x - e->base.w / 2;
+        float x = transform->x - (e->base.w / 2) * transform->scaleX / e->base.scaleX;
         if (e->style == 0) {
             x += 0.5f;
         }
@@ -51,20 +49,20 @@ static void draw_bar(UIProgressBar *e) {
         img = e->bar.sprite.image; img.subtex = &sub;
         C2D_SpriteFromImage(&spr, img);
         C2D_SpriteSetCenter(&spr, 0.f, 0.5f);
-        C2D_SpriteSetPos(&spr, x, e->base.y);
+        C2D_SpriteSetPos(&spr, x, transform->y);
         C2D_SpriteSetScale(&spr, sx, sy);
         C2D_DrawSpriteTinted(&spr, &e->bar.tint);
     }
 }
 
-static void ui_progress_bar_draw(UIElement* e) {
+static void ui_progress_bar_draw(UIElement* e, UITransform *transform) {
     UIProgressBar *progress_bar = (UIProgressBar *) e;
     if (progress_bar->flip_order) {
-        draw_bar(progress_bar);
-        draw_frame(progress_bar);
+        draw_bar(progress_bar, transform);
+        draw_frame(progress_bar, transform);
     } else {
-        draw_frame(progress_bar);
-        draw_bar(progress_bar);
+        draw_frame(progress_bar, transform);
+        draw_bar(progress_bar, transform);
     }
 }
 

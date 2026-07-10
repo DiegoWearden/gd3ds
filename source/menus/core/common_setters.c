@@ -31,3 +31,7 @@ void ui_element_set_scale_xy(UIElement *e, float x, float y) {
     e->scaleX = x;
     e->scaleY = y;
 }
+
+void ui_element_set_action(UIElement *e, UIActionFn action) {
+    e->action = action;
+}

@@ -21,7 +21,6 @@ static bool yes_exit = false;
 
 static UIScreen screen = {
     .isBottom = true,
-    .open_anim = ANIM_ZOOM
 };
 
 void exit_credits(UIElement* e) {
@@ -34,6 +33,7 @@ static UIAction actions[] = {
 
 void credits_init() {
     ui_load_screen(&screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/credits.txt");
+    ui_screen_open(&screen, ANIM_ZOOM);
     yes_exit = false;
 }
 

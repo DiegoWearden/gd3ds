@@ -9,6 +9,7 @@ void ui_particle_update_pos(UIParticle* e){
     if (!e) return;
 
     ParticleSystem *p = &(e->particle);
+
     p->emitterX = e->base.x;
     p->emitterY = e->base.y;
 }
@@ -19,14 +20,14 @@ void ui_particle_emit(UIParticle* e, int emitCount){
     spawnMultipleParticles(&(e->particle), emitCount);
 }
 
-static void ui_particle_update(UIElement* e, UIInput* touch) {
+static void ui_particle_update(UIElement* e, UIInput* touch, UITransform *transform) {
     UIParticle *particle = (UIParticle *) e;
     ParticleSystem *p = &(particle->particle);
 
     updateParticleSystem(p, delta);
 }
 
-static void ui_particle_draw(UIElement* e) {
+static void ui_particle_draw(UIElement* e, UITransform *transform) {
     UIParticle *particle = (UIParticle *) e;
     
     change_blending(true);

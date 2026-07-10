@@ -11,37 +11,34 @@
 
 #define FIRST_TRAIL_ID 27
 
-static void ui_icon_update(UIElement* e, UIInput* touch) {
-    ui_button_update(e, touch);
+static void ui_icon_update(UIElement* e, UIInput* touch, UITransform *transform) {
+    ui_button_update(e, touch, transform);
 }
 
-static void ui_icon_draw(UIElement* e) {
+static void ui_icon_draw(UIElement* e, UITransform *transform) {
     UIIcon *icon = (UIIcon *) e;
     UIButton *button = (UIButton *) e;
 
-    float scale = button->hoverScale;
-
-    float y = e->y;
-    if (icon->gamemode == GAMEMODE_SHIP) y -= 4;
+    if (icon->gamemode == GAMEMODE_SHIP) transform->y -= 4;
 
     if (icon->gamemode == TRAIL) {
         C2D_Sprite spr = { 0 };
         C2D_SpriteFromSheet(&spr, ui_2_sheet, FIRST_TRAIL_ID + icon->index);
         C3D_TexSetFilter(spr.image.tex, GPU_LINEAR, GPU_LINEAR);
         C2D_SpriteSetCenter(&spr, 0.5f, 0.5f);
-        C2D_SpriteSetPos(&spr, e->x, y);
-        C2D_SpriteSetScale(&spr, scale * button->base.scaleX, scale * button->base.scaleY);
+        C2D_SpriteSetPos(&spr, transform->x, transform->y);
+        C2D_SpriteSetScale(&spr, transform->scaleX,  transform->scaleY);
         C2D_DrawSprite(&spr);
     } else {
         spawn_icon_at(
             icon->gamemode,
             icon->index,
             false,
-            e->x, y,
+            transform->x, transform->y,
             0,
             0,
             0,
-            scale * button->base.scaleX,
+            transform->scaleX,
             C2D_Color32(175, 175, 175, 255),
             C2D_Color32(255, 255, 255, 255),
             0
@@ -50,8 +47,8 @@ static void ui_icon_draw(UIElement* e) {
 
     if (icon->isSelected) {
         C2D_SpriteSetCenter(&button->image.sprite, 0.5f, 0.5f);
-        C2D_SpriteSetPos(&button->image.sprite, e->x, e->y);
-        C2D_SpriteSetScale(&button->image.sprite, button->base.scaleX, button->base.scaleY);
+        C2D_SpriteSetPos(&button->image.sprite, transform->x, transform->y);
+        C2D_SpriteSetScale(&button->image.sprite, transform->scaleX, transform->scaleY);
         C2D_DrawSprite(&button->image.sprite);
     }
 }
@@ -86,9 +83,12 @@ UIIcon *ui_create_icon(const UIContext *ctx) {
     button->base.draw = ui_icon_draw;
     button->base.destroy = ui_icon_destroy;
 
+    button->base.modify_transform = ui_button_modify_transform;
+
     ui_element_apply_default_properties(&button->base, ctx);
     
-    button->hoverScale = 1.f;
+    button->hoverScale = 1;
+    button->hoverFactor = 1;
 
     C2D_SpriteFromSheet(&button->image.sprite, ui_sheet, 175);
     C3D_TexSetFilter(button->image.sprite.image.tex, GPU_LINEAR, GPU_LINEAR);
@@ -105,8 +105,10 @@ UIElement *ui_create_icon_from_props(const UIContext *ctx, const UIPropertyList 
 
     ui_element_apply_properties(&button->base, ctx, props);
 
-    ui_element_set_size(&button->base, 30 * button->base.scaleX, 30 * button->base.scaleY);
-        
+    ui_element_set_size(&button->base, 30, 30);
+    
+    button->hoverFactor = ui_prop_float(props, "hoverFactor", 1);    
+
     ui_icon_set_gamemode_index(icon, 
         ui_prop_int(props, "gamemode", 0), 
         ui_prop_int(props, "id", 0));

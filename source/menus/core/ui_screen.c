@@ -23,8 +23,8 @@
 #include "menus/components/ui_use_effect.h"
 #include "menus/components/ui_slider.h"
 #include "menus/components/ui_palette_icons.h"
+#include "menus/components/ui_rectangle.h"
 
-#include "particles/particle_definitions.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -75,6 +75,7 @@ static const UIElementConstructor element_constructors[] = {
     {"useeffect",    ui_create_use_effect_from_props },
     {"paletteicons", ui_create_palette_icons_from_props },
     {"slider",       ui_create_slider_from_props },
+    {"rectangle",    ui_create_rectangle_from_props },
 };
 
 const UIBitfieldEntry keybind_table[] = {
@@ -184,26 +185,110 @@ C2D_SpriteSheet *get_sheet(int sheet) {
     return NULL;
 }
 
-void run_animation_slide(UIScreen *screen, bool go_up) {
-    float fade_value = easeValue(EASE_IN_OUT, go_up ? 240 : 0, go_up ? 0 : 240, screen->open_anim_time, 0.5f, 2.0f);
-    float window_y_pos = -120 + fade_value;
+// Combines a transform an element's data
+UITransform ui_transform_combine(UITransform *parent, UIElement *e) {
+    return (UITransform){
+        .x = parent->x + e->x * parent->scaleX,
+        .y = parent->y + e->y * parent->scaleY,
+
+        .scaleX = parent->scaleX * e->scaleX,
+        .scaleY = parent->scaleY * e->scaleY,
+    };
+}
+
+// Updates an element and its children
+void ui_update_tree(UIElement *e, UIInput *input, UITransform *parent) {
+    if (!e->enabled) return;
+
+    UITransform world = ui_transform_combine(parent, e);
     
-    bool found_parent = false;
-    float movement_y = 0;
-    for (int i = 0; i < screen->count; i++) {
-        UIElement *e = screen->elements[i];
+    // Let the element modify its own transform
+    if (e->modify_transform)
+        e->modify_transform(e, &world);
+    
+    e->update(e, input, &world);
 
-        if (!found_parent) {
-            found_parent = true;
-            movement_y = window_y_pos - e->y;
+    if (!e->draws_children) {
+        for (UIElement *child = e->first_child; child; child = child->next_sibling) {
+            ui_update_tree(child, input, &world);
         }
+    }
+}
 
-        e->y += movement_y;
+// Draws an element and its children
+void ui_draw_tree(UIElement *e, UITransform *parent) {
+    if (!e->enabled) return;
+
+    UITransform world = ui_transform_combine(parent, e);
+
+    // Let the element modify its own transform
+    if (e->modify_transform)
+        e->modify_transform(e, &world);
+
+    e->draw(e, &world);
+
+    if (!e->draws_children) {
+        for (UIElement *child = e->first_child; child; child = child->next_sibling) {
+            ui_draw_tree(child, &world);
+        }
+    }
+}
+
+// Destroys an element and its children
+void ui_destroy_tree(UIElement *e) {
+    UIElement *child = e->first_child;
+
+    while (child) {
+        UIElement *next = child->next_sibling;
+
+        ui_destroy_tree(child);
+
+        child = next;
     }
 
-    if(screen->open_anim_time >= 0.5f){
-        screen->open_anim_time = 0.5f;
-        screen->open_anim_done = true;
+    e->destroy(e);
+
+    if (e->userdata && e->userdata_destroy) e->userdata_destroy(e->userdata);
+}
+
+
+// Starts the opening animation
+void ui_screen_open(UIScreen *screen, UIAnimation animation) {
+    if (!screen)
+        return;
+
+    screen->transition.animation = animation;
+    screen->transition.state = UI_TRANSITION_OPENING;
+    screen->transition.time = 0.0f;
+    screen->transition.duration = 0.5f;
+    screen->transition.done = false;
+}
+
+// Starts the opening animation in reverse
+void ui_screen_close(UIScreen *screen) {
+    if (!screen)
+        return;
+
+    screen->transition.state = UI_TRANSITION_CLOSING;
+    screen->transition.time = 0.0f;
+    screen->transition.done = false;
+}
+
+static void ui_screen_update_transition(UIScreen *screen, float dt) {
+    UITransition *t = &screen->transition;
+
+    if (t->done || t->state == UI_TRANSITION_NONE)
+        return;
+
+    t->time += dt;
+
+    if (t->time >= t->duration) {
+        t->time = t->duration;
+        t->done = true;
+
+        if (t->state == UI_TRANSITION_CLOSING) {
+            ui_unload_screen(screen);
+        }
     }
 }
 
@@ -211,18 +296,21 @@ void run_animation_slide(UIScreen *screen, bool go_up) {
 void ui_screen_update(UIScreen* s, UIInput* touch) {
     if (!s->loaded) return;
 
-    if (s->open_anim_time >= 1.f) {
-        s->open_anim_time = 1.f;
-        s->open_anim_done = true;
-    }
-
-    if(!s->open_anim_done) s->open_anim_time += 1.f / 60.f;
+    ui_screen_update_transition(s, 1/60.f);
     
-    if(s->disable_element_update) return;
+    // The screen could have been unloaded by the closing animation
+    if (!s->loaded) return;
+
+    UITransform identity = {
+        .x = 0.f,
+        .y = 0.f,
+        .scaleX = 1.f,
+        .scaleY = 1.f
+    };
 
     for (int i = s->count - 1; i >= 0; i--) {
         UIElement *e = s->elements[i];
-        if (e->enabled) e->update(e, touch);
+        ui_update_tree(e, touch, &identity);
     }
 }
 
@@ -230,58 +318,65 @@ void ui_screen_update(UIScreen* s, UIInput* touch) {
 void ui_screen_draw(UIScreen* s) {
     if (!s->loaded) return;
 
-    C3D_Mtx originalMat;
-    C3D_Mtx newMat;
-    C2D_ViewSave(&originalMat);
+    UITransform root = {
+        .x = 0.f,
+        .y = 0.f,
+        .scaleX = 1.f,
+        .scaleY = 1.f
+    };
 
-    float offX = 0.f;
-    float offY = 0.f;
+    int width = s->isBottom ? 320 : 400;
+    int height = 240;
 
-    if(!s->open_anim_done){
-        int width = s->isBottom ? 320 : 400;
-        int height = 240;
+    float slide_value = 0;
+    float scale_value = 0;
 
-        if(s->open_anim == ANIM_ZOOM) {
-            float scale_value = easeValue(ELASTIC_OUT, 0.f, 1.f, s->open_anim_time, 0.5f, 0.6f);
+    // Animation stuff
+    switch (s->transition.animation) {
+        case ANIM_ZOOM:
+            scale_value = easeValue(ELASTIC_OUT, 0.f, 1.f, s->transition.time, s->transition.duration, 0.6f);
+            
+            if (s->transition.state == UI_TRANSITION_CLOSING) scale_value = 1.f - scale_value;
+
+            root.scaleX = scale_value;
+            root.scaleY = scale_value;
 
             float cx = width * 0.5f;
             float cy = height * 0.5f;
 
-            C2D_ViewTranslate(cx, cy);
-            C2D_ViewScale(scale_value, scale_value);
-            C2D_ViewTranslate(-cx, -cy);
-        } else if(s->open_anim == ANIM_SLIDE_RIGHT) {
-            float slide_value = easeValue(ELASTIC_OUT, 0.f, 1.f, s->open_anim_time, 0.5f, 0.6f);
+            root.x = cx * (1.f - scale_value);
+            root.y = cy * (1.f - scale_value);
+            break;
+        case ANIM_SLIDE_RIGHT:
+            slide_value = easeValue(ELASTIC_OUT, 0.f, 1.f, s->transition.time, s->transition.duration, 0.6f);
 
-            offX = -(1.f - slide_value) * (width / 2.f);
-        }
+            if (s->transition.state == UI_TRANSITION_CLOSING) slide_value = 1.f - slide_value;
+
+            root.x = -(1.f - slide_value) * (width / 2.f);
+            break;
+        case ANIM_SLIDE_DOWN:
+            slide_value = easeValue(EASE_IN_OUT, 0.f, 1.f, s->transition.time, s->transition.duration, 2.f);
+
+            if (s->transition.state == UI_TRANSITION_CLOSING) slide_value = 1.f - slide_value;
+
+            root.y = -(1.f - slide_value) * height;
+            break;
+        default:
+            break;
     }
 
-    C2D_ViewTranslate(offX, offY);
-
-    C2D_ViewSave(&newMat);
 
     for (int i = 0; i < s->count; i++) {
         UIElement *e = s->elements[i];
 
-        if(e->type == UI_DARKEN) {
-            C2D_ViewRestore(&originalMat);
-        }
-
-        if (e->enabled) e->draw(e);
-
-        if(e->type == UI_DARKEN){
-            C2D_ViewRestore(&newMat);
-        }
+        ui_draw_tree(e, &root);
     }
-
-    C2D_ViewRestore(&originalMat);
 }
 
 void finish_animation(UIScreen *screen) {
     // Surely no animation lasts more than 31 years
-    screen->open_anim_time = 999999999.f;
-    screen->open_anim_done = true;
+    screen->transition.time = 999999999.f;
+    screen->transition.done = true;
 }
 
 // Find an action by its name
@@ -351,35 +446,84 @@ static char* next_token(char** cursor) {
     return start;
 }
 
+// Generic element search
+UIElement *ui_find_element( UIElement *element, UIElementPredicate predicate, void *userdata) {
+    if (!element) return NULL;
+
+    // Check this element
+    if (predicate(element, userdata))
+        return element;
+
+    // Check children
+    for (UIElement *child = element->first_child; child; child = child->next_sibling) {
+        UIElement *found = ui_find_element(child, predicate, userdata);
+
+        if (found) return found;
+    }
+
+    // Nothing in this element
+    return NULL;
+}
+
+// Generic element visitor
+void ui_visit_tree(UIElement *element, UIElementVisitor visitor, void *userdata) {
+    if (!element) return;
+
+    visitor(element, userdata);
+
+    for (UIElement *child = element->first_child; child; child = child->next_sibling) {
+        ui_visit_tree(child, visitor, userdata);
+    }
+}
+
+static bool has_tag(UIElement *element, void *userdata) {
+    const char *tag = userdata;
+
+    for (int i = 0; i < TAGS_PER_ELEMENT; i++) {
+        if (strcmp(element->tag[i], tag) == 0)
+            return true;
+    }
+
+    return false;
+}
+
 // Get element by its tag, returns NULL if there is no elements with that tag
 UIElement *ui_get_element_by_tag(UIScreen *screen, const char *tag) {
     for (int i = 0; i < screen->count; i++) {
-        UIElement *e = screen->elements[i];
-        for (int j = 0; j < TAGS_PER_ELEMENT; j++) {
-            // Check for element with this tag
-            if (strcmp(e->tag[j], tag) == 0) {
-                return e;
-            }
+        UIElement *found = ui_find_element(screen->elements[i], has_tag, (void *)tag);
+
+        if (found) return found;
+    }
+
+    return NULL;
+}
+
+typedef struct {
+    const char *tag;
+    void (*func)(UIElement *);
+} UITagVisitorData;
+
+static void visit_tag(UIElement *element, void *userdata) {
+    UITagVisitorData *data = userdata;
+
+    for (int i = 0; i < TAGS_PER_ELEMENT; i++) {
+        if (strcmp(element->tag[i], data->tag) == 0) {
+            data->func(element);
+            break;
         }
     }
-    // No element found
-    return NULL;
 }
 
 // Run a function on each element with an specific tag
 void ui_run_func_on_tag(UIScreen *screen, const char *tag, void (*func)(UIElement *e)) {
+    UITagVisitorData data = { .tag = tag, .func = func };
+
     for (int i = 0; i < screen->count; i++) {
-        UIElement *e = screen->elements[i];
-        for (int j = 0; j < TAGS_PER_ELEMENT; j++) {
-            // Check for element with this tag
-            if (strcmp(e->tag[j], tag) == 0) {
-                func(e);
-            }
-        }
+        ui_visit_tree(screen->elements[i], visit_tag, &data);
     }
 }
 
-// Run a function on each element with an specific tag
+// DEPRECATED: use child elements and just move the parent
 void ui_set_pos_on_tag(UIScreen *screen, float x, float y, const char *tag) {
     bool found_parent = false;
     float movement_x = 0;
@@ -481,6 +625,8 @@ void ui_element_apply_default_properties(UIElement *e, const UIContext *ctx) {
     e->opacity = 1;
 
     e->screen = ctx->screen;
+
+    e->userdata_destroy = free;
 }
 
 UNUSED static void print_props(UIPropertyList *props) {
@@ -506,6 +652,56 @@ void ui_screen_add_element(UIScreen *screen, UIElement *element) {
     element->screen = screen;
 }
 
+void ui_element_add_child(UIElement *parent, UIElement *child) {
+    if (!parent || !child) return;
+
+    child->parent = parent;
+
+    child->next_sibling = NULL;
+    child->prev_sibling = parent->last_child;
+
+    if (parent->last_child)
+        parent->last_child->next_sibling = child;
+    else
+        parent->first_child = child;
+
+    parent->last_child = child;
+}
+
+void ui_element_remove(UIElement *element) {
+    if (!element->parent) return;
+
+    UIElement *parent = element->parent;
+
+    if (element->prev_sibling)
+        element->prev_sibling->next_sibling = element->next_sibling;
+    else
+        parent->first_child = element->next_sibling;
+
+    if (element->next_sibling)
+        element->next_sibling->prev_sibling = element->prev_sibling;
+    else
+        parent->last_child = element->prev_sibling;
+
+    element->parent = NULL;
+    element->next_sibling = NULL;
+    element->prev_sibling = NULL;
+}
+
+void ui_element_set_userdata(UIElement *element, void *userdata) {
+    element->userdata = userdata;
+}
+
+bool ui_element_basic_bound_check(UIElement *e, UIInput *touch, UITransform *transform) {
+    float width  = (e->w * 0.5f) * fabsf(transform->scaleX);
+    float height = (e->h * 0.5f) * fabsf(transform->scaleY);
+
+    return touch->touchPosition.px >= transform->x - width  && touch->touchPosition.px < transform->x + width &&
+           touch->touchPosition.py >= transform->y - height && touch->touchPosition.py < transform->y + height;
+}
+
+#define MAX_NESTED_CHILDREN 32
+
 // Load a screen from its file, needs a pointer to the actions table and the action count
 void ui_load_screen(UIScreen* screen,
                     const UIAction* actions,
@@ -522,8 +718,8 @@ void ui_load_screen(UIScreen* screen,
     screen->loaded = true;
 
     screen->disable_element_update = false;
-    screen->open_anim_time = 0.f;
-    screen->open_anim_done = false;
+    screen->transition.time = 0.f;
+    screen->transition.done = false;
 
     screen->count = 0;
     screen->capacity = 16;
@@ -540,6 +736,12 @@ void ui_load_screen(UIScreen* screen,
 
     char line[512];
 
+    UIElement *child_stack[MAX_NESTED_CHILDREN];
+
+    int stack_ptr = 0;
+
+    UIElement *last_element = NULL;
+
     // Iterate through lines (one element per line)
     while (fgets(line, sizeof(line), f)) {
 
@@ -548,6 +750,17 @@ void ui_load_screen(UIScreen* screen,
         // Comment or empty
         if (line[0] == '#' || line[0] == '\0')
             continue;
+
+        // Add last element to the stack
+        if (line[0] == '{') {
+            if (stack_ptr < MAX_NESTED_CHILDREN) {
+                child_stack[stack_ptr++] = last_element;
+            }
+        } else if (line[0] == '}') {
+            if (stack_ptr > 0) {
+                stack_ptr--;
+            }
+        }
         
         char* cursor = line;
         char* token = next_token(&cursor);
@@ -586,7 +799,14 @@ void ui_load_screen(UIScreen* screen,
                 if (element_constructors[i].create) {
                     UIElement *e = element_constructors[i].create(&ctx, &props);
                     //print_props(&props);
-                    ui_screen_add_element(screen, e);
+
+                    if (stack_ptr > 0) {
+                        ui_element_add_child(child_stack[stack_ptr - 1], e);
+                    } else {
+                        ui_screen_add_element(screen, e);
+                    }
+
+                    last_element = e;
                 }
             }
         }
@@ -600,9 +820,7 @@ void ui_unload_screen(UIScreen *screen) {
 
     for (int i = 0; i < screen->count; i++) {
         UIElement *e = screen->elements[i];
-        if (e->destroy) {
-            e->destroy(e);
-        }
+        ui_destroy_tree(e);
     }
 
     free(screen->elements);

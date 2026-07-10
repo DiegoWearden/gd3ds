@@ -14,8 +14,7 @@ static bool yes_exit = false;
 static int current_page = 0;
 
 static UIScreen screen = {
-    .isBottom = true,
-    .open_anim = ANIM_ZOOM
+    .isBottom = true
 };
 
 bool particlesDisabled = false;
@@ -320,6 +319,7 @@ static UIAction actions[] = {
 
 void settings_init() {
     ui_load_screen(&screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/settings.txt");
+    ui_screen_open(&screen, ANIM_ZOOM);
     yes_exit = false;
 
     for (int i = 0; i < ARRAY_LEN(settings); i++) {

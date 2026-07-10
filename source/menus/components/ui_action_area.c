@@ -8,13 +8,12 @@
 #include "math_helpers.h"
 #include "menus/core/ui_screen.h"
 
-static void ui_action_area_update(UIElement* e, UIInput* touch) {
+static void ui_action_area_update(UIElement* e, UIInput* touch, UITransform *transform) {
     UIActionArea *area = (UIActionArea *) e;
     bool pressedTouch = hidKeysDown() & KEY_TOUCH;
     bool releasedTouch = hidKeysUp() & KEY_TOUCH;
 
-    bool inside = touch->touchPosition.px >= e->x - (e->w / 2) && touch->touchPosition.px < e->x + (e->w / 2) &&
-                  touch->touchPosition.py >= e->y - (e->h / 2) && touch->touchPosition.py < e->y + (e->h / 2);
+    bool inside = ui_element_basic_bound_check(e, touch, transform);
 
     // Check if pressed the button
     if (inside && pressedTouch && !touch->did_something) {
@@ -46,7 +45,7 @@ static void ui_action_area_update(UIElement* e, UIInput* touch) {
     }
 }
 
-static void ui_action_area_draw(UIElement* e) {
+static void ui_action_area_draw(UIElement* e, UITransform *transform) {
     (void)e;
 }
 

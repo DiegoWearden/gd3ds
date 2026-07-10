@@ -1,3 +1,4 @@
+#include "main.h"
 #include "menus/core/ui_element.h"
 #include <citro2d.h>
 #include "ui_image.h"
@@ -15,73 +16,53 @@ void ui_list_reset(UIList *list) {
     if (!list) return;
     
     list->scrollY = 0;
-    list->count = 0;
+
+    UIElement *child = list->base.first_child;
+
+    while (child) {
+        UIElement *next = child->next_sibling;
+        ui_destroy_tree(child);
+        child = next;
+    }
+
+    list->base.first_child = NULL;
+    list->base.last_child = NULL;
+    
     list->contentHeight = 0;
     list->lastTouchY = 0;
 }
 
-static void ui_list_expand(UIList *list) {
-    list->capacity *= 2;
-
-    list->items = realloc(
-        list->items,
-        list->capacity * sizeof(*list->items)
-    );
-}
-
-void ui_list_set_capacity(UIList *list, size_t capacity) {
-    if (!list) return;
-
-    if (!list->items) {
-        list->count = 0;
-        list->capacity = capacity;
-        list->items = calloc(
-            list->capacity, 
-            sizeof(*list->items));
-    } else if (capacity > list->capacity) {
-        list->capacity = capacity;
-        list->items = realloc(
-            list->items,
-            list->capacity * sizeof(*list->items)
-        );
-    }
-}
 
 void ui_list_add(UIList* list, UIElement* item) {
-    if (!list || !list->items) return;
+    if (!list) return;
 
-    // Expand if out of space
-    if (list->count == list->capacity) {
-        ui_list_expand(list);
-    }
+    ui_element_add_child((UIElement *) list, item);
 
-    // Add item and increase content height
-    list->items[list->count++] = item;
     list->contentHeight += item->h;
 }
 
-static void ui_list_forward_touch(UIList* list, UIInput* touch) {
+static void ui_list_forward_touch(UIList *list, UIInput *input, UITransform *transform) {
+    UITransform child = *transform;
+    child.y += list->scrollY;
 
-    float initial_y = list->base.y - (list->base.h / 2) + list->scrollY;
-    
-    for (int i = 0; i < list->count; i++) {
-        UIElement* item = list->items[i];
-        // Set position
-        item->y = initial_y + (item->h / 2) + (item->h) * i;
+    float y = list->scrollY - list->base.h * 0.5f;
 
-        if (!item->enabled) continue;
+    for (UIElement *item = list->base.first_child; item; item = item->next_sibling) {
+        UITransform t = *transform;
+        t.y += y + (item->h * 0.5f);
 
-        item->update(item, touch);
+        ui_update_tree(item, input, &t);
+
+        y += item->h;
     }
 }
 
-static void ui_list_update(UIElement* e, UIInput* touch) {
+static void ui_list_update(UIElement* e, UIInput* touch, UITransform *transform) {
     UIList* l = (UIList *) e;
 
-    bool inside = touch->touchPosition.px >= e->x - (e->w / 2) && touch->touchPosition.px < e->x + (e->w / 2) &&
-                  touch->touchPosition.py >= e->y - (e->h / 2) && touch->touchPosition.py < e->y + (e->h / 2);
+    bool inside = ui_element_basic_bound_check(e, touch, transform);
 
-    ui_list_forward_touch(l, touch);
+    ui_list_forward_touch(l, touch, transform);
     if (inside) {  
         touch->did_something = true;
 
@@ -150,31 +131,25 @@ static void ui_list_update(UIElement* e, UIInput* touch) {
     }
 }
 
-static void ui_list_draw(UIElement* e) {
+static void ui_list_draw(UIElement* e, UITransform *transform) {
     UIList* l = (UIList *) e;
-
-    float x = e->x - (e->w / 2);
-    float y = e->y - (e->h / 2);
-
-    // Draw border
-    // C2D_DrawRectSolid(x, y, 0, e->w, e->h,
-    // C2D_Color32(40,40,40,255));
-
+    float scissor_x = transform->x - (e->w / 2);
+    float scissor_y = transform->y - (e->h / 2);
+    
     // Enable clipping
-    set_scissor(GPU_SCISSOR_NORMAL, x, y, e->w, e->h);
+    set_scissor(GPU_SCISSOR_NORMAL, scissor_x, scissor_y, e->w, e->h);
 
-    float initial_y = y + l->scrollY;
+    float y = l->scrollY - e->h * 0.5f;
 
-    for (int i = 0; i < l->count; i++) {
-        UIElement* item = l->items[i];
+    for (UIElement *item = e->first_child; item; item = item->next_sibling) {
+        UITransform t = *transform;
+        t.y += y + (item->h * 0.5f);
 
-        // Set position
-        item->x = e->x;
-        item->y = initial_y + (item->h / 2) + (item->h) * i;
-        item->w = e->w; // Set width to container width
+        item->w = e->w;
 
-        // Draw item
-        item->draw(item);
+        ui_draw_tree(item, &t);
+
+        y += item->h;
     }
 
     // Disable scissor
@@ -202,6 +177,8 @@ UIList *ui_create_list(const UIContext *ctx) {
     e->base.update = ui_list_update;
     e->base.draw = ui_list_draw;
     e->base.destroy = ui_list_destroy;
+
+    e->base.draws_children = true;
     
     ui_list_reset(e);
 
@@ -212,6 +189,8 @@ UIElement *ui_create_list_from_props(const UIContext *ctx, const UIPropertyList 
     UIList *list = ui_create_list(ctx);
 
     if (!list) return NULL;
+    
+    ui_element_apply_properties(&list->base, ctx, props);
 
     return &list->base;
 }

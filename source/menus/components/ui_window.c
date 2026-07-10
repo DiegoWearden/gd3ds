@@ -25,18 +25,17 @@ void ui_window_set_atlas(UIWindow* e, int index) {
     }
 }
 
-static void ui_window_update(UIElement* e, UIInput* touch) {
-    bool inside = touch->touchPosition.px >= e->x - (e->w / 2) && touch->touchPosition.px < e->x + (e->w / 2) &&
-                  touch->touchPosition.py >= e->y - (e->h / 2) && touch->touchPosition.py < e->y + (e->h / 2);
+static void ui_window_update(UIElement* e, UIInput* touch, UITransform *transform) {
+    bool inside = ui_element_basic_bound_check(e, touch, transform);
     
     // Mask background elements
     if (inside) touch->did_something = true;
 }
 
-static void ui_window_draw(UIElement* e) {
+static void ui_window_draw(UIElement* e, UITransform *transform) {
     UIWindow *window = (UIWindow *) e;
 
-    draw_9_slice(window->atlas, e->x, e->y, e->w, e->h, window->border, window->color);
+    draw_9_slice(window->atlas, transform->x, transform->y, transform->scaleX, transform->scaleY, e->w, e->h, window->border, window->color);
 }
 
 static void ui_window_destroy(UIElement *e) {

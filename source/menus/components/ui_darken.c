@@ -15,11 +15,10 @@ void ui_darken_reset_opacity(UIDarken* e){
     C2D_PlainImageTint(&e->image.tint, C2D_Color32f(0, 0, 0, e->base.opacity), 1.0f);
 }
 
-static void ui_darken_update(UIElement* e, UIInput* touch) {
+static void ui_darken_update(UIElement* e, UIInput* touch, UITransform *transform) {
     UIDarken *darken = (UIDarken *) e;
 
-    bool inside = touch->touchPosition.px >= e->x - (e->w / 2) && touch->touchPosition.px < e->x + (e->w / 2) &&
-                  touch->touchPosition.py >= e->y - (e->h / 2) && touch->touchPosition.py < e->y + (e->h / 2);
+    bool inside = ui_element_basic_bound_check(e, touch, transform);
     
     // Mask background elements
     if (inside) touch->did_something = true;
@@ -34,7 +33,7 @@ static void ui_darken_update(UIElement* e, UIInput* touch) {
     }
 }
 
-static void ui_darken_draw(UIElement* e) {
+static void ui_darken_draw(UIElement* e, UITransform *transform) {
     UIDarken *darken = (UIDarken *) e;
 
     if(!darken->darkenOver){
@@ -45,7 +44,7 @@ static void ui_darken_draw(UIElement* e) {
         C2D_SpriteSetPos(&darken->image.sprite, SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
         C2D_SpriteSetScale(&darken->image.sprite, SCREEN_WIDTH/16.f, SCREEN_HEIGHT/16.f);
     } else {
-        C2D_SpriteSetPos(&darken->image.sprite, e->x, e->y);
+        C2D_SpriteSetPos(&darken->image.sprite, transform->x, transform->y);
         C2D_SpriteSetScale(&darken->image.sprite, e->w/16.f, e->h/16.f);
     }
     C2D_DrawSpriteTinted(&darken->image.sprite, &darken->image.tint);

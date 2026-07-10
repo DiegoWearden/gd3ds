@@ -8,8 +8,8 @@
 // If currently using an slider
 bool sliding;
 
-static void draw_button(UISlider *e) {
-    float left_side = e->base.x - e->base.w / 2;
+static void draw_button(UISlider *e, UITransform *transform) {
+    float left_side = transform->x - e->base.w / 2;
     
     float percent = ui_slider_get_percent(e);
     int button_x = left_side + (int)(percent * e->base.w);
@@ -17,19 +17,19 @@ static void draw_button(UISlider *e) {
     C2D_SpriteFromSheet(&e->button, bar_sheet, 4 + e->dragging);
     C3D_TexSetFilter(e->button.image.tex, GPU_LINEAR, GPU_LINEAR);
     C2D_SpriteSetCenter(&e->button, 0.5f, 0.5f);
-    C2D_SpriteSetPos(&e->button, button_x, e->base.y);
-    C2D_SpriteSetScale(&e->button, e->base.scaleX, e->base.scaleY);
+    C2D_SpriteSetPos(&e->button, button_x, transform->y);
+    C2D_SpriteSetScale(&e->button, transform->scaleX, transform->scaleY);
     C2D_DrawSprite(&e->button);
 }
 
-static void draw_frame(UISlider *e) {
+static void draw_frame(UISlider *e, UITransform *transform) {
     C2D_SpriteSetCenter(&e->track_frame, 0.5f, 0.5f);
-    C2D_SpriteSetPos(&e->track_frame, e->base.x, e->base.y);
-    C2D_SpriteSetScale(&e->track_frame, e->base.scaleX, e->base.scaleY);
+    C2D_SpriteSetPos(&e->track_frame, transform->x, transform->y);
+    C2D_SpriteSetScale(&e->track_frame, transform->scaleX, transform->scaleY);
     C2D_DrawSprite(&e->track_frame);
 }
 
-static void draw_bar(UISlider *e) {
+static void draw_bar(UISlider *e, UITransform *transform) {
     float bar_width = e->track.image.subtex->width;
     
     int pixels = (e->value / e->max_value) * bar_width;
@@ -48,24 +48,25 @@ static void draw_bar(UISlider *e) {
 
         sub = select_box(&e->track.image, 0, 0, pixels, e->track.image.subtex->height);
         img = e->track.image; img.subtex = &sub;
+
         C2D_SpriteFromImage(&spr, img);
         C2D_SpriteSetCenter(&spr, 0.f, 0.5f);
-        C2D_SpriteSetPos(&spr, e->base.x - e->base.w / 2, e->base.y);
-        C2D_SpriteSetScale(&spr, e->base.scaleX, e->base.scaleY);
+        C2D_SpriteSetPos(&spr, transform->x - e->base.w / 2, transform->y);
+        C2D_SpriteSetScale(&spr, transform->scaleX, transform->scaleY);
         C2D_DrawSpriteTinted(&spr, &tint);
     }
 }
 
-static float slider_button_x(UISlider* e) {
-    float left_side = e->base.x - e->base.w / 2;
+static float slider_button_x(UISlider* e, UITransform *transform) {
+    float left_side = transform->x - e->base.w / 2;
 
     float t = e->value / e->max_value;
 
     return left_side + (t * e->base.w);
 }
 
-static void slider_set_from_x(UISlider* e, float px) {
-    float left_side = e->base.x - e->base.w / 2;
+static void slider_set_from_x(UISlider* e, UITransform *transform, float px) {
+    float left_side = transform->x - e->base.w / 2;
 
     float t = (float)(px - left_side) / e->base.w;
 
@@ -75,16 +76,16 @@ static void slider_set_from_x(UISlider* e, float px) {
     e->value = t * e->max_value;
 }
 
-static bool slider_touching_button(UISlider* e, UIInput* touch) {
-    int button_x = slider_button_x(e);
+static bool slider_touching_button(UISlider* e, UIInput* touch, UITransform *transform) {
+    int button_x = slider_button_x(e, transform);
 
-    float width = e->button.image.subtex->width;
-    float height = e->button.image.subtex->height;
+    float width = e->button.image.subtex->width * transform->scaleX;
+    float height = e->button.image.subtex->height * transform->scaleY;
 
     return touch->touchPosition.px >= button_x - width / 2 &&
            touch->touchPosition.px <= button_x + width / 2 &&
-           touch->touchPosition.py >= e->base.y - height / 2 &&
-           touch->touchPosition.py <= e->base.y + height / 2;
+           touch->touchPosition.py >= transform->y - height / 2 &&
+           touch->touchPosition.py <= transform->y + height / 2;
 }
 
 void ui_slider_set_value(UISlider *e, float value) {
@@ -99,10 +100,10 @@ float ui_slider_get_percent(UISlider* e) {
     return e->value / e->max_value;
 }
 
-static void ui_slider_update(UIElement* e, UIInput* touch) {
+static void ui_slider_update(UIElement* e, UIInput* touch, UITransform *transform) {
     UISlider* s = (UISlider *) e;
 
-    bool inside = slider_touching_button(s, touch);
+    bool inside = slider_touching_button(s, touch, transform);
 
     bool pressedTouch = hidKeysDown() & KEY_TOUCH;
     bool heldTouch = hidKeysHeld() & KEY_TOUCH;
@@ -114,7 +115,7 @@ static void ui_slider_update(UIElement* e, UIInput* touch) {
     }
 
     if (s->dragging && heldTouch) {
-        slider_set_from_x(s, touch->touchPosition.px);
+        slider_set_from_x(s, transform, touch->touchPosition.px);
     }
 
     if (releasedTouch) {
@@ -129,15 +130,15 @@ static void ui_slider_update(UIElement* e, UIInput* touch) {
     }
 }
 
-static void ui_slider_draw(UIElement* e) {
+static void ui_slider_draw(UIElement* e, UITransform *transform) {
     UISlider* s = (UISlider *) e;
 
     // Track
-    draw_bar(s);
-    draw_frame(s);
+    draw_bar(s, transform);
+    draw_frame(s, transform);
 
     // Button
-    draw_button(s);
+    draw_button(s, transform);
 }
 
 static void ui_slider_destroy(UIElement *e) {
