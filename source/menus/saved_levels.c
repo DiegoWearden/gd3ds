@@ -1,7 +1,7 @@
 #include <3ds.h>
 #include <citro2d.h>
-#include "menus/components/ui_element.h"
-#include "menus/components/ui_screen.h"
+#include "menus/core/ui_element.h"
+#include "menus/core/ui_screen.h"
 #include "menus/components/ui_list.h"
 #include "menus/components/ui_image.h"
 #include "main.h"
@@ -33,9 +33,7 @@ static const SavedLevelsEntries saved_levels[] = {
     { "revolution", "funnygame", "<#f982ff>Something Something Something", "Long", 111, 123, 2 },
 };
 
-#define NUM_SAVED_LEVELS_ENTRIES (sizeof(saved_levels) / sizeof(SavedLevelsEntries))
-
-UIElement entries1[NUM_SAVED_LEVELS_ENTRIES];
+UIElement entries1[ARRAY_LEN(saved_levels)];
 
 static void action_exit(UIElement *e) {
     exit_flag = true;
@@ -67,7 +65,7 @@ void saved_levels_loop() {
 
     list = (UIList *) ui_get_element_by_tag(&default_screen, "list");
 
-    for (int i = 0; i < NUM_SAVED_LEVELS_ENTRIES; i++) {
+    for (int i = 0; i < ARRAY_LEN(saved_levels); i++) {
         char name[256];
         char creator[256];
         char song[256];

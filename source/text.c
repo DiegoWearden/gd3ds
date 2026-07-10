@@ -8,7 +8,7 @@
 #include "fonts/bigFont.h"
 #include <stdarg.h>
 
-#include "menus/components/ui_screen.h"
+#include "menus/core/ui_screen.h"
 
 static const u32 white = ABGR8(255, 255, 255, 255);
 static char wrap_buffer[4096];
@@ -34,10 +34,8 @@ static const TagColor color_table[] = {
     { "blue",  ABGR8(0, 0, 255, 255)},
 };
 
-#define NUM_COLORS sizeof(color_table) / sizeof(color_table[0])
-
 static bool parse_named_color_tag(const char *tag, u32 *out) {
-    for (int i = 0; i < NUM_COLORS; i++) {
+    for (int i = 0; i < ARRAY_LEN(color_table); i++) {
         if (strcasecmp(tag, color_table[i].name) == 0) {
             *out = color_table[i].color;
             return true;
@@ -263,6 +261,45 @@ static float get_image_tag_length(const Charset *font, const float zoom_x, char 
     return 0;
 }
 
+static void get_line_metrics(const Charset *font, float zoom_x, bool parse_tags, const char *text, int start, float *out_length, float *out_first_char, float *out_last_char) {
+    float length = 0.f;
+    float first_char = 0.f, last_char = 0.f;
+    bool first = true;
+
+    for (int i = start; text[i]; i++) {
+        // Skip tags
+        if (text[i] == '<' && parse_tags) {
+            char tag[64];
+            if (read_tag(text, &i, tag, sizeof(tag))) {
+                if (strcmp(tag, "p") == 0) {
+                    break;
+                }
+
+                length += get_image_tag_length(font, zoom_x, tag);
+                
+                continue;
+            }
+        }
+
+        const Glyph *character = get_glyph(font, text[i]);
+        if (character) {
+            // First character
+            if (first) { 
+                first_char = character->xOffset * zoom_x; 
+                first = false; 
+            }
+
+            // Calculate gap between visual end and xadvance end
+            last_char = (character->xAdvance - character->xOffset - character->width) * zoom_x;
+            length += character->xAdvance * zoom_x;
+        }
+    }
+
+    *out_length = length;
+    *out_first_char = first_char;
+    *out_last_char = last_char;
+}
+
 float get_line_length(const Charset *font, const float zoom_x, bool parse_tags, const char *text, int start) {
     float text_length = 0;
 
@@ -388,7 +425,11 @@ void draw_text(const Charset *font, C2D_SpriteSheet *sheet, const float x, const
         height = aCharacter->height * HEIGHT_OFFSET_MULT;
     }
 
-    float line_length = get_line_length(font, fabsf(scaleX), parse_tags, tmp, 0);
+    float line_length;
+    float first_char;
+    float last_char;
+
+    get_line_metrics(font, fabsf(scaleX), parse_tags, tmp, 0, &line_length, &first_char, &last_char);
 
     float offset_x = 0;
     float offset_y = 0;
@@ -419,14 +460,7 @@ void draw_text(const Charset *font, C2D_SpriteSheet *sheet, const float x, const
                         
                         offset_y += line_height;
 
-                        // Measure next line
-                        line_length = get_line_length(
-                            font,
-                            fabsf(scaleX),
-                            true,
-                            tmp,
-                            i + 1
-                        );
+                        get_line_metrics(font, fabsf(scaleX), true, tmp, i + 1, &line_length, &first_char, &last_char);
 
                         continue;
                     }
@@ -439,6 +473,8 @@ void draw_text(const Charset *font, C2D_SpriteSheet *sheet, const float x, const
 
         C2D_PlainImageTint(&tint, current_color, 1.f);
         
+        float width_offset = alignment * (line_length - first_char - last_char) + first_char;
+
         if (!is_image) {
             const Glyph *character = get_glyph(font, tmp[i]);
             
@@ -452,7 +488,8 @@ void draw_text(const Charset *font, C2D_SpriteSheet *sheet, const float x, const
                 int index = character->spriteIndex;
                 
                 float base_y = y - total_height / 2.f;
-                float final_x = x + offset_x + xoffset - line_length * alignment;
+
+                float final_x = x + offset_x + xoffset - width_offset;
                 float final_y = base_y + offset_y + yoffset - height * scaleY;
 
                 final_x += (character->width  * scaleX) * 0.5f;
@@ -494,7 +531,7 @@ void draw_text(const Charset *font, C2D_SpriteSheet *sheet, const float x, const
                     float xadvance = image_width;
                     
                     float base_y = y - total_height / 2.f;
-                    float final_x = x + offset_x - line_length * alignment;
+                    float final_x = x + offset_x - width_offset;
                     float final_y = base_y + offset_y - image_height * 0.5f;
 
                     final_x += image_width * 0.5f;

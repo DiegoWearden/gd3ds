@@ -1,4 +1,4 @@
-#include "ui_element.h"
+#include "menus/core/ui_element.h"
 #include <citro2d.h>
 #include "ui_image.h"
 #include "text.h"
@@ -6,7 +6,7 @@
 #include "ui_button.h"
 #include "easing.h"
 #include "math_helpers.h"
-#include "ui_screen.h"
+#include "menus/core/ui_screen.h"
 
 static void ui_action_area_update(UIElement* e, UIInput* touch) {
     UIActionArea *area = (UIActionArea *) e;
@@ -57,29 +57,30 @@ static void ui_action_area_destroy(UIElement *e) {
     }
 }
 
-UIActionArea *ui_create_action_area(
-    int x, int y, float w, float h, 
-    UIActionFn action,
-    char (*tag)[TAG_LENGTH]
-) {
+UIActionArea *ui_create_action_area(const UIContext *ctx) {
     UIActionArea *e = malloc(sizeof(UIActionArea));
 
     if (!e) return NULL;
 
     memset(e, 0, sizeof(UIActionArea));
+
     e->base.type = UI_ACTION_AREA;
-    e->base.x = x;
-    e->base.y = y;
-    e->base.w = w;
-    e->base.h = h;
     e->base.enabled = true;
-    e->base.action = action;
     e->base.update = ui_action_area_update;
     e->base.draw = ui_action_area_draw;
     e->base.destroy = ui_action_area_destroy;
-
-    // Copy tag
-    copy_tag_array(&e->base, tag);
+    
+    ui_element_apply_default_properties(&e->base, ctx);
 
     return e;
+}
+
+UIElement *ui_create_action_area_from_props(const UIContext *ctx, const UIPropertyList *props) {
+    UIActionArea *action_area = ui_create_action_area(ctx);
+
+    if (!action_area) return NULL;
+
+    ui_element_apply_properties(&action_area->base, ctx, props);
+
+    return &action_area->base;
 }

@@ -50,6 +50,8 @@ struct UIElement {
     float x, y;
     int w, h;
 
+    float scaleX, scaleY;
+
     float opacity;
 
     bool enabled;
@@ -82,9 +84,6 @@ typedef struct {
 
     ImageData image;
 
-    float scaleX;
-    float scaleY;
-
     bool useTint;
 } UIImage;
 
@@ -95,14 +94,14 @@ typedef struct {
 
     bool hovered;
     bool pressed;
-    
+
     float hoverTimer;
     float hoverScale;
 
-    float scaleX;
-    float scaleY;
     int font;
     char text[64];
+
+    UIActionFn pre_action;
 
     float textScale;
 
@@ -111,21 +110,9 @@ typedef struct {
 } UIButton;
 
 typedef struct {
-    UIElement base;
-    
-    ImageData image;
+    UIButton  base;
 
     bool checked;
-    u8 image_id;
-    
-    float scaleX;
-    float scaleY;
-
-    bool hovered;
-    bool pressed;
-
-    float hoverTimer;
-    float hoverScale;
 } UICheckBox;
 
 typedef struct {
@@ -134,7 +121,6 @@ typedef struct {
     C2D_Image atlas;
 
     u32 color;
-    bool useTint;
     int border;
 } UIWindow;
 
@@ -154,7 +140,7 @@ typedef struct {
     
     char text[512];
     float alignment;
-    float scale;
+
     int font;
     bool parse_tags;
 } UILabel;
@@ -167,68 +153,31 @@ typedef struct {
 } UIActionArea;
 
 typedef struct {
-    UIElement base;
+    UIButton base;
 
     int gamemode;
     int index;
-
-    ImageData image;
-
-    bool hovered;
-    bool pressed;
-    
-    float hoverTimer;
-    float hoverScale;
-
-    float scaleX;
-    float scaleY;
 
     bool isSelected;
 } UIIcon;
 
 typedef struct {
-    UIElement base;
+    UIButton base;
 
     int index;
     int color_index;
 
     ImageData image;
-    ImageData button;
-
-    bool hovered;
-    bool pressed;
-    
-    float hoverTimer;
-    float hoverScale;
-
-    float scaleX;
-    float scaleY;
 
     bool isSelected;
 } UIColor;
 
 typedef struct {
-    UIElement base;
+    UIButton base;
 
     C2D_Image atlas;
     u32 color;
     int border;
-
-    bool hovered;
-    bool pressed;
-    
-    float hoverTimer;
-    float hoverScale;
-
-    float scaleX;
-    float scaleY;
-    int font;
-    char text[64];
-
-    float textScale;
-    
-    u32 keyBinds;
-    int keyPressTimer;
 } UIWindowButton;
 
 typedef struct {
@@ -250,9 +199,6 @@ typedef struct {
 
     ImageData bar;
 
-    float scale;
-    float fill_scaleX;
-    float fill_scaleY;
     int style;
 
     float value;
@@ -262,14 +208,13 @@ typedef struct {
     bool useTint;
 } UIProgressBar;
 
-#define UI_LIST_MAX_ITEMS 256
-
 typedef struct {
     UIElement base;
     
-    UIElement* items[UI_LIST_MAX_ITEMS];
+    UIElement **items;
 
-    int itemCount;
+    size_t count;
+    size_t capacity;
 
     int scrollY;
     int contentHeight;
@@ -301,8 +246,6 @@ typedef struct {
     float max_value;
     float value;
 
-    float scale;
-
     bool dragging;
 
     C2D_Sprite track_frame;
@@ -310,6 +253,11 @@ typedef struct {
     C2D_Sprite button;
 } UISlider;
 
+typedef struct {
+    UIElement base;
+
+    float spacing;
+} UIPaletteIcons;
 /*
 typedef struct {
     

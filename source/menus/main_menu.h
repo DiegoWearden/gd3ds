@@ -1,5 +1,5 @@
 #pragma once
-#include "menus/components/ui_element.h"
+#include "menus/core/ui_element.h"
 
 extern bool in_info_card;
 

@@ -3,8 +3,8 @@
 
 #include <stdlib.h>
 
-#include "menus/components/ui_element.h"
-#include "menus/components/ui_screen.h"
+#include "menus/core/ui_element.h"
+#include "menus/core/ui_screen.h"
 #include "math_helpers.h"
 #include "menus/components/ui_list.h"
 #include "menus/components/ui_image.h"
@@ -102,7 +102,7 @@ void action_open_info_card(int id) {
             break;
         case 4:
             // hitboxes info
-            set_info_content("Shows object hitboxes while in a level<p>WARNING: AFFECTS PERFORMANCE!");
+            set_info_content("Shows object hitboxes while in a level.<p>WARNING: AFFECTS PERFORMANCE!");
             break;
         case 5:
             // debug info
@@ -114,7 +114,7 @@ void action_open_info_card(int id) {
             break;
         case 7:
             // ULTRA accurate percentage info
-            set_info_content("But mom! I want more decimals!!!!<p>(use at your own risk)");
+            set_info_content("But mom, I want more decimals!!!!<p>(use at your own risk)");
             break;
         case 8:
             // Switch trail color
@@ -126,7 +126,7 @@ void action_open_info_card(int id) {
             break;
         case 10:
             // quick retry info
-            set_info_content("Restarts in 0,5 seconds instead of 1.");
+            set_info_content("Restarts in 0.5 seconds instead of 1.");
             break;
         case 11:
             // solid trail info

@@ -1,8 +1,7 @@
 #pragma once
-#include "ui_element.h"
+#include "menus/core/ui_element.h"
 #include <citro2d.h>
-#include "ui_screen.h"
-#include "ui_bg_gradient.h"
-#include "menus/palette_kit.h"
+#include "menus/core/ui_screen.h"
 
-UIElement *ui_create_palette_icons(char (*tag)[TAG_LENGTH]);
+UIPaletteIcons *ui_create_palette_icons(const UIContext *ctx);
+UIElement *ui_create_palette_icons_from_props(const UIContext *ctx, const UIPropertyList *props);

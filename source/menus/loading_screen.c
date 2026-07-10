@@ -1,7 +1,7 @@
 #include <3ds.h>
 #include <citro2d.h>
-#include "menus/components/ui_element.h"
-#include "menus/components/ui_screen.h"
+#include "menus/core/ui_element.h"
+#include "menus/core/ui_screen.h"
 #include "math_helpers.h"
 #include "menus/components/ui_image.h"
 #include "menus/components/ui_label.h"
@@ -67,8 +67,6 @@ char *splash_texts[] = {
     "No consistent naming conventions!"
 };
 
-#define NUM_SPLASH_TEXTS (sizeof(splash_texts) / sizeof(char *))
-
 static UIAction actions[] = {
 
 };
@@ -105,7 +103,7 @@ void loading_screen_init() {
 
     splashtext = (UILabel *) ui_get_element_by_tag(&default_screen_top, "splashtext");
     
-    int text_index = random_int(0, NUM_SPLASH_TEXTS - 1);
+    int text_index = random_int(0, ARRAY_LEN(splash_texts) - 1);
 
     char *text = splash_texts[text_index];
 

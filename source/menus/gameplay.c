@@ -1,7 +1,8 @@
 #include <3ds.h>
 #include <citro2d.h>
-#include "menus/components/ui_element.h"
-#include "menus/components/ui_screen.h"
+#include "menus/core/common_setters.h"
+#include "menus/core/ui_element.h"
+#include "menus/core/ui_screen.h"
 #include "menus/components/ui_list.h"
 #include "menus/components/ui_window.h"
 #include "menus/components/ui_image.h"
@@ -350,8 +351,7 @@ int gameplay_screen_bot_loop() {
             float opacity = easeValue(EASE_LINEAR, 0.f, 1.f, coin_anims[i], 0.1f, 1.f);
 
             coins_full[i]->base.enabled = true;
-            coins_full[i]->scaleX = scale;
-            coins_full[i]->scaleY = scale;
+            ui_element_set_scale((UIElement *) coins_full[i], scale);
             ui_image_set_tint(coins_full[i], C2D_Color32f(1, 1, 1, opacity));
 
             if(coin_anims[i] >= 0.05f){

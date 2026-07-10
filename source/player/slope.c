@@ -11,7 +11,7 @@
 #include "graphics.h"
 #include "text.h"
 #include "fonts/bigFont.h"
-#include "menus/components/ui_screen.h"
+#include "menus/core/ui_screen.h"
 #include "math_helpers.h"
 #include "main.h"
 

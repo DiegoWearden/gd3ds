@@ -1,7 +1,8 @@
 #include <3ds.h>
 #include <citro2d.h>
-#include "menus/components/ui_element.h"
-#include "menus/components/ui_screen.h"
+#include "main.h"
+#include "menus/core/ui_element.h"
+#include "menus/core/ui_screen.h"
 #include "math_helpers.h"
 #include "menus/components/ui_list.h"
 #include "menus/components/ui_window.h"
@@ -160,6 +161,8 @@ const u32 colors[] = {
     ABGR8(64, 64, 64, 255),
     ABGR8(0, 0, 0, 255)
 };
+
+const size_t NUM_COLORS = ARRAY_LEN(colors);
 
 static int color_counter = 0;
 

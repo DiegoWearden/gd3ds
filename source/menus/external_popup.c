@@ -1,8 +1,8 @@
 #include <3ds.h>
 #include <citro2d.h>
 #include <stdlib.h>
-#include "menus/components/ui_element.h"
-#include "menus/components/ui_screen.h"
+#include "menus/core/ui_element.h"
+#include "menus/core/ui_screen.h"
 #include "menus/components/ui_list.h"
 #include "menus/components/ui_image.h"
 #include "menus/components/ui_label.h"
@@ -161,7 +161,7 @@ static void set_description(char *gmd) {
             if (decoded2_len > 0) {
                 decoded2[decoded2_len] = '\0';
 
-                char *wrapped = wrap_text(&chatFont_fontCharset, description->scale, (char *)decoded2, MAX_DESCRIPTION_WIDTH);
+                char *wrapped = wrap_text(&chatFont_fontCharset, description->base.scaleX, (char *)decoded2, MAX_DESCRIPTION_WIDTH);
 
                 ui_label_set_text(description, wrapped);
             }
@@ -169,7 +169,7 @@ static void set_description(char *gmd) {
             free(decoded2);
         // Normal description, as it should be
         } else {
-            char *wrapped = wrap_text(&chatFont_fontCharset, description->scale, (char *)decoded, MAX_DESCRIPTION_WIDTH);
+            char *wrapped = wrap_text(&chatFont_fontCharset, description->base.scaleX, (char *)decoded, MAX_DESCRIPTION_WIDTH);
 
             ui_label_set_text(description, wrapped);
 

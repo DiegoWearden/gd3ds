@@ -1,6 +1,6 @@
-#include "ui_element.h"
+#include "menus/core/ui_element.h"
 #include <citro2d.h>
-#include "ui_screen.h"
+#include "menus/core/ui_screen.h"
 #include "graphics.h"
 #include "particles/circles.h"
 
@@ -70,7 +70,7 @@ static void ui_use_effect_destroy(UIElement *e) {
     }
 }
 
-UIUseEffect *ui_create_use_effect(char (*tag)[TAG_LENGTH]) {
+UIUseEffect *ui_create_use_effect(const UIContext *ctx) {
     UIUseEffect *e = malloc(sizeof(UIUseEffect));
 
     if (!e) return NULL;
@@ -84,9 +84,8 @@ UIUseEffect *ui_create_use_effect(char (*tag)[TAG_LENGTH]) {
         e->xPos[i] = 0;
         e->yPos[i] = 0;
     }
-
-    e->base.x = 0;
-    e->base.y = 0;
+    
+    ui_element_apply_default_properties(&e->base, ctx);
 
     e->base.type = UI_USE_EFFECT;
     e->base.enabled = true;
@@ -95,7 +94,15 @@ UIUseEffect *ui_create_use_effect(char (*tag)[TAG_LENGTH]) {
     e->base.draw = ui_use_effect_draw;
     e->base.destroy = ui_use_effect_destroy;
 
-    copy_tag_array(&e->base, tag);
-
     return e;
+}
+
+UIElement *ui_create_use_effect_from_props(const UIContext *ctx, const UIPropertyList *props) {
+    UIUseEffect *use_effect = ui_create_use_effect(ctx);
+
+    if (!use_effect) return NULL;
+
+    ui_element_apply_properties(&use_effect->base, ctx, props);
+
+    return &use_effect->base;
 }

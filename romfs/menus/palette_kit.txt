@@ -161,4 +161,4 @@ colorbutton x=246 y=205 scale=0.4 action="color_selected" tag="color"
 colorbutton x=261 y=205 scale=0.4 action="color_selected" tag="color"
 colorbutton x=276 y=205 scale=0.4 action="color_selected" tag="color"
 
-palleteicons tag="icons"
+paletteicons x=160 y=70 scale=0.7 tag="icons"

@@ -1,7 +1,7 @@
 #include <3ds.h>
 #include <citro2d.h>
-#include "menus/components/ui_element.h"
-#include "menus/components/ui_screen.h"
+#include "menus/core/ui_element.h"
+#include "menus/core/ui_screen.h"
 #include "menus/components/ui_list.h"
 #include "statistics.h"
 #include "menus/components/ui_darken.h"
@@ -31,12 +31,9 @@ static const StatisticEntries stats[] = {
     { "Completed Demon Levels", &total_demons },
     { "Collected Secret Coins", &total_coins },
     { "Players Destroyed", &players_destroyed }
-
 };
 
-#define NUM_STATS_ENTRIES (sizeof(stats) / sizeof(StatisticEntries))
-
-UIElement entries[NUM_STATS_ENTRIES];
+UIElement entries[ARRAY_LEN(stats)];
 
 void exit_statistics(UIElement* e) {
     //start exit animation
@@ -56,7 +53,7 @@ void statistics_init() {
     list = (UIList *) ui_get_element_by_tag(&screen, "list");
 
     if (list) {
-        for (int i = 0; i < NUM_STATS_ENTRIES; i++) {
+        for (int i = 0; i < ARRAY_LEN(stats); i++) {
             char *name = stats[i].name;
             int value = *stats[i].value;
 

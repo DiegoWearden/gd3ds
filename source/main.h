@@ -22,6 +22,10 @@
 #define LIKELY(x)   __builtin_expect(!!(x), 1)
 #define UNLIKELY(x) __builtin_expect(!!(x), 0)
 
+#define UNUSED __attribute__((unused)) 
+
+#define ARRAY_LEN(arr) (sizeof(arr) / sizeof(arr[0]))
+
 typedef struct {
     float x, y;
 } Vec2D;

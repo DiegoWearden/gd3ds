@@ -1,6 +1,13 @@
-#include "ui_element.h"
+#include "menus/core/ui_element.h"
 #include <citro2d.h>
-#include "ui_screen.h"
+#include "menus/core/ui_screen.h"
+#include "menus/core/ui_props.h"
+
+void ui_darken_set_opacity(UIDarken* e, float opacity) {
+    if (!e) return;
+
+    C2D_PlainImageTint(&e->image.tint, C2D_Color32f(0, 0, 0, opacity), 1.0f);
+}
 
 void ui_darken_reset_opacity(UIDarken* e){
     if (!e) return;
@@ -51,37 +58,23 @@ static void ui_darken_destroy(UIElement *e) {
     }
 }
 
-UIDarken *ui_create_darken(float x, float y, float width, float height, float opacity, float darkenTime, bool fullScreen, char (*tag)[TAG_LENGTH]) {
+UIDarken *ui_create_darken(const UIContext *ctx) {
     UIDarken *e = malloc(sizeof(UIDarken));
 
     if (!e) return NULL;
 
     memset(e, 0, sizeof(UIDarken));
     e->base.type = UI_DARKEN;
-    e->base.x = x;
-    e->base.y = y;
-    e->base.w = width;
-    e->base.h = height;
     e->base.enabled = true;
     e->base.opacity = 0.0f;
-    e->fullScreen = fullScreen;
 
-    if (darkenTime <= 0.f) {
-        ui_darken_reset_opacity(e);
-        
-        e->base.opacity = opacity;
-        e->darkenOver = true;
-    } else {
-        e->darkenTime = darkenTime;
-        e->darkenTimeElapsed = 0.f;
-        e->darkenOver = false;
-        e->targetOpacity = opacity;
-    }
-
-    // Copy tag
-    copy_tag_array(&e->base, tag);
-
-    C2D_PlainImageTint(&e->image.tint, C2D_Color32f(0, 0, 0, opacity), 1.0f);
+    e->darkenTime = 0.1f;
+    e->darkenTimeElapsed = 0.f;
+    e->darkenOver = false;
+    e->targetOpacity = 0.4f;
+    
+    ui_element_apply_default_properties(&e->base, ctx);
+    
     C2D_SpriteFromSheet(&e->image.sprite, ui_sheet, 416);
     C2D_SpriteSetCenter(&e->image.sprite, 0.5f, 0.5f);
 
@@ -90,4 +83,35 @@ UIDarken *ui_create_darken(float x, float y, float width, float height, float op
     e->base.destroy = ui_darken_destroy;
 
     return e;
+}
+
+UIElement *ui_create_darken_from_props(const UIContext *ctx, const UIPropertyList *props) {
+    UIDarken *darken = ui_create_darken(ctx);
+
+    if (!darken) return NULL;
+
+    ui_element_apply_properties(&darken->base, ctx, props);
+
+    if (darken->base.w == 0 || darken->base.h == 0) {
+        darken->fullScreen = true;
+    }
+
+    float darkenTime = ui_prop_float(props, "darkenTime", 0.1f);
+    float opacity = ui_prop_float(props, "opacity", 0.4f);
+    
+    if (darkenTime <= 0.f) {
+        ui_darken_reset_opacity(darken );
+        
+        darken->base.opacity = opacity;
+        darken->darkenOver = true;
+    } else {
+        darken->darkenTime = darkenTime;
+        darken->darkenTimeElapsed = 0.f;
+        darken->darkenOver = false;
+        darken->targetOpacity = opacity;
+    }
+
+    C2D_PlainImageTint(&darken->image.tint, C2D_Color32f(0, 0, 0, opacity), 1.0f);
+
+    return &darken->base;
 }

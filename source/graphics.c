@@ -22,7 +22,7 @@
 #include "menus/settings.h"
 #include "menus/gameplay.h"
 
-#include "menus/components/ui_screen.h"
+#include "menus/core/ui_screen.h"
 
 #include "fonts/bigFont.h"
 #include "particles/rays.h"

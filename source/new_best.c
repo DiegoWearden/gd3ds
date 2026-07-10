@@ -7,7 +7,7 @@
 #include "graphics.h"
 #include "save/config.h"
 
-#include "menus/components/ui_screen.h"
+#include "menus/core/ui_screen.h"
 #include "menus/settings.h"
 #include "menus/level_select.h"
 
@@ -60,8 +60,6 @@ char *died_to_text[DEATH_REASON_COUNT] = {
     "Bro died to the ground",
 };
 
-#define NUM_NEW_BEST_TEXT (sizeof(new_best_text) / sizeof(char *))
-
 typedef enum {
     SCALE_IN,
     WAITING,
@@ -92,7 +90,7 @@ void init_new_best_popup(int progress) {
     new_best_popup.state = SCALE_IN;
     new_best_popup.ease = ELASTIC_OUT;
 
-    new_best_popup.text_id = random_int(0, NUM_NEW_BEST_TEXT - 1);
+    new_best_popup.text_id = random_int(0, ARRAY_LEN(new_best_text) - 1);
     new_best_popup.progress = progress;
     
 
@@ -109,7 +107,7 @@ void init_new_best_popup(int progress) {
     // If on story madness, reroll to not say the story madness line
     if (new_best_popup.text_id == STORY_MADNESS_ID && contains(level_info.level_name, "story madness")) {
         do {
-            new_best_popup.text_id = random_int(0, NUM_NEW_BEST_TEXT - 1);
+            new_best_popup.text_id = random_int(0, ARRAY_LEN(new_best_text) - 1);
         } while(new_best_popup.text_id == STORY_MADNESS_ID);
     }
 

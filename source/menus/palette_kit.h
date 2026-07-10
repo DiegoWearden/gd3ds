@@ -4,5 +4,5 @@
 void palette_kit_init();
 int palette_kit_loop();
 
-#define NUM_COLORS 107
+extern const size_t NUM_COLORS;
 extern const u32 colors[];

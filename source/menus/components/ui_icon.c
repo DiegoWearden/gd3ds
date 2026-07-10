@@ -1,82 +1,25 @@
-#include "ui_element.h"
+#include "menus/components/ui_button.h"
+#include "menus/core/common_setters.h"
+#include "menus/core/ui_element.h"
 #include <citro2d.h>
-#include "ui_image.h"
-#include "text.h"
-#include "fonts/bigFont.h"
 #include "ui_icon.h"
-#include "easing.h"
-#include "math_helpers.h"
-#include "ui_screen.h"
+#include "menus/core/ui_screen.h"
+#include "menus/core/ui_props.h"
 #include "graphics.h"
 
 #include "menus/icon_kit.h"
 
-#include "main.h"
-#include "ui_slider.h"
-
 #define FIRST_TRAIL_ID 27
 
 static void ui_icon_update(UIElement* e, UIInput* touch) {
-    UIIcon *icon = (UIIcon *) e;
-
-    bool pressedTouch = hidKeysDown() & KEY_TOUCH;
-    bool releasedTouch = hidKeysUp() & KEY_TOUCH;
-
-    bool inside = touch->touchPosition.px >= e->x - (e->w / 2) && touch->touchPosition.px < e->x + (e->w / 2) &&
-                  touch->touchPosition.py >= e->y - (e->h / 2) && touch->touchPosition.py < e->y + (e->h / 2);
-
-    // Check if pressed the icon
-    if (inside && pressedTouch && !touch->did_something) {
-        icon->hovered = true;
-        icon->pressed = true;
-    }
-
-    // If previously pressed on it, hover
-    if (inside && !sliding) {
-        icon->hovered = true;
-    }
-    
-    EaseTypes bounce_type;
-    // Animation
-    if (icon->hovered) {
-        icon->hoverTimer += DT;
-        bounce_type = BOUNCE_OUT;
-    } else {
-        icon->hoverTimer -= DT;
-        // As the animation plays in reverse, we just use bounce in
-        bounce_type = BOUNCE_IN;
-    }
-
-    icon->hoverTimer = clampf(icon->hoverTimer, 0.f, ICON_HOVER_ANIM_TIME);
-    icon->hoverScale = easeValue(bounce_type, 1.0f, ICON_HOVER_SCALE, icon->hoverTimer, ICON_HOVER_ANIM_TIME, 0);
-
-
-    // If released on icon, do its action
-    if (icon->hovered && releasedTouch) {
-        icon->pressed = false;
-        icon->hovered = false;
-        icon->hoverTimer = 0.f;
-        icon->hoverScale = 1.f;
-        if (e->action)
-            e->action(e);
-    }
-    
-    // Unpress the icon
-    if (!inside) {
-        icon->hovered = false;
-    }
-    
-    // Mask background elements
-    if (inside) {
-        touch->interacted = true;
-        touch->did_something = true;
-    }
+    ui_button_update(e, touch);
 }
 
 static void ui_icon_draw(UIElement* e) {
     UIIcon *icon = (UIIcon *) e;
+    UIButton *button = (UIButton *) e;
 
-    float scale = icon->hoverScale;
+    float scale = button->hoverScale;
 
     float y = e->y;
     if (icon->gamemode == GAMEMODE_SHIP) y -= 4;
@@ -87,7 +30,7 @@ static void ui_icon_draw(UIElement* e) {
         C3D_TexSetFilter(spr.image.tex, GPU_LINEAR, GPU_LINEAR);
         C2D_SpriteSetCenter(&spr, 0.5f, 0.5f);
         C2D_SpriteSetPos(&spr, e->x, y);
-        C2D_SpriteSetScale(&spr, scale * icon->scaleX, scale * icon->scaleX);
+        C2D_SpriteSetScale(&spr, scale * button->base.scaleX, scale * button->base.scaleY);
         C2D_DrawSprite(&spr);
     } else {
         spawn_icon_at(
@@ -98,7 +41,7 @@ static void ui_icon_draw(UIElement* e) {
             0,
             0,
             0,
-            scale * icon->scaleX,
+            scale * button->base.scaleX,
             C2D_Color32(175, 175, 175, 255),
             C2D_Color32(255, 255, 255, 255),
             0
@@ -106,10 +49,10 @@ static void ui_icon_draw(UIElement* e) {
     }
 
     if (icon->isSelected) {
-        C2D_SpriteSetCenter(&icon->image.sprite, 0.5f, 0.5f);
-        C2D_SpriteSetPos(&icon->image.sprite, e->x, e->y);
-        C2D_SpriteSetScale(&icon->image.sprite, icon->scaleX, icon->scaleX);
-        C2D_DrawSprite(&icon->image.sprite);
+        C2D_SpriteSetCenter(&button->image.sprite, 0.5f, 0.5f);
+        C2D_SpriteSetPos(&button->image.sprite, e->x, e->y);
+        C2D_SpriteSetScale(&button->image.sprite, button->base.scaleX, button->base.scaleY);
+        C2D_DrawSprite(&button->image.sprite);
     }
 }
 
@@ -128,38 +71,45 @@ void ui_icon_set_gamemode_index(UIIcon*e, int gamemode, int index) {
     e->index = index;
 }
 
-UIIcon *ui_create_icon(
-    int x, int y, float scale, int index, int gamemode, 
-    UIActionFn action,
-    char (*tag)[TAG_LENGTH]
-) {
+UIIcon *ui_create_icon(const UIContext *ctx) {
     UIIcon *e = malloc(sizeof(UIIcon));
 
     if (!e) return NULL;
 
+    UIButton *button = (UIButton *) e;
+
     memset(e, 0, sizeof(UIIcon));
-    e->base.type = UI_ICON;
-    e->base.x = x;
-    e->base.y = y;
-    e->base.w = 30*scale;
-    e->base.h = 30*scale;
-    e->base.enabled = true;
-    e->base.action = action;
-    e->base.update = ui_icon_update;
-    e->base.draw = ui_icon_draw;
-    e->base.destroy = ui_icon_destroy;
+    button->base.type = UI_ICON;
+    button->base.enabled = true;
 
-    // Copy tag
-    copy_tag_array(&e->base, tag);
+    button->base.update = ui_icon_update;
+    button->base.draw = ui_icon_draw;
+    button->base.destroy = ui_icon_destroy;
 
-    e->scaleX = scale;
-
-    C2D_SpriteFromSheet(&e->image.sprite, ui_sheet, 175);
-    C3D_TexSetFilter(e->image.sprite.image.tex, GPU_LINEAR, GPU_LINEAR);
-
-    ui_icon_set_gamemode_index(e, gamemode, index);
+    ui_element_apply_default_properties(&button->base, ctx);
     
-    e->hoverScale = 1.f;
+    button->hoverScale = 1.f;
+
+    C2D_SpriteFromSheet(&button->image.sprite, ui_sheet, 175);
+    C3D_TexSetFilter(button->image.sprite.image.tex, GPU_LINEAR, GPU_LINEAR);
 
     return e;
+}
+
+UIElement *ui_create_icon_from_props(const UIContext *ctx, const UIPropertyList *props) {
+    UIIcon *icon = ui_create_icon(ctx);
+
+    if (!icon) return NULL;
+
+    UIButton *button = (UIButton *) icon;
+
+    ui_element_apply_properties(&button->base, ctx, props);
+
+    ui_element_set_size(&button->base, 30 * button->base.scaleX, 30 * button->base.scaleY);
+        
+    ui_icon_set_gamemode_index(icon, 
+        ui_prop_int(props, "gamemode", 0), 
+        ui_prop_int(props, "id", 0));
+
+    return &button->base;
 }

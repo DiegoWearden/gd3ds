@@ -1,7 +1,8 @@
 #include <3ds.h>
 #include <citro2d.h>
-#include "menus/components/ui_element.h"
-#include "menus/components/ui_screen.h"
+#include "menus/core/ui_element.h"
+#include "menus/core/ui_screen.h"
+#include "menus/components/ui_checkbox.h"
 #include "menus/components/ui_list.h"
 #include "main_menu.h"
 #include "settings.h"
@@ -102,9 +103,6 @@ static Setting settings[] = {
 };
 
 
-#define NUMBER_SETTINGS (sizeof(settings) / sizeof(Setting))
-
-
 const char *pages_tags[] = {
     "page1",
     "page2",
@@ -115,11 +113,9 @@ const char *pages_tags[] = {
     "page7",
 };
 
-#define NUMBER_PAGES (sizeof(pages_tags) / sizeof(char *))
-
 
 void switch_page(int page) {
-    for (int i = 0; i < NUMBER_PAGES; i++) {
+    for (int i = 0; i < ARRAY_LEN(pages_tags); i++) {
         if (i == page) {
             ui_run_func_on_tag(&screen, pages_tags[page], ui_enable_element);
         } else {
@@ -215,7 +211,7 @@ void doNot_settings(UIElement* e) {
 void action_left_page(UIElement *e) {
     current_page--;
     if (current_page < 0) {
-        current_page = NUMBER_PAGES - 1;
+        current_page = ARRAY_LEN(pages_tags) - 1;
     }
 
     switch_page(current_page);
@@ -223,7 +219,7 @@ void action_left_page(UIElement *e) {
 
 void action_right_page(UIElement *e) {
     current_page++;
-    if (current_page >= NUMBER_PAGES) {
+    if (current_page >= ARRAY_LEN(pages_tags)) {
         current_page = 0;
     }
 
@@ -326,8 +322,12 @@ void settings_init() {
     ui_load_screen(&screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/settings.txt");
     yes_exit = false;
 
-    for (int i = 0; i < NUMBER_SETTINGS; i++) {
-        ((UICheckBox *)ui_get_element_by_tag(&screen, settings[i].chk_name))->checked = *settings[i].var;
+    for (int i = 0; i < ARRAY_LEN(settings); i++) {
+        UICheckBox *checkbox = (UICheckBox *)ui_get_element_by_tag(&screen, settings[i].chk_name);
+        if (checkbox) {
+            checkbox->checked = *settings[i].var;
+            set_checkbox_enabled(checkbox, checkbox->checked);
+        }
     }
 
     current_page = 0;

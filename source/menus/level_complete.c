@@ -3,8 +3,9 @@
 
 #include "level_complete.h"
 
-#include "menus/components/ui_element.h"
-#include "menus/components/ui_screen.h"
+#include "menus/core/common_setters.h"
+#include "menus/core/ui_element.h"
+#include "menus/core/ui_screen.h"
 #include "math_helpers.h"
 #include "menus/components/ui_list.h"
 #include "menus/components/ui_image.h"
@@ -102,9 +103,6 @@ char *completion_texts[] = {
     "Brilliant!",
 };
 
-#define NUM_COMPLETION_TEXTS (sizeof(completion_texts) / sizeof(char *))
-#define NUM_DO_NOCOMPLETION_TEXTS (sizeof(do_not_completion_texts) / sizeof(char *))
-
 
 static void exit_level_complete(UIElement* e) {
     if (!animating_up) {
@@ -132,8 +130,8 @@ static void scale_bottom_buttons_anim(UIElement* e){
     UIButton *button = (UIButton *) e;
 
     float fade_value_scale = easeValue(ELASTIC_OUT, 0, 1, anim_time, ANIM_DURATION, 1.f);
-    button->scaleX = fade_value_scale;
-    button->scaleY = fade_value_scale;
+    
+    ui_element_set_scale((UIElement *) button, fade_value_scale);
 }
 
 static UIAction actions[] = {
@@ -215,8 +213,8 @@ static void run_rewards_animation(float delta){
         rewardCenter = coin;
         
         coin->base.enabled = true;
-        coin->scaleX = scale_value * 0.88f;
-        coin->scaleY = scale_value * 0.88f;
+
+        ui_element_set_scale((UIElement *) coin, scale_value * 0.88f);
 
         ui_image_set_tint(coin, C2D_Color32f(1, 1, 1, opacity_value));
     } else{
@@ -233,9 +231,8 @@ static void run_rewards_animation(float delta){
             star->base.y = ((scale_value * 0.7f) * (up_y_start - 127 - center) + center);
             star_text->base.y = ((scale_value * 0.55f) * (up_y_start - 83 - center) + center);
 
-            star->scaleX = scale_value * 0.7f;
-            star->scaleY = scale_value * 0.7f;
-            star_text->scale = scale_value * 0.55f;
+            ui_element_set_scale((UIElement *) star, scale_value * 0.7f);
+            ui_element_set_scale_xy((UIElement *) star_text, scale_value * 0.55f, star_text->base.scaleY);
 
             ui_image_set_tint(star, C2D_Color32f(1, 1, 1, opacity_value));
             star_text->base.opacity = opacity_value;
@@ -283,6 +280,10 @@ static void run_end_animation(float delta) {
 void level_complete_init() {
     init = true;
     in_level_complete = true;
+    
+    ui_unload_screen(&screen);
+    ui_unload_screen(&screen_top);
+    
     ui_load_screen(&screen_top, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/level_complete_top.txt");
     ui_load_screen(&screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/level_complete.txt");
 
@@ -368,7 +369,7 @@ void level_complete_init() {
             if (state.current_data.attempts == 1) start_index++;
         }
 
-        int text_index = random_int(start_index, (doNot ? NUM_DO_NOCOMPLETION_TEXTS : NUM_COMPLETION_TEXTS)- 1);
+        int text_index = random_int(start_index, (doNot ? ARRAY_LEN(do_not_completion_texts) : ARRAY_LEN(completion_texts))- 1);
 
         if (doNot) {
             // If exactly 2 attempts, say "Not 1 attempt"
@@ -377,7 +378,7 @@ void level_complete_init() {
             // If on story madness, reroll to not say the story madness line
             if (text_index == 1 && contains(level_info.level_name, "story madness")) {
                 do {
-                    text_index = random_int(start_index, (doNot ? NUM_DO_NOCOMPLETION_TEXTS : NUM_COMPLETION_TEXTS)- 1);
+                    text_index = random_int(start_index, (doNot ? ARRAY_LEN(do_not_completion_texts) : ARRAY_LEN(completion_texts))- 1);
                 } while(text_index == 1);
             }
         }
@@ -415,7 +416,7 @@ void level_complete_init() {
         ui_label_set_text(completion_text, text);
 
         float text_scale;
-        float scale = completion_text->scale;
+        float scale = completion_text->base.scaleX;
 
         // Get text length in pixels
         float length = get_longest_line_length(&bigFont_fontCharset, scale, text);
@@ -426,7 +427,9 @@ void level_complete_init() {
             text_scale = scale;
         }
 
-        completion_text->scale = text_scale;
+        float ratio = scale / completion_text->base.scaleY;
+        
+        ui_element_set_scale_xy((UIElement *) completion_text, text_scale, completion_text->base.scaleX * ratio);
     } else {
         ui_run_func_on_tag(&screen_top, "funnytext", ui_disable_element);
 
@@ -443,18 +446,28 @@ void level_complete_init() {
             if(alreadyCollectedCoin){
                 coin->base.enabled = true;
                 coin->base.opacity = 1.f;
-                coin->scaleX = 0.88f;
-                coin->scaleY = 0.88f;
+                
+                ui_element_set_scale((UIElement *) coin, 0.88f);
             }
         }
     }
 
     if (state.practice_mode) {
         ui_run_func_on_tag(&screen_top, "levelcomplete", ui_disable_element);
-        if (doNot) ((UIImage *) ui_get_element_by_tag(&screen_top, "practicecomplete"))->scaleX *= -1.f;
+        if (doNot) {
+            UIImage *level_complete_text = (UIImage *) ui_get_element_by_tag(&screen_top, "practicecomplete");
+            if (level_complete_text) {
+                ui_element_set_scale_x((UIElement *) level_complete_text, level_complete_text->base.scaleX * -1);
+            }
+        }
     } else {
         ui_run_func_on_tag(&screen_top, "practicecomplete", ui_disable_element);
-        if (doNot) ((UIImage *) ui_get_element_by_tag(&screen_top, "levelcomplete"))->scaleX *= -1.f;
+        if (doNot) {
+            UIImage *level_complete_text = (UIImage *) ui_get_element_by_tag(&screen_top, "levelcomplete");
+            if (level_complete_text) {
+                ui_element_set_scale_x((UIElement *) level_complete_text, level_complete_text->base.scaleX * -1);
+            }
+        }
     }
 
     ui_get_element_by_tag(&screen, "endDarken")->opacity = 0.f;
@@ -468,14 +481,10 @@ int level_complete_loop(float delta) {
     if (animating_up) run_end_animation(delta);
 
     if (yes_exit) {
-        ui_unload_screen(&screen);
-        ui_unload_screen(&screen_top);
         return 1;
     }
 
     if (restart) {
-        ui_unload_screen(&screen);
-        ui_unload_screen(&screen_top);
         return 2;
     }
 

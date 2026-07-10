@@ -1,8 +1,9 @@
 #include <stdlib.h>
 #include <3ds.h>
 #include <citro2d.h>
-#include "menus/components/ui_element.h"
-#include "menus/components/ui_screen.h"
+#include "menus/core/common_setters.h"
+#include "menus/core/ui_element.h"
+#include "menus/core/ui_screen.h"
 #include "math_helpers.h"
 #include "menus/components/ui_list.h"
 #include "menus/components/ui_window.h"
@@ -90,6 +91,8 @@ const u32 default_lvl_colors[] = {
     C2D_Color32Const(0, 227, 228, 255),
     C2D_Color32Const(0, 112, 229, 255),
 };
+
+const size_t NUM_MENU_COLORS = ARRAY_LEN(default_lvl_colors);
 
 #define DOTS_SCALE 0.75f
 
@@ -191,8 +194,8 @@ void update_level_name(int level, int card) {
     } else {
         txt_scale = 0.85f;
     }
-
-    e->scale = txt_scale;
+    
+    ui_element_set_scale((UIElement *) e, txt_scale);
 
     ui_label_set_text(e, main_levels[level].level_name);
 }

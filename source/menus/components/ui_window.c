@@ -1,18 +1,28 @@
-#include "ui_element.h"
+#include "c2d/base.h"
+#include "menus/core/ui_element.h"
 #include <citro2d.h>
+#include "menus/core/ui_props.h"
 #include "ui_image.h"
 #include "text.h"
 #include "fonts/bigFont.h"
 #include "easing.h"
 #include "utils/gfx.h"
 #include "ui_checkbox.h"
-#include "ui_screen.h"
+#include "menus/core/ui_screen.h"
 
 void ui_window_set_tint(UIWindow* e, u32 color) {
     if (!e) return;
 
     e->color = color;
-    e->useTint = true;
+}
+
+void ui_window_set_atlas(UIWindow* e, int index) {
+    if (!e) return;
+
+    e->atlas = C2D_SpriteSheetGetImage(window_sheet, index);
+    if (e->atlas.tex) {
+        e->border = e->atlas.subtex->width / 3;
+    }
 }
 
 static void ui_window_update(UIElement* e, UIInput* touch) {
@@ -36,32 +46,42 @@ static void ui_window_destroy(UIElement *e) {
     }
 }
 
-UIWindow *ui_create_window(
-    int x, int y, int w, int h, int style,
-    char (*tag)[TAG_LENGTH]
-) {
+UIWindow *ui_create_window(const UIContext *ctx) {
     UIWindow *e = malloc(sizeof(UIWindow));
 
     if (!e) return NULL;
 
     memset(e, 0, sizeof(UIWindow));
     e->base.type = UI_WINDOW;
-    e->base.x = x;
-    e->base.y = y;
-    e->base.w = w;
-    e->base.h = h;
     e->base.enabled = true;
+
     e->base.update = ui_window_update;
     e->base.draw = ui_window_draw;
     e->base.destroy = ui_window_destroy;
+    
+    ui_element_apply_default_properties(&e->base, ctx);
 
-    e->color = C2D_Color32(255, 255, 255, 255);
-
-    // Copy tag
-    copy_tag_array(&e->base, tag);
-    e->atlas = C2D_SpriteSheetGetImage(window_sheet, style);
-
-    e->border = e->atlas.subtex->width / 3;
+    ui_window_set_atlas(e, 0);
+    ui_window_set_tint(e, C2D_Color32(255, 255, 255, 255));
 
     return e;
+}
+
+UIElement *ui_create_window_from_props(const UIContext *ctx, const UIPropertyList *props) {
+    UIWindow *window = ui_create_window(ctx);
+
+    if (!window) return NULL;
+
+    ui_element_apply_properties(&window->base, ctx, props);
+
+    ui_window_set_atlas(window, ui_prop_int(props, "style", 0));
+
+    ui_window_set_tint(window, C2D_Color32(
+        ui_prop_int(props, "r", 255), 
+        ui_prop_int(props, "g", 255), 
+        ui_prop_int(props, "b", 255), 
+        ui_prop_int(props, "a", 255)
+    ));
+
+    return &window->base;
 }

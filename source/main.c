@@ -24,7 +24,7 @@
 #include "menus/icon_kit.h"
 #include "menus/gameplay.h"
 #include "menus/soggy.h"
-#include "menus/components/ui_screen.h"
+#include "menus/core/ui_screen.h"
 
 #include "player/collision.h"
 #include "state.h"

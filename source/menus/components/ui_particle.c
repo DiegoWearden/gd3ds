@@ -1,7 +1,8 @@
-#include "ui_element.h"
+#include "menus/core/ui_element.h"
 #include "particles/particle_definitions.h"
 #include <citro2d.h>
-#include "ui_screen.h"
+#include "menus/core/ui_screen.h"
+#include "menus/core/ui_props.h"
 #include "graphics.h"
 
 void ui_particle_update_pos(UIParticle* e){
@@ -44,21 +45,46 @@ static void ui_particle_destroy(UIElement *e) {
     }
 }
 
-UIParticle *ui_create_particle(int x, int y, float scale, float r, float g, float b, ParticleDefinition* const def, char (*tag)[TAG_LENGTH]) {
+void ui_init_particle_definition(UIParticle *e, const ParticleDefinition *def) {
+    if (!e || !def) return;
+
+    ParticleSystem *p = &(e->particle);
+    initParticleSystem(p, def);
+    p->affectedByMirror = false;
+    p->stationary = true;
+}
+
+UIParticle *ui_create_particle(const UIContext *ctx) {
     UIParticle *e = malloc(sizeof(UIParticle));
 
     if (!e) return NULL;
 
     memset(e, 0, sizeof(UIParticle));
-    ParticleSystem *p = &(e->particle);
-
-    initParticleSystem(p, def);
 
     e->base.type = UI_PARTICLE;
-    e->base.x = x;
-    e->base.y = y;
     e->base.enabled = true;
+
+    e->base.update = ui_particle_update;
+    e->base.draw = ui_particle_draw;
+    e->base.destroy = ui_particle_destroy;
     
+    ui_element_apply_default_properties(&e->base, ctx);
+
+    return e;
+}
+
+UIElement *ui_create_particle_from_props(const UIContext *ctx, const UIPropertyList *props) {
+    UIParticle *particle = ui_create_particle(ctx);
+
+    if (!particle) return NULL;
+    
+    ui_element_apply_properties(&particle->base, ctx, props);
+
+    float r = ui_prop_float(props, "r", -1.f);
+    float g = ui_prop_float(props, "g", -1.f);
+    float b = ui_prop_float(props, "b", -1.f);
+
+    ParticleSystem *p = &(particle->particle);
     //Do not override colors if invalid
     if(r >= 0.f && g >= 0.f && b >= 0.f && r <= 1.f && g <= 1.f && b <= 1.f){
         p->cfg.startColorRed = r;
@@ -69,17 +95,21 @@ UIParticle *ui_create_particle(int x, int y, float scale, float r, float g, floa
         p->cfg.finishColorBlue = b;
     }
 
-    p->emitterX = x;
-    p->emitterY = y;
-    p->scale = scale;
-    p->affectedByMirror = false;
-    p->stationary = true;
+    const char *def_name = ui_prop_string(props, "particleDef", "");
 
-    e->base.update = ui_particle_update;
-    e->base.draw = ui_particle_draw;
-    e->base.destroy = ui_particle_destroy;
+    const ParticleDefinition *particleDef = NULL;
 
-    copy_tag_array(&e->base, tag);
+    for(int i = 0; i < PARTICLE_DEF_COUNT; i++){
+        if(strcmp(particleDefNames[i].name, def_name) == 0){
+            particleDef = particleDefNames[i].def;
+        }
+    }
 
-    return e;
+    ui_init_particle_definition(particle, particleDef);
+
+    p->emitterX = particle->base.x;
+    p->emitterY = particle->base.y;
+    p->scale = particle->base.scaleX;
+
+    return &particle->base;
 }

@@ -1,4 +1,4 @@
-#include "ui_element.h"
+#include "menus/core/ui_element.h"
 #include <citro2d.h>
 #include "ui_image.h"
 #include "text.h"
@@ -6,7 +6,8 @@
 #include "easing.h"
 #include "utils/gfx.h"
 #include "ui_checkbox.h"
-#include "ui_screen.h"
+#include "menus/core/ui_screen.h"
+#include "menus/core/ui_props.h"
 #include "ui_textbox.h"
 
 #include "utils/keyboard.h"
@@ -54,33 +55,40 @@ static void ui_textbox_destroy(UIElement *e) {
     }
 }
 
-UITextbox *ui_create_textbox(
-    int x, int y, int w, int limit, char *title,
-    char (*tag)[TAG_LENGTH]
-) {
+UITextbox *ui_create_textbox(const UIContext *ctx) {
     UITextbox *e = malloc(sizeof(UITextbox));
 
     if (!e) return NULL;
 
     memset(e, 0, sizeof(UITextbox));
     e->base.type = UI_TEXTBOX;
-    e->base.x = x;
-    e->base.y = y;
-    e->base.w = w;
-    e->base.h = 30;
     e->base.enabled = true;
     e->base.update = ui_textbox_update;
     e->base.draw = ui_textbox_draw;
     e->base.destroy = ui_textbox_destroy;
-
-    strncpy(e->title, title, 63);
-
-    // Copy tag
-    copy_tag_array(&e->base, tag);
+    
+    ui_element_apply_default_properties(&e->base, ctx);
 
     e->atlas = C2D_SpriteSheetGetImage(window_sheet, TEXTBOX_STYLE);
     e->border = e->atlas.subtex->width / 3;
 
-    e->character_limit = limit;
     return e;
+}
+
+UIElement *ui_create_textbox_from_props(const UIContext *ctx, const UIPropertyList *props) {
+    UITextbox *textbox = ui_create_textbox(ctx);
+
+    if (!textbox) return NULL;
+
+    ui_element_apply_properties(&textbox->base, ctx, props);
+
+    if (textbox->base.h == 0) {
+        textbox->base.h = 30;
+    }
+    
+    textbox->character_limit = ui_prop_int(props, "limit", 16);
+
+    strncpy(textbox->title, ui_prop_string(props, "title", "Enter text:"), sizeof(textbox->title) - 1);
+
+    return &textbox->base;
 }

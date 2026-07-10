@@ -1,6 +1,7 @@
-#include "ui_element.h"
+#include "menus/core/ui_element.h"
 #include <citro2d.h>
-#include "ui_screen.h"
+#include "menus/core/ui_screen.h"
+#include "menus/core/ui_props.h"
 
 static void ui_progress_bar_update(UIElement* e, UIInput* touch) {
     bool inside = touch->touchPosition.px >= e->x - (e->w / 2) && touch->touchPosition.px < e->x + (e->w / 2) &&
@@ -13,7 +14,7 @@ static void ui_progress_bar_update(UIElement* e, UIInput* touch) {
 static void draw_frame(UIProgressBar *e) {
     C2D_SpriteSetCenter(&e->frame.sprite, 0.5f, 0.5f);
     C2D_SpriteSetPos(&e->frame.sprite, e->base.x, e->base.y);
-    C2D_SpriteSetScale(&e->frame.sprite, e->scale, e->scale);
+    C2D_SpriteSetScale(&e->frame.sprite, e->base.scaleX, e->base.scaleY);
     C2D_DrawSpriteTinted(&e->frame.sprite, &e->frame.tint);
 }
 
@@ -31,6 +32,15 @@ static void draw_bar(UIProgressBar *e) {
         Tex3DS_SubTexture sub;
         C2D_Image img;
 
+
+        float sx = e->base.scaleX;
+        float sy = e->base.scaleY;
+
+        if (e->style == 0) {
+            // Add 1 pixel of margin
+            sx *= ((float)(e->base.w - 2) / (float)e->base.w);
+            sy *= ((float)(e->base.h - 2) / (float)e->base.h);
+        }
         
         float x = e->base.x - e->base.w / 2;
         if (e->style == 0) {
@@ -42,12 +52,8 @@ static void draw_bar(UIProgressBar *e) {
         C2D_SpriteFromImage(&spr, img);
         C2D_SpriteSetCenter(&spr, 0.f, 0.5f);
         C2D_SpriteSetPos(&spr, x, e->base.y);
-        C2D_SpriteSetScale(&spr, e->fill_scaleX, e->fill_scaleY);
-        if (e->useTint) {
-            C2D_DrawSpriteTinted(&spr, &e->bar.tint);
-        } else {
-            C2D_DrawSprite(&spr);
-        }
+        C2D_SpriteSetScale(&spr, sx, sy);
+        C2D_DrawSpriteTinted(&spr, &e->bar.tint);
     }
 }
 
@@ -73,16 +79,15 @@ void ui_progress_bar_set_tint(UIProgressBar* e, u32 color) {
     if (!e) return;
 
     C2D_PlainImageTint(&e->bar.tint, color, 1.0f);
-    e->useTint = true;
 }
 
 void ui_progress_bar_clear_tint(UIProgressBar* e) {
     if (!e) return;
-    
-    e->useTint = false;
+
+    C2D_PlainImageTint(&e->bar.tint, 0xffffffff, 1.0f);
 }
 
-void ui_progress_bar_set_images(UIProgressBar *e, int style, float scale) {
+void ui_progress_bar_set_images(UIProgressBar *e, int style) {
     switch (style) {
         case 0:
             C2D_SpriteFromSheet(&e->bar.sprite, bar_sheet, 0);
@@ -92,11 +97,9 @@ void ui_progress_bar_set_images(UIProgressBar *e, int style, float scale) {
 
             e->frame.sprite = e->bar.sprite;
 
-            e->base.w = e->bar.sprite.image.subtex->width * scale;
-            e->base.h = e->bar.sprite.image.subtex->height * scale;
+            e->base.w = e->bar.sprite.image.subtex->width * e->base.scaleX;
+            e->base.h = e->bar.sprite.image.subtex->height * e->base.scaleY;
 
-            e->fill_scaleX = scale * ((float)(e->base.w - 2) / (float)e->base.w);
-            e->fill_scaleY = scale * ((float)(e->base.h - 2) / (float)e->base.h);
             e->flip_order = false;
             break;
         case 1:
@@ -108,8 +111,8 @@ void ui_progress_bar_set_images(UIProgressBar *e, int style, float scale) {
             
             C2D_PlainImageTint(&e->frame.tint, C2D_Color32(255, 255, 255, 255), 1.0f);
 
-            e->base.w = e->bar.sprite.image.subtex->width * scale;
-            e->base.h = e->bar.sprite.image.subtex->height * scale;
+            e->base.w = e->bar.sprite.image.subtex->width * e->base.scaleX;
+            e->base.h = e->bar.sprite.image.subtex->height * e->base.scaleY;
 
             e->flip_order = true;
             break;
@@ -122,44 +125,60 @@ void ui_progress_bar_set_images(UIProgressBar *e, int style, float scale) {
             
             C2D_PlainImageTint(&e->frame.tint, C2D_Color32(255, 255, 255, 255), 1.0f);
 
-            e->base.w = e->bar.sprite.image.subtex->width * scale;
-            e->base.h = e->bar.sprite.image.subtex->height * scale;
+            e->base.w = e->bar.sprite.image.subtex->width * e->base.scaleX;
+            e->base.h = e->bar.sprite.image.subtex->height * e->base.scaleY;
 
             e->flip_order = true;
             break;
     }
 }
 
-UIProgressBar *ui_create_progress_bar(int x, int y, int style, float scale, float max_value, char (*tag)[TAG_LENGTH]) {
+UIProgressBar *ui_create_progress_bar(const UIContext *ctx) {
     UIProgressBar *e = malloc(sizeof(UIProgressBar));
 
     if (!e) return NULL;
 
     memset(e, 0, sizeof(UIProgressBar));
     e->base.type = UI_PROGRESS_BAR;
-    e->base.x = x;
-    e->base.y = y;
     e->base.enabled = true;
     e->useTint = false;
 
-    e->style = style;
+    ui_element_apply_default_properties(&e->base, ctx);
 
-    // Copy tag
-    copy_tag_array(&e->base, tag);
-
-    e->scale = scale;
-    e->fill_scaleX = scale;
-    e->fill_scaleY = scale;
-
-    ui_progress_bar_set_images(e, style, scale);
-
-    // Please no divisions by zero, thanks
-    e->max_value = (max_value == 0 ? 100 : max_value);
     e->value = 0;
+    e->max_value = 100;
 
     e->base.update = ui_progress_bar_update;
     e->base.draw = ui_progress_bar_draw;
     e->base.destroy = ui_progress_bar_destroy;
 
     return e;
+}
+
+UIElement *ui_create_progress_bar_from_props(const UIContext *ctx, const UIPropertyList *props) {
+    UIProgressBar *progress_bar = ui_create_progress_bar(ctx);
+
+    if (!progress_bar) return NULL;
+
+    ui_element_apply_properties(&progress_bar->base, ctx, props);
+    
+    progress_bar->style = ui_prop_int(props, "style", 0);
+
+    progress_bar->max_value = ui_prop_float(props, "max_value", 100);
+
+    // Please no divisions by zero, thanks
+    if (progress_bar->max_value == 0) {
+        progress_bar->max_value = 100;
+    }
+
+    ui_progress_bar_set_images(progress_bar, progress_bar->style);
+
+    ui_progress_bar_set_tint(progress_bar, C2D_Color32(
+        ui_prop_int(props, "r", 255), 
+        ui_prop_int(props, "g", 255), 
+        ui_prop_int(props, "b", 255), 
+        ui_prop_int(props, "a", 255)
+    ));
+    
+    return &progress_bar->base;
 }

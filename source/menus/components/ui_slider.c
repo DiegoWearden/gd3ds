@@ -1,6 +1,8 @@
-#include "ui_element.h"
+#include "menus/core/common_setters.h"
+#include "menus/core/ui_element.h"
 #include <citro2d.h>
-#include "ui_screen.h"
+#include "menus/core/ui_screen.h"
+#include "menus/core/ui_props.h"
 #include "ui_slider.h"
 
 // If currently using an slider
@@ -16,14 +18,14 @@ static void draw_button(UISlider *e) {
     C3D_TexSetFilter(e->button.image.tex, GPU_LINEAR, GPU_LINEAR);
     C2D_SpriteSetCenter(&e->button, 0.5f, 0.5f);
     C2D_SpriteSetPos(&e->button, button_x, e->base.y);
-    C2D_SpriteSetScale(&e->button, e->scale, e->scale);
+    C2D_SpriteSetScale(&e->button, e->base.scaleX, e->base.scaleY);
     C2D_DrawSprite(&e->button);
 }
 
 static void draw_frame(UISlider *e) {
     C2D_SpriteSetCenter(&e->track_frame, 0.5f, 0.5f);
     C2D_SpriteSetPos(&e->track_frame, e->base.x, e->base.y);
-    C2D_SpriteSetScale(&e->track_frame, e->scale, e->scale);
+    C2D_SpriteSetScale(&e->track_frame, e->base.scaleX, e->base.scaleY);
     C2D_DrawSprite(&e->track_frame);
 }
 
@@ -49,7 +51,7 @@ static void draw_bar(UISlider *e) {
         C2D_SpriteFromImage(&spr, img);
         C2D_SpriteSetCenter(&spr, 0.f, 0.5f);
         C2D_SpriteSetPos(&spr, e->base.x - e->base.w / 2, e->base.y);
-        C2D_SpriteSetScale(&spr, e->scale, e->scale);
+        C2D_SpriteSetScale(&spr, e->base.scaleX, e->base.scaleY);
         C2D_DrawSpriteTinted(&spr, &tint);
     }
 }
@@ -145,37 +147,55 @@ static void ui_slider_destroy(UIElement *e) {
     }
 }
 
-UISlider *ui_create_slider(int x, int y, float scale, float max, char (*tag)[TAG_LENGTH]) {
-    UISlider *e = malloc(sizeof(UISlider));
-
-    if (!e) return NULL;
-
-    memset(e, 0, sizeof(UISlider));
-    e->base.type = UI_SLIDER;
-
-    e->base.x = x;
-    e->base.y = y;
-    e->base.enabled = true;
-
+static void ui_slider_init_graphics(UISlider *e) {
     C2D_SpriteFromSheet(&e->track, bar_sheet, 3);
     C3D_TexSetFilter(e->track.image.tex, GPU_LINEAR, GPU_LINEAR);
 
     C2D_SpriteFromSheet(&e->track_frame, bar_sheet, 1);
     C3D_TexSetFilter(e->track_frame.image.tex, GPU_LINEAR, GPU_LINEAR);
 
-    e->base.w = e->track.image.subtex->width * scale;
-    e->base.h = e->track.image.subtex->height * scale;
+    e->base.w = e->track.image.subtex->width * e->base.scaleX;
+    e->base.h = e->track.image.subtex->height * e->base.scaleY;
+}
 
-    // Copy tag
-    copy_tag_array(&e->base, tag);
+UISlider *ui_create_slider(const UIContext *ctx) {
+    UISlider *e = malloc(sizeof(UISlider));
 
-    e->scale = scale;
-    e->value = max;
-    e->max_value = max;
+    if (!e) return NULL;
+
+    memset(e, 0, sizeof(UISlider));
+    e->base.type = UI_SLIDER;
+    e->base.enabled = true;
+    
+    ui_element_apply_default_properties(&e->base, ctx);
+
+    ui_slider_init_graphics(e);
+
+    e->value = 1;
+    e->max_value = 1;
 
     e->base.update = ui_slider_update;
     e->base.draw = ui_slider_draw;
     e->base.destroy = ui_slider_destroy;
 
     return e;
+}
+
+UIElement *ui_create_slider_from_props(const UIContext *ctx, const UIPropertyList *props) {
+    UISlider *slider = ui_create_slider(ctx);
+
+    if (!slider) return NULL;
+
+    ui_element_apply_properties(&slider->base, ctx, props);
+
+    slider->max_value = ui_prop_float(props, "max_value", 100);
+
+    // Please no divisions by zero, thanks
+    if (slider->max_value == 0) {
+        slider->max_value = 100;
+    }
+    
+    ui_slider_init_graphics(slider);
+
+    return &slider->base;
 }

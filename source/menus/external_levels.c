@@ -1,7 +1,7 @@
 #include <3ds.h>
 #include <citro2d.h>
-#include "menus/components/ui_element.h"
-#include "menus/components/ui_screen.h"
+#include "menus/core/ui_element.h"
+#include "menus/core/ui_screen.h"
 #include "math_helpers.h"
 #include "menus/components/ui_list.h"
 #include "menus/components/ui_window.h"
@@ -39,8 +39,6 @@ const char *error_strings[] = {
     "Couldn't parse objects."
 };
 
-#define NUM_ERRORS (sizeof(error_strings) / sizeof(char *))
-
 static bool exit_flag = false;
 bool external_start_level = false;
 
@@ -56,8 +54,6 @@ static UIImage *bg_gradient;
 static UIImage *bg_gradient_top;
 static UIList *list;
 static UILabel *path_label;
-
-UIElement texts[UI_LIST_MAX_ITEMS];
 
 char current_path[320] = { 0 };
 char last_path[320] = { 1 };
@@ -92,7 +88,7 @@ void load_level_folder(char *folder) {
     FileOrFolder *entries = load_folder(folder, &count);
     char level_name[256];
     if (entries && list) {
-        for (int i = 0; i < count && i < UI_LIST_MAX_ITEMS; i++) {
+        for (int i = 0; i < count; i++) {
             FileOrFolder *entry = &entries[i];
             strncpy(level_name, entry->name, sizeof(level_name) - 1);
             /*
@@ -163,7 +159,7 @@ static void show_error_message() {
 
     int message_id = level_result - 1;
     char *message = "Ultra unknown error.";
-    if (message_id < NUM_ERRORS) {
+    if (message_id < ARRAY_LEN(error_strings)) {
         message = (char *) error_strings[message_id]; 
     }
 

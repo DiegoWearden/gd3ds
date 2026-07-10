@@ -1,7 +1,13 @@
-#include "ui_element.h"
+#include "menus/core/ui_element.h"
 #include <citro2d.h>
-#include "ui_image.h"
-#include "ui_screen.h"
+#include "menus/core/ui_screen.h"
+#include "menus/core/ui_props.h"
+
+static const UIFloatEnumEntry alignment_table[] = {
+    { "LEFT",   0.f },
+    { "CENTER", 0.5f },
+    { "RIGHT",  1.f }
+};
 
 static void ui_label_update(UIElement* e, UIInput* touch) {
     // Do absolutely nothing
@@ -17,7 +23,7 @@ static void ui_label_draw(UIElement* e) {
     if (font_id >= NUM_FONTS) font_id = 0;
 
     const LabelFont *font = &fonts[font_id];
-    draw_text(font->charset, font->sheet, e->x, e->y, label->scale, label->scale, label->alignment, label->parse_tags, "%s", label->text);
+    draw_text(font->charset, font->sheet, e->x, e->y, label->base.scaleX, label->base.scaleY, label->alignment, label->parse_tags, "%s", label->text);
 }
 
 static void ui_label_destroy(UIElement* e) {
@@ -45,49 +51,57 @@ void ui_label_set_scale_from_width(UILabel *e, const char *text, float width) {
 
     float text_scale;
 
-    float scale = e->scale;
+    float scaleX = e->base.scaleX;
+
+    float ratio = scaleX / e->base.scaleY;
 
     // Get text length in pixels
-    float length = get_longest_line_length(font->charset, scale, text);
+    float length = get_longest_line_length(font->charset, scaleX, text);
 
     if (length == 0) return;
 
     if (width < length) {
-        text_scale = scale * (width / length);
+        text_scale = scaleX * (width / length);
     } else {
-        text_scale = scale;
+        text_scale = scaleX;
     }
 
-    e->scale = text_scale;
+    e->base.scaleX = text_scale;
+    e->base.scaleY = e->base.scaleX * ratio;
 }
 
-UILabel *ui_create_label(int x, int y, float scale, char *text, int font, float alignment, bool parse_tags, char (*tag)[TAG_LENGTH]) {
+UILabel *ui_create_label(const UIContext *ctx) {
     UILabel *e = malloc(sizeof(UILabel));
 
     if (!e) return NULL;
 
     memset(e, 0, sizeof(UILabel));
     e->base.type = UI_LABEL;
-    e->base.x = x;
-    e->base.y = y;
-    e->base.w = 0;
-    e->base.h = 10;
     e->base.enabled = true;
     
-    e->font = font;
-    e->alignment = alignment;
-    e->scale = scale;
-    e->parse_tags = parse_tags;
-    
-    // Copy tag
-    copy_tag_array(&e->base, tag);
+    ui_element_apply_default_properties(&e->base, ctx);
 
-    // Copy text
-    strncpy(e->text, text, 255);
+    e->parse_tags = true;
 
     e->base.update = ui_label_update;
     e->base.draw = ui_label_draw;
     e->base.destroy = ui_label_destroy;
 
     return e;
+}
+
+UIElement *ui_create_label_from_props(const UIContext *ctx, const UIPropertyList *props) {
+    UILabel *label = ui_create_label(ctx);
+
+    if (!label) return NULL;
+
+    ui_element_apply_properties(&label->base, ctx, props);
+
+    ui_label_set_text(label, ui_prop_string(props, "text", ""));
+    
+    label->font = ui_prop_int(props, "font", 0);
+    label->alignment = ui_prop_float_enum(props, "align", alignment_table, ARRAY_LEN(alignment_table), 0);
+    label->parse_tags = ui_prop_bool(props, "parseTags", true);
+
+    return &label->base;
 }
