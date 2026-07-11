@@ -17,7 +17,7 @@ static void ui_bg_gradient_update(UIElement* e, UIInput* touch, UITransform *tra
 static void ui_bg_gradient_draw(UIElement* e, UITransform *transform) {
     UIImage *image = (UIImage *) e;
     C2D_SpriteSetPos(&image->image.sprite, transform->x, transform->y);
-    C2D_SpriteSetScale(&image->image.sprite, image->base.scaleX, image->base.scaleY);
+    C2D_SpriteSetScale(&image->image.sprite, transform->scaleX, transform->scaleY);
     C2D_DrawSpriteTinted(&image->image.sprite, &image->image.tint);
 }
 

@@ -140,20 +140,24 @@ static void ui_list_update(UIElement* e, UIInput* touch, UITransform *transform)
 
 static void ui_list_draw(UIElement* e, UITransform *transform) {
     UIList* l = (UIList *) e;
-    float scissor_x = transform->x - (e->w / 2);
-    float scissor_y = transform->y - (e->h / 2);
+
+    float width = e->w * transform->scaleX;
+    float height = e->h * transform->scaleY;
+
+    float scissor_x = transform->x - (width / 2);
+    float scissor_y = transform->y - (height / 2);
 
     // Draw background
-    C2D_DrawRectSolid(scissor_x, scissor_y, 0, e->w, e->h, l->background_color);
+    C2D_DrawRectSolid(scissor_x, scissor_y, 0, width, height, l->background_color);
     
     // Enable clipping
-    set_scissor(GPU_SCISSOR_NORMAL, scissor_x, scissor_y, e->w, e->h);
+    set_scissor(GPU_SCISSOR_NORMAL, scissor_x, scissor_y, width, height);
 
     float y = l->scrollY - e->h * 0.5f;
 
     for (UIElement *item = e->first_child; item; item = item->next_sibling) {
         UITransform t = *transform;
-        t.y += y + (item->h * 0.5f);
+        t.y += (y + (item->h * 0.5f)) * transform->scaleY;
 
         item->w = e->w;
 
