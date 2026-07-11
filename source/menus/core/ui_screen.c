@@ -36,6 +36,7 @@
 #include "fonts/bigFont.h"
 #include "fonts/chatFont.h"
 #include "fonts/goldFont.h"
+#include "utils/gfx.h"
 
 C2D_SpriteSheet ui_sheet;
 C2D_SpriteSheet ui_2_sheet;
@@ -317,6 +318,14 @@ void ui_screen_update(UIScreen* s, UIInput* touch) {
 // Draw all screen characters
 void ui_screen_draw(UIScreen* s) {
     if (!s->loaded) return;
+
+    // If fading, update without interacting
+    if (get_fade_status()) {
+        UIInput touch;
+        touch.did_something = true;
+        touch.interacted = false;
+        ui_screen_update(s, &touch);
+    }
 
     UITransform root = {
         .x = 0.f,
