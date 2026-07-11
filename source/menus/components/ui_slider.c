@@ -9,10 +9,11 @@
 bool sliding;
 
 static void draw_button(UISlider *e, UITransform *transform) {
-    float left_side = transform->x - e->base.w / 2;
+    float width = e->base.w * transform->scaleX;
+    float left_side = transform->x - (width / 2);
     
     float percent = ui_slider_get_percent(e);
-    int button_x = left_side + (int)(percent * e->base.w);
+    int button_x = left_side + (int)(percent * width);
     
     C2D_SpriteFromSheet(&e->button, bar_sheet, 4 + e->dragging);
     C3D_TexSetFilter(e->button.image.tex, GPU_LINEAR, GPU_LINEAR);
@@ -44,6 +45,8 @@ static void draw_bar(UISlider *e, UITransform *transform) {
         C2D_Image img;
         C2D_ImageTint tint;
         
+        float x = transform->x - (e->base.w / 2) * transform->scaleX;
+        
         C2D_PlainImageTint(&tint, C2D_Color32(50, 190, 240, 255), 1.f);
 
         sub = select_box(&e->track.image, 0, 0, pixels, e->track.image.subtex->height);
@@ -51,24 +54,26 @@ static void draw_bar(UISlider *e, UITransform *transform) {
 
         C2D_SpriteFromImage(&spr, img);
         C2D_SpriteSetCenter(&spr, 0.f, 0.5f);
-        C2D_SpriteSetPos(&spr, transform->x - e->base.w / 2, transform->y);
+        C2D_SpriteSetPos(&spr, x, transform->y);
         C2D_SpriteSetScale(&spr, transform->scaleX, transform->scaleY);
         C2D_DrawSpriteTinted(&spr, &tint);
     }
 }
 
 static float slider_button_x(UISlider* e, UITransform *transform) {
-    float left_side = transform->x - e->base.w / 2;
+    float width = e->base.w * transform->scaleX;
+    float left_side = transform->x - width / 2;
 
     float t = e->value / e->max_value;
 
-    return left_side + (t * e->base.w);
+    return left_side + (t * width);
 }
 
 static void slider_set_from_x(UISlider* e, UITransform *transform, float px) {
-    float left_side = transform->x - e->base.w / 2;
+    float width = e->base.w * transform->scaleX;
+    float left_side = transform->x - width / 2;
 
-    float t = (float)(px - left_side) / e->base.w;
+    float t = (float)(px - left_side) / width;
 
     if (t < 0.f) t = 0.f;
     if (t > 1.f) t = 1.f;
@@ -155,8 +160,8 @@ static void ui_slider_init_graphics(UISlider *e) {
     C2D_SpriteFromSheet(&e->track_frame, bar_sheet, 1);
     C3D_TexSetFilter(e->track_frame.image.tex, GPU_LINEAR, GPU_LINEAR);
 
-    e->base.w = e->track.image.subtex->width * e->base.scaleX;
-    e->base.h = e->track.image.subtex->height * e->base.scaleY;
+    e->base.w = e->track.image.subtex->width;
+    e->base.h = e->track.image.subtex->height;
 }
 
 UISlider *ui_create_slider(const UIContext *ctx) {
