@@ -35,15 +35,18 @@ static void draw_bar(UIProgressBar *e, UITransform *transform) {
         float sx = transform->scaleX;
         float sy = transform->scaleY;
 
+        float width_scaled = e->base.w * sx;
+        float height_scaled = e->base.h * sy;
+
         if (e->style == 0) {
             // Add 1 pixel of margin
-            sx *= ((float)(e->base.w - 2) / (float)e->base.w);
-            sy *= ((float)(e->base.h - 2) / (float)e->base.h);
+            sx *= ((float)(width_scaled - 2) / (float)width_scaled);
+            sy *= ((float)(height_scaled - 2) / (float)height_scaled);
         }
         
-        float x = transform->x - (e->base.w / 2) * transform->scaleX;
+        float x = transform->x - (width_scaled / 2);
         if (e->style == 0) {
-            x += 0.5f;
+            x += 2.f * transform->scaleX;
         }
 
         sub = select_box(&e->bar.sprite.image, 0, 0, pixels, e->bar.sprite.image.subtex->height);
