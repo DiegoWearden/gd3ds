@@ -136,7 +136,9 @@ static bool parse_image_tag(const char *tag, int *image, int *sheet) {
 }
 
 // Count da lines
-static int count_lines(const char *text) {
+static int count_lines(const char *text, bool parse_tags) {
+    if (!parse_tags) return 1;
+    
     int lines = 1;
 
     for (int i = 0; text[i]; i++) {
@@ -439,7 +441,7 @@ void draw_text(const Charset *font, C2D_SpriteSheet *sheet, const float x, const
     float offset_y = 0;
 
     // Get total text height
-    int line_count = count_lines(tmp) - 1;
+    int line_count = count_lines(tmp, parse_tags) - 1;
     float line_height = (height * fabsf(scaleY)) + SPACING * fabsf(scaleY);
     float total_height = (line_count * line_height);
 
