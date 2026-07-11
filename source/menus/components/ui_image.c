@@ -45,8 +45,8 @@ void ui_image_set_image(UIImage *e, int sprite_index, int sheet) {
     C2D_SpriteFromSheet(&e->image.sprite, *get_sheet(sheet), sprite_index);
     C3D_TexSetFilter(e->image.sprite.image.tex, GPU_LINEAR, GPU_LINEAR);
 
-    e->base.w = e->image.sprite.image.subtex->width * e->base.scaleX;
-    e->base.h = e->image.sprite.image.subtex->height * e->base.scaleY;
+    e->base.w = e->image.sprite.image.subtex->width;
+    e->base.h = e->image.sprite.image.subtex->height;
 }
 
 UIImage *ui_create_image(const UIContext *ctx) {

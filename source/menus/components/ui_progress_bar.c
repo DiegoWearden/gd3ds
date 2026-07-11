@@ -41,7 +41,7 @@ static void draw_bar(UIProgressBar *e, UITransform *transform) {
             sy *= ((float)(e->base.h - 2) / (float)e->base.h);
         }
         
-        float x = transform->x - (e->base.w / 2) * transform->scaleX / e->base.scaleX;
+        float x = transform->x - (e->base.w / 2) * transform->scaleX;
         if (e->style == 0) {
             x += 0.5f;
         }
@@ -96,8 +96,8 @@ void ui_progress_bar_set_images(UIProgressBar *e, int style) {
 
             e->frame.sprite = e->bar.sprite;
 
-            e->base.w = e->bar.sprite.image.subtex->width * e->base.scaleX;
-            e->base.h = e->bar.sprite.image.subtex->height * e->base.scaleY;
+            e->base.w = e->bar.sprite.image.subtex->width;
+            e->base.h = e->bar.sprite.image.subtex->height;
 
             e->flip_order = false;
             break;
@@ -110,8 +110,8 @@ void ui_progress_bar_set_images(UIProgressBar *e, int style) {
             
             C2D_PlainImageTint(&e->frame.tint, C2D_Color32(255, 255, 255, 255), 1.0f);
 
-            e->base.w = e->bar.sprite.image.subtex->width * e->base.scaleX;
-            e->base.h = e->bar.sprite.image.subtex->height * e->base.scaleY;
+            e->base.w = e->bar.sprite.image.subtex->width;
+            e->base.h = e->bar.sprite.image.subtex->height;
 
             e->flip_order = true;
             break;
@@ -124,8 +124,8 @@ void ui_progress_bar_set_images(UIProgressBar *e, int style) {
             
             C2D_PlainImageTint(&e->frame.tint, C2D_Color32(255, 255, 255, 255), 1.0f);
 
-            e->base.w = e->bar.sprite.image.subtex->width * e->base.scaleX;
-            e->base.h = e->bar.sprite.image.subtex->height * e->base.scaleY;
+            e->base.w = e->bar.sprite.image.subtex->width;
+            e->base.h = e->bar.sprite.image.subtex->height;
 
             e->flip_order = true;
             break;

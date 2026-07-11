@@ -18,8 +18,8 @@ static void set_checkbox_texture(UICheckBox* e, bool enabled) {
     C2D_SpriteFromSheet(&button->image.sprite, ui_sheet, tex);
     C3D_TexSetFilter(button->image.sprite.image.tex, GPU_LINEAR, GPU_LINEAR);
 
-    button->base.w = fabsf(button->image.sprite.image.subtex->width * button->base.scaleX);
-    button->base.h = fabsf(button->image.sprite.image.subtex->height * button->base.scaleY);
+    button->base.w = button->image.sprite.image.subtex->width;
+    button->base.h = button->image.sprite.image.subtex->height;
 }
 
 // Set checkbox checked state

@@ -45,8 +45,8 @@ UIImage *ui_create_bg_gradient(const UIContext *ctx) {
 
     ui_element_set_scale_xy((UIElement *) e, BG_GRADIENT_XSCALE, BG_GRADIENT_YSCALE);
 
-    e->base.w = e->image.sprite.image.subtex->width * e->base.scaleX;
-    e->base.h = e->image.sprite.image.subtex->height * e->base.scaleY;
+    e->base.w = e->image.sprite.image.subtex->width;
+    e->base.h = e->image.sprite.image.subtex->height;
 
     ui_image_clear_tint(e);
 
