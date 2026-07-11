@@ -1,4 +1,6 @@
 #include "graphics.h"
+#include "c2d/base.h"
+#include "c2d/spritesheet.h"
 #include "objects.h"
 #include "main.h"
 #include "math_helpers.h"
@@ -975,6 +977,10 @@ void change_blending(bool blending) {
         C3D_TexEnv *env = C3D_GetTexEnv(4);
         C3D_TexEnvInit(env);
     }
+
+    // Draw dummy image for changes to apply
+    C2D_Image dummy = C2D_SpriteSheetGetImage(spriteSheet, 0);
+    C2D_DrawImageAt(dummy, 0, 0, 0, NULL, 0, 0);
 
     blending_state = blending;
 }
