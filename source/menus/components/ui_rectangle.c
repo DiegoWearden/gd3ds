@@ -1,12 +1,9 @@
 #include "c2d/base.h"
-#include "menus/components/ui_image.h"
-#include "menus/core/common_setters.h"
 #include "menus/core/ui_element.h"
 #include <citro2d.h>
 #include "menus/core/ui_screen.h"
 #include "menus/core/ui_props.h"
-#include "ui_bg_gradient.h"
-
+#include "math_helpers.h"
 
 void ui_rectangle_set_color(UIRectangle* e, u32 color) {
     if (!e) return;
@@ -71,12 +68,7 @@ UIElement *ui_create_rectangle_from_props(const UIContext *ctx, const UIProperty
     
     ui_element_apply_properties(&rectangle->base, ctx, props);
 
-    ui_rectangle_set_color(rectangle, C2D_Color32(
-        ui_prop_int(props, "r", 255), 
-        ui_prop_int(props, "g", 255), 
-        ui_prop_int(props, "b", 255), 
-        ui_prop_int(props, "a", 255)
-    ));
+    ui_rectangle_set_color(rectangle, ui_prop_color(props, "color", ABGR8(255, 255, 255, 255)));
 
     return &rectangle->base;
 }

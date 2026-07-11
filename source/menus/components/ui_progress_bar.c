@@ -2,6 +2,7 @@
 #include <citro2d.h>
 #include "menus/core/ui_screen.h"
 #include "menus/core/ui_props.h"
+#include "math_helpers.h"
 
 static void ui_progress_bar_update(UIElement* e, UIInput* touch, UITransform *transform) {
     bool inside = ui_element_basic_bound_check(e, touch, transform);
@@ -171,12 +172,7 @@ UIElement *ui_create_progress_bar_from_props(const UIContext *ctx, const UIPrope
 
     ui_progress_bar_set_images(progress_bar, progress_bar->style);
 
-    ui_progress_bar_set_tint(progress_bar, C2D_Color32(
-        ui_prop_int(props, "r", 255), 
-        ui_prop_int(props, "g", 255), 
-        ui_prop_int(props, "b", 255), 
-        ui_prop_int(props, "a", 255)
-    ));
+    ui_progress_bar_set_tint(progress_bar, ui_prop_color(props, "barColor", ABGR8(255, 255, 255, 255)));
     
     return &progress_bar->base;
 }

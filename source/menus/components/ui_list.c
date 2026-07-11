@@ -8,6 +8,7 @@
 #include "easing.h"
 #include "math_helpers.h"
 #include "menus/core/ui_screen.h"
+#include "menus/core/ui_props.h"
 #include "ui_list.h"
 #include "utils/gfx.h"
 #include <stdlib.h>
@@ -39,6 +40,12 @@ void ui_list_add(UIList* list, UIElement* item) {
     ui_element_add_child((UIElement *) list, item);
 
     list->contentHeight += item->h;
+}
+
+void ui_list_set_bg_color(UIList *list, u32 color) {
+    if (!list) return;
+
+    list->background_color = color;
 }
 
 static void ui_list_forward_touch(UIList *list, UIInput *input, UITransform *transform) {
@@ -135,6 +142,9 @@ static void ui_list_draw(UIElement* e, UITransform *transform) {
     UIList* l = (UIList *) e;
     float scissor_x = transform->x - (e->w / 2);
     float scissor_y = transform->y - (e->h / 2);
+
+    // Draw background
+    C2D_DrawRectSolid(scissor_x, scissor_y, 0, e->w, e->h, l->background_color);
     
     // Enable clipping
     set_scissor(GPU_SCISSOR_NORMAL, scissor_x, scissor_y, e->w, e->h);
@@ -191,6 +201,8 @@ UIElement *ui_create_list_from_props(const UIContext *ctx, const UIPropertyList 
     if (!list) return NULL;
     
     ui_element_apply_properties(&list->base, ctx, props);
+
+    ui_list_set_bg_color(list, ui_prop_color(props, "bgColor", ABGR8(0, 0, 0, 0)));
 
     return &list->base;
 }

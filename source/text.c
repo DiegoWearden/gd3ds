@@ -45,13 +45,17 @@ static bool parse_named_color_tag(const char *tag, u32 *out) {
     return false;
 }
 
-static bool parse_hex_color(const char *str, u32 *out) {
+bool parse_hex_color(const char *str, u32 *out) {
     unsigned int r, g, b, a;
 
-    // #RRGGBB
     if (str[0] == '#') {
-        unsigned int r, g, b;
+        // RRGGBBAA
+        if (sscanf(str + 1, "%02x%02x%02x%02x", &r, &g, &b, &a) == 4 && strlen(str) == 9) {
+            *out = ABGR8(r, g, b, a);
+            return true;
+        }
 
+        // #RRGGBB
         if (sscanf(str + 1, "%02x%02x%02x", &r, &g, &b) == 3 && strlen(str) == 7) {
             *out = ABGR8(r, g, b, 255);
             return true;

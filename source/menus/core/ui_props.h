@@ -20,3 +20,5 @@ u32 ui_prop_bitfield(const UIPropertyList *props, const char *key, const UIBitfi
 
 int ui_prop_int_enum(const UIPropertyList *props, const char *key, const UIIntEnumEntry *table, size_t count, int default_value);
 float ui_prop_float_enum(const UIPropertyList *props, const char *key, const UIFloatEnumEntry *table, size_t count, float default_value);
+
+u32 ui_prop_color(const UIPropertyList *props, const char *key, u32 default_value);

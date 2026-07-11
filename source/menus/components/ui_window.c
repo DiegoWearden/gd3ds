@@ -9,6 +9,7 @@
 #include "utils/gfx.h"
 #include "ui_checkbox.h"
 #include "menus/core/ui_screen.h"
+#include "math_helpers.h"
 
 void ui_window_set_tint(UIWindow* e, u32 color) {
     if (!e) return;
@@ -75,12 +76,7 @@ UIElement *ui_create_window_from_props(const UIContext *ctx, const UIPropertyLis
 
     ui_window_set_atlas(window, ui_prop_int(props, "style", 0));
 
-    ui_window_set_tint(window, C2D_Color32(
-        ui_prop_int(props, "r", 255), 
-        ui_prop_int(props, "g", 255), 
-        ui_prop_int(props, "b", 255), 
-        ui_prop_int(props, "a", 255)
-    ));
+    ui_window_set_tint(window, ui_prop_color(props, "color", ABGR8(255, 255, 255, 255)));
 
     return &window->base;
 }

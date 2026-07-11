@@ -108,12 +108,7 @@ UIElement *ui_create_window_button_from_props(const UIContext *ctx, const UIProp
 
     ui_window_button_set_style(window_button, ui_prop_int(props, "style", 0));
 
-    ui_window_button_set_tint(window_button, C2D_Color32(
-        ui_prop_int(props, "r", 255), 
-        ui_prop_int(props, "g", 255), 
-        ui_prop_int(props, "b", 255), 
-        ui_prop_int(props, "a", 255)
-    ));
+    ui_window_button_set_tint(window_button, ui_prop_color(props, "color", ABGR8(255, 255, 255, 255)));
 
     button->hoverFactor = ui_prop_float(props, "hoverFactor", 1);
 

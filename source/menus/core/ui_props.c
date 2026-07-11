@@ -1,6 +1,8 @@
 #include "ui_props.h"
 #include <stdlib.h>
 #include "main.h"
+#include "menus/core/ui_screen.h"
+#include "text.h"
 #include "utils/string_helpers.h"
 
 const char *ui_prop_string(const UIPropertyList *props, const char *key, const char *default_value) {
@@ -75,4 +77,15 @@ float ui_prop_float_enum(const UIPropertyList *props, const char *key, const UIF
     }
 
     return default_value;
+}
+
+u32 ui_prop_color(const UIPropertyList *props, const char *key, u32 default_value) {
+    const char *value = ui_prop_string(props, key, NULL);
+    if (!value) return default_value;
+
+    u32 color;
+
+    bool parsed = parse_hex_color(value, &color);
+
+    return parsed ? color : default_value;
 }

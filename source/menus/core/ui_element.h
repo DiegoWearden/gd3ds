@@ -239,6 +239,8 @@ typedef struct {
     bool dragging;
 
     int dpadHeldTime;
+
+    u32 background_color;
 } UIList;
 
 typedef struct {
