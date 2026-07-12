@@ -261,6 +261,26 @@ bool make_last_checkpoint_permanent() {
     return true;
 }
 
+void delete_permanent_checkpoint(int idx) {
+    if (idx < 0 || idx >= perm_checkpoint_count) return;
+
+    memmove(&perm_checkpoints[idx], &perm_checkpoints[idx + 1],
+            (perm_checkpoint_count - idx - 1) * sizeof(CheckpointData));
+    perm_checkpoint_count--;
+
+    // Keep the selection pointing at a sensible neighbor
+    if (perm_checkpoint_selected == idx) perm_checkpoint_selected = idx - 1;
+    else if (perm_checkpoint_selected > idx) perm_checkpoint_selected--;
+
+    if (perm_checkpoint_count == 0) {
+        char path[512];
+        perm_checkpoint_path(path, sizeof(path));
+        remove(path);
+    } else {
+        save_permanent_checkpoints();
+    }
+}
+
 void restore_permanent_checkpoint(int idx) {
     if (idx < 0 || idx >= perm_checkpoint_count) return;
 

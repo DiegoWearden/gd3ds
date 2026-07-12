@@ -11,6 +11,7 @@ extern int perm_checkpoint_selected; // -1 = level start
 void load_permanent_checkpoints();
 bool make_last_checkpoint_permanent();
 void restore_permanent_checkpoint(int idx);
+void delete_permanent_checkpoint(int idx);
 float perm_checkpoint_percent(int idx);
 
 void start_practice_mode();

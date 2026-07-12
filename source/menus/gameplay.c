@@ -271,6 +271,11 @@ static void action_cp_next(UIElement *e) {
     switch_permanent_checkpoint(1);
 }
 
+static void action_delete_perm(UIElement *e) {
+    if (state.practice_mode || perm_checkpoint_selected < 0) return;
+    delete_permanent_checkpoint(perm_checkpoint_selected);
+}
+
 static void action_cbf(UIElement *e) {
     cbf_enabled = ((UICheckBox *) e)->checked;
 
@@ -294,6 +299,7 @@ static UIAction actions[] = {
     {"save_perm", action_save_perm },
     {"cp_prev", action_cp_prev },
     {"cp_next", action_cp_next },
+    {"delete_perm", action_delete_perm },
 };
 
 void gameplay_screen_init() {
@@ -481,6 +487,13 @@ int gameplay_screen_bot_loop() {
         if (auto_checkpoint_toggle && auto_checkpoint_toggle->checked != autoCheckpoints) set_checkbox_enabled(auto_checkpoint_toggle, autoCheckpoints);
     } else {
         ui_run_func_on_tag(&default_screen, "practice_options", ui_disable_element);
+    }
+
+    // Delete button for the selected permanent checkpoint (normal-mode pause)
+    if (game_paused && !state.practice_mode && perm_checkpoint_selected >= 0) {
+        ui_run_func_on_tag(&default_screen, "delete_perm_cp", ui_enable_element);
+    } else {
+        ui_run_func_on_tag(&default_screen, "delete_perm_cp", ui_disable_element);
     }
 
     // Permanent checkpoint switcher (normal mode only, toggleable in settings)

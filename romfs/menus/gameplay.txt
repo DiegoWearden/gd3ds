@@ -38,3 +38,6 @@ label x=82 y=135 text="Auto checkpoints" scale=0.38 tag="paused,practice_options
 
 checkbox x=64 y=224 tag="paused,cbf_toggle" scale=0.6 action="cbf"
 label x=82 y=224 text="CBF input" scale=0.38 tag="paused"
+
+button x=64 y=133 id=199 scale=0.7 tag="paused,delete_perm_cp" action="delete_perm" keyBinds="DOWN"
+label x=88 y=133 text="Delete checkpoint" scale=0.38 tag="paused,delete_perm_cp"
