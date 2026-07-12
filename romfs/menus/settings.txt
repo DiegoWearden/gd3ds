@@ -75,6 +75,11 @@ checkbox x=75 y=85 tag="page5,chk_quickretry" scale=0.75 action="quickRetry"
 button x=62 y=72 action="quickretryinfo" id=90 scale=0.5 tag="page5"
 label x=90 y=85 text="Quick retry" scale=0.4 tag="page5"
 
+checkbox x=75 y=115 tag="page5,chk_practicemusicsync" scale=0.75 action="practiceMusicSync"
+label x=90 y=115 text="Practice Music Sync" scale=0.4 tag="page5"
+
+# cosmetic page
+
 label x=160 y=52 text="Cosmetic" tag="page6" scale=0.6 align=CENTER
 
 checkbox x=75 y=85 tag="page6,chk_trailcolor" scale=0.75 action="switchTrailColor"

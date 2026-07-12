@@ -1,4 +1,5 @@
 #include "practice.h"
+#include "level_loading.h"
 #include "main.h"
 #include "graphics.h"
 #include "state.h"
@@ -47,6 +48,8 @@ typedef struct CheckpointData {
     ColorChannel channels[COL_CHANNEL_NUM];
     ColTriggerBuffer col_trigger_buffer[COL_CHANNEL_NUM];
     
+    float song_offset;
+
 } CheckpointData;
 
 CheckpointData checkpoints[MAX_CHECKPOINTS];
@@ -96,6 +99,8 @@ void new_checkpoint() {
 
     check->wall_y = level_info.wall_y;
 
+    check->song_offset = level_info.song_offset + state.player.timeElapsed;
+
     memcpy(check->channels, channels, sizeof(channels));
     memcpy(check->col_trigger_buffer, col_trigger_buffer, sizeof(col_trigger_buffer));
 }
@@ -131,6 +136,8 @@ void restore_checkpoint() {
 
     current_fading_effect = check->current_fading_effect;
     p1_trail = check->p1_trail;
+
+    if (practiceMusicSync) seek_mp3(check->song_offset);
     
     memcpy(channels, check->channels, sizeof(channels));
     memcpy(col_trigger_buffer, check->col_trigger_buffer, sizeof(col_trigger_buffer));
@@ -159,16 +166,24 @@ void start_practice_mode() {
     checkpoint_count = 0;
     checkpoint_pointer = 0;
     state.practice_mode = true;
-    stop_mp3();
-    play_mp3("romfs:/songs/StayInsideMe.mp3", true, 0);
+    
+    if (!practiceMusicSync) {
+        stop_mp3();
+        play_practice_song();
+    }
 }
 
 void exit_practice_mode() {
     state.practice_mode = false;
     init_variables();
     reload_level(); 
-    stop_mp3();
-    play_level_song();
+
+    if (practiceMusicSync) {
+        seek_mp3(level_info.song_offset);
+    } else {
+        stop_mp3();
+        play_level_song(level_info.song_offset);
+    }
 }
 
 void handle_practice_mode() {

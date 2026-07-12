@@ -195,7 +195,8 @@ void init_state();
 void init_trails(int trail);
 void init_wave_trails();
 
-void play_level_song();
+void play_level_song(float seek);
+void play_practice_song();
 void update_attempt_text_pos();
 
 bool is_coin_collected(int obj);

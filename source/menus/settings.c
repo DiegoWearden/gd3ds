@@ -7,7 +7,9 @@
 #include "main_menu.h"
 #include "settings.h"
 
+#include "mp3_player.h"
 #include "save/config.h"
+#include "state.h"
 
 static bool yes_exit = false;
 
@@ -37,6 +39,7 @@ bool solidWaveTrail = false;
 bool noPlayerTrail = false;
 bool noWaveTrailBehind = false;
 bool doNot = false;
+bool practiceMusicSync = false;
 
 static Setting settings[] = {
     {
@@ -99,6 +102,9 @@ static Setting settings[] = {
     {
         "chk_donot", &doNot
     },
+    {
+        "chk_practicemusicsync", &practiceMusicSync
+    }
 };
 
 
@@ -207,6 +213,20 @@ void doNot_settings(UIElement* e) {
     doNot = ((UICheckBox *)e)->checked;
 }
 
+void practiceMusicSync_settings(UIElement* e) {
+    practiceMusicSync = ((UICheckBox *)e)->checked;
+
+    // Enable song
+    if (state.practice_mode) {
+        stop_mp3();
+        if (practiceMusicSync) {
+            play_level_song(level_info.song_offset + state.player.timeElapsed);
+        } else {
+            play_practice_song();
+        }
+    }
+}
+
 void action_left_page(UIElement *e) {
     current_page--;
     if (current_page < 0) {
@@ -300,6 +320,7 @@ static UIAction actions[] = {
     { "noPlayerTrail", noPlayerTrail_settings},
     { "noWaveTrailBehind", noWaveTrailBehind_settings},
     { "doNot", doNot_settings},
+    { "practiceMusicSync" , practiceMusicSync_settings},
     { "left_page", action_left_page},
     { "right_page", action_right_page},
     { "wideinfo", action_info_wide},

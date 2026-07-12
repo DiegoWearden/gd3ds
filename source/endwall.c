@@ -1,3 +1,4 @@
+#include "level_loading.h"
 #include "main.h"
 #include "state.h"
 #include "math_helpers.h"
@@ -228,7 +229,7 @@ int handle_wall_cutscene(float delta) {
                 if (state.practice_mode) {
                     clear_practice_mode();
                     stop_mp3();
-                    play_level_song();
+                    play_level_song(level_info.song_offset);
                 } else {
                     if (song_loaded) seek_mp3(level_info.song_offset);
                 }
