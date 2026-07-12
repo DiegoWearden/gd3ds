@@ -359,7 +359,11 @@ void init_trails(int trail) {
 
 void init_variables() {
     level_frame = 0;
-   
+
+    // Fresh attempt: starts at the level beginning unless a permanent
+    // checkpoint restore follows and flips this back on
+    attempt_from_perm_cp = false;
+
     init_trails(selected_trail);
     init_wave_trails();
 

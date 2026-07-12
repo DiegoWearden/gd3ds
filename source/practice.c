@@ -85,6 +85,9 @@ typedef struct {
 static CheckpointData perm_checkpoints[MAX_PERM_CHECKPOINTS];
 int perm_checkpoint_count = 0;
 int perm_checkpoint_selected = -1; // -1 = level start
+// True while the current attempt began at a permanent checkpoint rather than
+// the level start; such runs must not write progress/completion records
+bool attempt_from_perm_cp = false;
 
 // static const int checkpoint_size = sizeof(checkpoints);
 
@@ -283,6 +286,8 @@ void delete_permanent_checkpoint(int idx) {
 
 void restore_permanent_checkpoint(int idx) {
     if (idx < 0 || idx >= perm_checkpoint_count) return;
+
+    attempt_from_perm_cp = true;
 
     restore_checkpoint_data(&perm_checkpoints[idx]);
 

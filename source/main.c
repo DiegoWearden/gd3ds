@@ -769,7 +769,10 @@ void game_loop() {
                             state.current_data.max_practice = progress;
                             level_data_sel->practice_progress = progress;
                         }
-                    } else {
+                    } else if (!attempt_from_perm_cp) {
+                        // Runs started from a permanent checkpoint don't
+                        // count as records: the distance wasn't played
+                        // from the level start
                         if (state.current_data.max_normal < progress) {
                             init_new_best_popup(progress);
                             had_new_best = true;

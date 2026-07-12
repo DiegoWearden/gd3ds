@@ -169,7 +169,9 @@ int handle_wall_cutscene(float delta) {
                 if (state.practice_mode) {
                     state.current_data.max_practice = 100;
                     level_data_sel->practice_progress = 100;
-                } else {
+                } else if (!attempt_from_perm_cp) {
+                    // Completions from a permanent checkpoint don't count:
+                    // the level wasn't beaten from the start
                     state.current_data.max_normal = 100;
                     
                     // Add totals
