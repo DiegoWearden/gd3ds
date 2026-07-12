@@ -228,6 +228,12 @@ float physics_calc_time = 0;
 float particle_calc_time = 0;
 float triggers_time = 0;
 
+// CBF debug stats: for each press, the physics step within the frame's batch
+// where state.input.pressedJump first became true. Measured identically in
+// both modes, downstream of whichever input path is active: the vanilla
+// snapshot predicts every press lands in bin 0, CBF predicts a spread.
+static int cbf_step_hist[4];
+
 float delta = 0;
 unsigned int level_frame = 0;
 unsigned int frame_counter = 0;
@@ -540,6 +546,7 @@ void game_loop() {
     bool fixed_dt = true;
     precise_input_reset();
     cbf_enabled = (state.custom_level ? level_data.cbf : main_level_data[curr_level_id].cbf);
+    memset(cbf_step_hist, 0, sizeof(cbf_step_hist));
     bool old_wide = wideEnabled;
 
     // Main loop
@@ -661,6 +668,7 @@ void game_loop() {
 
             if (!game_paused) {
                 accumulator += physics_delta;
+                bool press_seen = false;
                 // Run simulation in fixed steps
                 while (accumulator >= STEPS_DT_UNMOD) {
                     // This step simulates the real-time window ending at
@@ -669,6 +677,13 @@ void game_loop() {
                     if (precise_frame && precise_input_ready()) {
                         u64 window_end = (u64)((s64)now - (s64)((accumulator - STEPS_DT) * 1000.0 * CPU_TICKS_PER_MSEC));
                         precise_input_step(window_end);
+                    }
+
+                    // Mode-agnostic probe: record the batch step where the
+                    // physics first saw this press, whichever path set it
+                    if (!press_seen && state.input.pressedJump) {
+                        press_seen = true;
+                        cbf_step_hist[steps > 3 ? 3 : steps]++;
                     }
 
                     u64 start_physics = svcGetSystemTick();
@@ -1027,6 +1042,9 @@ void game_loop() {
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 126, DEBUG_TEXT_SCALE, 0, true, " - Play: %6.2f%%", player_time * 6);
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 138, DEBUG_TEXT_SCALE, 0, true, " - Hndl: %6.2f%%", handle_player_time * 6);
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 150, DEBUG_TEXT_SCALE, 0, true, "Input: %.2fms %dev", precise_input_sample_ms(), precise_input_event_count());
+                int hist_total = cbf_step_hist[0] + cbf_step_hist[1] + cbf_step_hist[2] + cbf_step_hist[3];
+                float hist_avg = hist_total ? (cbf_step_hist[1] + 2 * cbf_step_hist[2] + 3 * cbf_step_hist[3]) * (1000.f / STEPS_HZ) / hist_total : 0.f;
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 162, DEBUG_TEXT_SCALE, 0, true, "CBF: %d|%d|%d|%d ~%.1fms", cbf_step_hist[0], cbf_step_hist[1], cbf_step_hist[2], cbf_step_hist[3], hist_avg);
 
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   54,  DEBUG_TEXT_SCALE, 0, true, "SprDraw:  %6.2f%%", (sprite_drawing_time) * 6);
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   66,  DEBUG_TEXT_SCALE, 0, true, " - Creating: %6.2f%%", (object_creating_time) * 6);
