@@ -186,18 +186,11 @@ void update_level_name(int level, int card) {
 
     UILabel *e = (card) ? level_card_2_title : level_card_title;
     level_card_title_top = (UILabel *) ui_get_element_by_tag(&default_screen_top, "levelname");
-    float length = get_text_length(&bigFont_fontCharset, 1 / 0.85f, false, main_levels[level].level_name);
 
-    float txt_scale;
-    if (level_card_window->base.base.w < length) {
-        txt_scale = (level_card_window->base.base.w / length);
-    } else {
-        txt_scale = 0.85f;
-    }
-    
-    ui_element_set_scale((UIElement *) e, txt_scale);
+    ui_element_set_scale((UIElement *) e, 1.f);
 
     ui_label_set_text(e, main_levels[level].level_name);
+    ui_label_set_scale_from_width(e, main_levels[level].level_name, level_card_window->base.base.w * 0.85f);
 }
 
 void update_level_stars(int level, int card) {
