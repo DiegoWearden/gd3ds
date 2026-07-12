@@ -12,6 +12,7 @@
 #include "menus/components/ui_label.h"
 #include "fonts/bigFont.h"
 #include "main.h"
+#include "practice.h"
 #include "easing.h"
 #include "mp3_player.h"
 #include "level_select.h"
@@ -64,6 +65,8 @@ static UIImage *coins_full[3];
 static UIParticle *particles[4];
 
 char *practice_completion_text = "Well done... Now try to complete it<p>without any checkpoints!";
+
+char *startpos_completion_text = "You can't beat a level<p>from a start pos!";
 
 char *do_not_completion_texts[] = {
     "Not 1 attempt",
@@ -182,6 +185,12 @@ static void spawn_reward_firework(UIImage* e){
 
 // This plays the animation of the coins popping into place and the stars
 static void run_rewards_animation(float delta){
+    // Start-pos runs save no coins or stars, so there is nothing to award
+    if(attempt_from_perm_cp){
+        animating_reward = false;
+        return;
+    }
+
     if(rewardAnimPhase > 3){
         animating_reward = false;
         return;
@@ -355,9 +364,9 @@ void level_complete_init() {
     ui_disable_element(ui_get_element_by_tag(&screen_top, "star"));
     ui_disable_element((UIElement *) star_text);
 
-    showStars = stars > 0 && level_data_sel->normal_progress < 100;
+    showStars = stars > 0 && level_data_sel->normal_progress < 100 && !attempt_from_perm_cp;
 
-    if(state.custom_level == true || state.practice_mode || cheated) {
+    if(state.custom_level == true || state.practice_mode || cheated || attempt_from_perm_cp) {
         ui_run_func_on_tag(&screen_top, "coin1", ui_disable_element);
         ui_run_func_on_tag(&screen_top, "coin2", ui_disable_element);
         ui_run_func_on_tag(&screen_top, "coin3", ui_disable_element);
@@ -412,7 +421,11 @@ void level_complete_init() {
             snprintf(tmp, sizeof(tmp), "Safe mode - %s", enabled_cheats);
             text = tmp;
         }
-        
+
+        if (attempt_from_perm_cp) {
+            text = startpos_completion_text;
+        }
+
         ui_label_set_text(completion_text, text);
         ui_label_set_scale_from_width(completion_text, text, COMPLETION_TEXT_MAX_WIDTH);
     } else {

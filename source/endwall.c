@@ -227,11 +227,14 @@ int handle_wall_cutscene(float delta) {
                 total_jumps += state.current_data.jumps;
 
                 first_load_init_variables();
-                reload_level(); 
+                reload_level();
                 if (state.practice_mode) {
                     clear_practice_mode();
                     stop_mp3();
                     play_level_song(level_info.song_offset);
+                } else if (perm_checkpoint_selected >= 0) {
+                    // Restart back into the start pos the run began from
+                    restore_permanent_checkpoint(perm_checkpoint_selected);
                 } else {
                     if (song_loaded) seek_mp3(level_info.song_offset);
                 }

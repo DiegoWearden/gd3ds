@@ -291,7 +291,12 @@ void restore_permanent_checkpoint(int idx) {
 
     restore_checkpoint_data(&perm_checkpoints[idx]);
 
-    if (song_loaded) seek_mp3(perm_checkpoints[idx].song_offset);
+    if (song_loaded) {
+        seek_mp3(perm_checkpoints[idx].song_offset);
+        // Playback may be paused (e.g. switching during the death
+        // animation), and no respawn will run to unpause it
+        unpause_playback_mp3();
+    }
 
     reset_auto_checkpoint_timer();
 }
