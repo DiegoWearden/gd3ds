@@ -1,4 +1,5 @@
 #include "practice.h"
+#include "level_loading.h"
 #include "main.h"
 #include "graphics.h"
 #include "state.h"
@@ -10,7 +11,6 @@
 
 #define MAX_CHECKPOINTS 100
 #define CHECKPOINT_GFX_ID 6
-#define PRACTICE_SONG_PATH "romfs:/songs/StayInsideMe.mp3"
 #define AUTO_CHECKPOINT_INTERVAL 1.25f
 #define AUTO_CHECKPOINT_FLYING_INTERVAL 1.0f
 #define AUTO_CHECKPOINT_MIN_DISTANCE (3.5f * 30.f)
@@ -52,12 +52,13 @@ typedef struct CheckpointData {
     ColorChannel channels[COL_CHANNEL_NUM];
     ColTriggerBuffer col_trigger_buffer[COL_CHANNEL_NUM];
     
+    float song_offset;
+
 } CheckpointData;
 
 CheckpointData checkpoints[MAX_CHECKPOINTS];
 int checkpoint_count = 0;
 int checkpoint_pointer = 0;
-static bool practice_level_music_active = false;
 static float auto_checkpoint_timer = 0.f;
 static float last_auto_checkpoint_x = 0.f;
 
@@ -109,6 +110,8 @@ void new_checkpoint() {
 
     check->wall_y = level_info.wall_y;
 
+    check->song_offset = level_info.song_offset + state.player.timeElapsed;
+
     memcpy(check->channels, channels, sizeof(channels));
     memcpy(check->col_trigger_buffer, col_trigger_buffer, sizeof(col_trigger_buffer));
 
@@ -146,6 +149,8 @@ void restore_checkpoint() {
 
     current_fading_effect = check->current_fading_effect;
     p1_trail = check->p1_trail;
+
+    if (practiceMusicSync) seek_mp3(check->song_offset);
     
     memcpy(channels, check->channels, sizeof(channels));
     memcpy(col_trigger_buffer, check->col_trigger_buffer, sizeof(col_trigger_buffer));
@@ -171,59 +176,7 @@ void clear_practice_mode() {
     checkpoint_count = 0;
     checkpoint_pointer = 0;
     state.practice_mode = false;
-    practice_level_music_active = false;
     reset_auto_checkpoint_timer();
-}
-
-static float get_practice_level_music_time() {
-    return level_info.song_offset + state.player.timeElapsed;
-}
-
-static float get_level_music_start_time() {
-    return (level_info.custom_song_id > 0 || state.custom_level) ? level_info.song_offset : 0.f;
-}
-
-static void play_original_practice_song() {
-    practice_level_music_active = false;
-    song_loaded = false;
-    play_mp3(PRACTICE_SONG_PATH, true, 0);
-}
-
-bool practice_uses_level_music() {
-    return state.practice_mode && practiceLevelMusic && practice_level_music_active;
-}
-
-void apply_practice_music_mode() {
-    if (!state.practice_mode) return;
-
-    if (practiceLevelMusic) {
-        if (practice_level_music_active) {
-            sync_practice_level_music();
-            return;
-        }
-
-        if (song_loaded) {
-            practice_level_music_active = true;
-            return;
-        }
-
-        stop_mp3();
-
-        if (play_level_song_at(get_practice_level_music_time())) {
-            practice_level_music_active = true;
-        } else {
-            play_original_practice_song();
-        }
-        return;
-    }
-
-    stop_mp3();
-    play_original_practice_song();
-}
-
-void sync_practice_level_music() {
-    if (!practice_uses_level_music()) return;
-    seek_mp3(get_practice_level_music_time());
 }
 
 void start_practice_mode() {
@@ -231,22 +184,23 @@ void start_practice_mode() {
     checkpoint_pointer = 0;
     state.practice_mode = true;
     reset_auto_checkpoint_timer();
-    apply_practice_music_mode();
+
+    if (!practiceMusicSync) {
+        stop_mp3();
+        play_practice_song();
+    }
 }
 
 void exit_practice_mode() {
-    bool was_using_level_music = practice_uses_level_music();
-
     state.practice_mode = false;
-    practice_level_music_active = false;
     init_variables();
-    reload_level(); 
+    reload_level();
 
-    if (was_using_level_music && song_loaded) {
-        seek_mp3(get_level_music_start_time());
+    if (practiceMusicSync) {
+        seek_mp3(level_info.song_offset);
     } else {
         stop_mp3();
-        play_level_song();
+        play_level_song(level_info.song_offset);
     }
 }
 

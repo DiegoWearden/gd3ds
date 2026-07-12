@@ -9,7 +9,9 @@
 #include "practice.h"
 #include "state.h"
 
+#include "mp3_player.h"
 #include "save/config.h"
+#include "state.h"
 
 static bool yes_exit = false;
 
@@ -35,12 +37,12 @@ bool ultraDecimalPercent = false;
 bool switchTrailColor = false;
 bool switchWaveTrailColor = false;
 bool quickRetry = false;
-bool practiceLevelMusic = false;
 bool autoCheckpoints = false;
 bool solidWaveTrail = false;
 bool noPlayerTrail = false;
 bool noWaveTrailBehind = false;
 bool doNot = false;
+bool practiceMusicSync = false;
 
 static Setting settings[] = {
     {
@@ -92,9 +94,6 @@ static Setting settings[] = {
         "chk_quickretry", &quickRetry
     },
     {
-        "chk_practice_level_music", &practiceLevelMusic
-    },
-    {
         "chk_auto_checkpoints", &autoCheckpoints
     },
     {
@@ -109,6 +108,9 @@ static Setting settings[] = {
     {
         "chk_donot", &doNot
     },
+    {
+        "chk_practicemusicsync", &practiceMusicSync
+    }
 };
 
 
@@ -201,14 +203,6 @@ void quickRetry_settings(UIElement* e) {
     quickRetry = ((UICheckBox *)e)->checked;
 }
 
-void practiceLevelMusic_settings(UIElement* e) {
-    practiceLevelMusic = ((UICheckBox *)e)->checked;
-
-    if (game_state == STATE_GAME && state.practice_mode) {
-        apply_practice_music_mode();
-    }
-}
-
 void autoCheckpoints_settings(UIElement* e) {
     autoCheckpoints = ((UICheckBox *)e)->checked;
 }
@@ -227,6 +221,20 @@ void noWaveTrailBehind_settings(UIElement* e) {
 
 void doNot_settings(UIElement* e) {
     doNot = ((UICheckBox *)e)->checked;
+}
+
+void practiceMusicSync_settings(UIElement* e) {
+    practiceMusicSync = ((UICheckBox *)e)->checked;
+
+    // Enable song
+    if (state.practice_mode) {
+        stop_mp3();
+        if (practiceMusicSync) {
+            play_level_song(level_info.song_offset + state.player.timeElapsed);
+        } else {
+            play_practice_song();
+        }
+    }
 }
 
 void action_left_page(UIElement *e) {
@@ -287,10 +295,6 @@ void action_info_quick_retry(UIElement *e) {
     action_open_info_card(10);
 }
 
-void action_info_practice_level_music(UIElement *e) {
-    action_open_info_card(14);
-}
-
 void action_info_auto_checkpoints(UIElement *e) {
     action_open_info_card(15);
 }
@@ -326,12 +330,12 @@ static UIAction actions[] = {
     { "switchTrailColor", switchTrailColor_settings},
     { "switchWaveTrailColor", switchWaveTrailColor_settings},
     { "quickRetry", quickRetry_settings},
-    { "practiceLevelMusic", practiceLevelMusic_settings},
     { "autoCheckpoints", autoCheckpoints_settings},
     { "solidWaveTrail", solidWaveTrail_settings},
     { "noPlayerTrail", noPlayerTrail_settings},
     { "noWaveTrailBehind", noWaveTrailBehind_settings},
     { "doNot", doNot_settings},
+    { "practiceMusicSync" , practiceMusicSync_settings},
     { "left_page", action_left_page},
     { "right_page", action_right_page},
     { "wideinfo", action_info_wide},
@@ -344,7 +348,6 @@ static UIAction actions[] = {
     { "trailcolorinfo", action_info_trail},
     { "wavetrailcolorinfo", action_info_wave_trail},
     { "quickretryinfo", action_info_quick_retry},
-    { "practicelevelmusicinfo", action_info_practice_level_music},
     { "autocheckpointsinfo", action_info_auto_checkpoints},
     { "solidwavetrailinfo", action_info_solid_wave_trail},
     { "nowavetrailbehindinfo", action_info_no_wave_trail_behind},

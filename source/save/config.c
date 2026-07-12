@@ -37,13 +37,13 @@ void init_values() {
     config_init_bool(&cfg, CONFIG_MISC_PATH "hitboxTrail", false);
     config_init_bool(&cfg, CONFIG_MISC_PATH "hitboxesOnDeath", false);
     config_init_bool(&cfg, CONFIG_MISC_PATH "doNot", false);
+    config_init_bool(&cfg, CONFIG_MISC_PATH "practiceMusicSync", false);
 
     config_init_bool(&cfg, CONFIG_GAMEPLAY_PATH "showProgressBar", false);
     config_init_bool(&cfg, CONFIG_GAMEPLAY_PATH "showProgressPercent", false);
     config_init_bool(&cfg, CONFIG_GAMEPLAY_PATH "decimalPercent", false);
     config_init_bool(&cfg, CONFIG_GAMEPLAY_PATH "ultraDecimalPercent", false);
     config_init_bool(&cfg, CONFIG_GAMEPLAY_PATH "quickRetry", false);
-    config_init_bool(&cfg, CONFIG_GAMEPLAY_PATH "practiceLevelMusic", false);
     config_init_bool(&cfg, CONFIG_GAMEPLAY_PATH "autoCheckpoints", false);
 
     config_init_bool(&cfg, CONFIG_COSMETIC_PATH "switchTrailColor", false);
@@ -90,13 +90,13 @@ void cfg_init() {
     hitboxTrail =     config_get_bool(&cfg, CONFIG_MISC_PATH "hitboxTrail", false);
     hitboxesOnDeath = config_get_bool(&cfg, CONFIG_MISC_PATH "hitboxesOnDeath", false);
     doNot = config_get_bool(&cfg, CONFIG_MISC_PATH "doNot", false);
+    practiceMusicSync = config_get_bool(&cfg, CONFIG_MISC_PATH "practiceMusicSync", false);
 
     showProgressBar =     config_get_bool(&cfg, CONFIG_GAMEPLAY_PATH "showProgressBar", false);
     showProgressPercent = config_get_bool(&cfg, CONFIG_GAMEPLAY_PATH "showProgressPercent", false);
     decimalPercent =      config_get_bool(&cfg, CONFIG_GAMEPLAY_PATH "decimalPercent", false);
     ultraDecimalPercent = config_get_bool(&cfg, CONFIG_GAMEPLAY_PATH "ultraDecimalPercent", false);
     quickRetry = config_get_bool(&cfg, CONFIG_GAMEPLAY_PATH "quickRetry", false);
-    practiceLevelMusic = config_get_bool(&cfg, CONFIG_GAMEPLAY_PATH "practiceLevelMusic", false);
     autoCheckpoints = config_get_bool(&cfg, CONFIG_GAMEPLAY_PATH "autoCheckpoints", false);
 
     switchTrailColor =     config_get_bool(&cfg, CONFIG_COSMETIC_PATH "switchTrailColor", false);
@@ -154,13 +154,13 @@ void cfg_save() {
     config_set_bool(&cfg, CONFIG_MISC_PATH "hitboxTrail", hitboxTrail);
     config_set_bool(&cfg, CONFIG_MISC_PATH "hitboxesOnDeath", hitboxesOnDeath);
     config_set_bool(&cfg, CONFIG_MISC_PATH "doNot", doNot);
+    config_set_bool(&cfg, CONFIG_MISC_PATH "practiceMusicSync", practiceMusicSync);
 
     config_set_bool(&cfg, CONFIG_GAMEPLAY_PATH "showProgressBar", showProgressBar);
     config_set_bool(&cfg, CONFIG_GAMEPLAY_PATH "showProgressPercent", showProgressPercent);
     config_set_bool(&cfg, CONFIG_GAMEPLAY_PATH "decimalPercent", decimalPercent);
     config_set_bool(&cfg, CONFIG_GAMEPLAY_PATH "ultraDecimalPercent", ultraDecimalPercent);
     config_set_bool(&cfg, CONFIG_GAMEPLAY_PATH "quickRetry", quickRetry);
-    config_set_bool(&cfg, CONFIG_GAMEPLAY_PATH "practiceLevelMusic", practiceLevelMusic);
     config_set_bool(&cfg, CONFIG_GAMEPLAY_PATH "autoCheckpoints", autoCheckpoints);
     
     config_set_bool(&cfg, CONFIG_COSMETIC_PATH "switchTrailColor", switchTrailColor);

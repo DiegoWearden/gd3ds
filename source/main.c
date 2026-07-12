@@ -519,7 +519,7 @@ void game_loop() {
         level_info.level_name = main_levels[curr_level_id].level_name;
     }
 
-    play_level_song();
+    play_level_song(level_info.song_offset);
 
     if (song_loaded) pause_playback_mp3();
 
@@ -800,13 +800,15 @@ void game_loop() {
                     //resets UI coins on gameplay screen
                     reset_coins();
 
-                    if (state.practice_mode && checkpoint_count > 0) {
-                        restore_checkpoint();
+                    if (state.practice_mode) {
+                        if (checkpoint_count > 0) {
+                            restore_checkpoint();
+                        } else {
+                            seek_mp3(level_info.song_offset);
+                        }
                     }
 
-                    sync_practice_level_music();
-
-                    if (song_loaded || state.practice_mode) unpause_playback_mp3();
+                    if (song_loaded) unpause_playback_mp3();
                     fixed_dt = true; 
                     state.dead = false;
                     state.hitbox_display = 0;

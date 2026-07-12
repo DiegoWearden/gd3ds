@@ -53,7 +53,7 @@ void ui_label_set_scale_from_width(UILabel *e, const char *text, float width) {
 
     float scaleX = e->base.scaleX;
 
-    float ratio = scaleX / e->base.scaleY;
+    if (scaleX == 0) return;
 
     // Get text length in pixels
     float length = get_longest_line_length(font->charset, scaleX, text);
@@ -66,8 +66,10 @@ void ui_label_set_scale_from_width(UILabel *e, const char *text, float width) {
         text_scale = scaleX;
     }
 
-    e->base.scaleX = text_scale;
-    e->base.scaleY = e->base.scaleX * ratio;
+    float factor = text_scale / scaleX;
+
+    e->base.scaleX *= factor;
+    e->base.scaleY *= factor;
 }
 
 UILabel *ui_create_label(const UIContext *ctx) {

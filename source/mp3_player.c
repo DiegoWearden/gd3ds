@@ -6,6 +6,7 @@
 #include <string.h>
 #include "main.h"
 #include <unistd.h>
+#include "menus/settings.h"
 #include "state.h"
 
 #define THREAD_AFFINITY -1           // Execute thread on any core
@@ -190,7 +191,7 @@ u32 decode_mp3(void* buffer) {
 }
 
 float calculate_amplitude(float power) {
-    if (state.practice_mode) power = 0;
+    if (state.practice_mode && !practiceMusicSync) power = 0;
 
     static float prev = 0.0f;
     static float pulse = 0.0f;

@@ -414,22 +414,7 @@ void level_complete_init() {
         }
         
         ui_label_set_text(completion_text, text);
-
-        float text_scale;
-        float scale = completion_text->base.scaleX;
-
-        // Get text length in pixels
-        float length = get_longest_line_length(&bigFont_fontCharset, scale, text);
-    
-        if (COMPLETION_TEXT_MAX_WIDTH < length) {
-            text_scale = scale * (COMPLETION_TEXT_MAX_WIDTH / length);
-        } else {
-            text_scale = scale;
-        }
-
-        float ratio = scale / completion_text->base.scaleY;
-        
-        ui_element_set_scale_xy((UIElement *) completion_text, text_scale, completion_text->base.scaleX * ratio);
+        ui_label_set_scale_from_width(completion_text, text, COMPLETION_TEXT_MAX_WIDTH);
     } else {
         ui_run_func_on_tag(&screen_top, "funnytext", ui_disable_element);
 

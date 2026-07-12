@@ -9,6 +9,7 @@
 #include "particles/particles.h"
 #include "menus/settings.h"
 #include "menus/icon_kit.h"
+#include "practice.h"
 #include "utils/json_config.h"
 #include "level/main_levels.h"
 #include "level_loading.h"
@@ -384,11 +385,13 @@ void init_variables() {
 
 void handle_death(Player *player, bool pause_song) {
     play_sfx(&explode_sound, 1);
-    if (pause_song && practice_uses_level_music()) {
-        pause_playback_mp3();
-    } else if (song_loaded && pause_song && !state.practice_mode) {
-        pause_playback_mp3();
-        seek_mp3(level_info.song_offset);
+    if (song_loaded && pause_song) {
+        if (!state.practice_mode) {
+            pause_playback_mp3();
+            seek_mp3(level_info.song_offset);
+        } else if (practiceMusicSync) {
+            pause_playback_mp3();
+        }
     }
 
     // Spawn death particles
@@ -467,9 +470,7 @@ void clear_bg_flash() {
     state.flash_data.use_lbg = false;
 }
 
-bool play_level_song_at(float seek) {
-    if (seek < 0) seek = 0;
-
+void play_level_song(float seek) {
     if (level_info.custom_song_id > 0) {
         size_t sz = 0;
         void *buf = load_user_song(level_info.custom_song_id, &sz);
@@ -485,16 +486,10 @@ bool play_level_song_at(float seek) {
             song_loaded = play_mp3(main_levels[curr_level_id].song_path, false, seek);
         }
     }
-
-    return song_loaded;
 }
 
-void play_level_song() {
-    if (level_info.custom_song_id > 0 || state.custom_level) {
-        play_level_song_at(level_info.song_offset);
-    } else {
-        play_level_song_at(0);
-    }
+void play_practice_song() {
+    play_mp3("romfs:/songs/StayInsideMe.mp3", true, 0);
 }
 
 // Respawn effect

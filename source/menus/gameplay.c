@@ -179,7 +179,6 @@ static void restart_level() {
         if (checkpoint_count > 0) {
             restore_checkpoint();
         }
-        sync_practice_level_music();
     } else if (song_loaded) seek_mp3(level_info.song_offset);
 
     reset_coins();

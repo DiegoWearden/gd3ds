@@ -75,13 +75,14 @@ checkbox x=75 y=85 tag="page5,chk_quickretry" scale=0.75 action="quickRetry"
 button x=62 y=72 action="quickretryinfo" id=90 scale=0.5 tag="page5"
 label x=90 y=85 text="Quick retry" scale=0.4 tag="page5"
 
-checkbox x=75 y=115 tag="page5,chk_practice_level_music" scale=0.75 action="practiceLevelMusic"
-button x=62 y=102 action="practicelevelmusicinfo" id=90 scale=0.5 tag="page5"
-label x=90 y=115 text="Practice level song" scale=0.4 tag="page5"
+checkbox x=75 y=115 tag="page5,chk_practicemusicsync" scale=0.75 action="practiceMusicSync"
+label x=90 y=115 text="Practice Music Sync" scale=0.4 tag="page5"
 
 checkbox x=75 y=145 tag="page5,chk_auto_checkpoints" scale=0.75 action="autoCheckpoints"
 button x=62 y=132 action="autocheckpointsinfo" id=90 scale=0.5 tag="page5"
 label x=90 y=145 text="Auto checkpoints" scale=0.4 tag="page5"
+
+# cosmetic page
 
 label x=160 y=52 text="Cosmetic" tag="page6" scale=0.6 align=CENTER
 

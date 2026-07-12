@@ -22,12 +22,12 @@ extern bool ultraDecimalPercent;
 extern bool switchTrailColor;
 extern bool switchWaveTrailColor;
 extern bool quickRetry;
-extern bool practiceLevelMusic;
 extern bool autoCheckpoints;
 extern bool solidWaveTrail;
 extern bool noPlayerTrail;
 extern bool noWaveTrailBehind;
 extern bool doNot;
+extern bool practiceMusicSync;
 
 void settings_init();
 int settings_loop();
