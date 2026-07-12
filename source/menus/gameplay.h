@@ -13,3 +13,4 @@ int gameplay_screen_top_loop();
 int gameplay_screen_bot_loop();
 void unpause_game();
 void pause_game();
+bool cp_switcher_visible();

@@ -43,6 +43,7 @@ bool noPlayerTrail = false;
 bool noWaveTrailBehind = false;
 bool doNot = false;
 bool practiceMusicSync = false;
+bool cpSwitcherEnabled = true;
 
 static Setting settings[] = {
     {
@@ -110,6 +111,9 @@ static Setting settings[] = {
     },
     {
         "chk_practicemusicsync", &practiceMusicSync
+    },
+    {
+        "chk_cp_switcher", &cpSwitcherEnabled
     }
 };
 
@@ -237,6 +241,10 @@ void practiceMusicSync_settings(UIElement* e) {
     }
 }
 
+void cpSwitcher_settings(UIElement* e) {
+    cpSwitcherEnabled = ((UICheckBox *)e)->checked;
+}
+
 void action_left_page(UIElement *e) {
     current_page--;
     if (current_page < 0) {
@@ -336,6 +344,7 @@ static UIAction actions[] = {
     { "noWaveTrailBehind", noWaveTrailBehind_settings},
     { "doNot", doNot_settings},
     { "practiceMusicSync" , practiceMusicSync_settings},
+    { "cpSwitcher", cpSwitcher_settings},
     { "left_page", action_left_page},
     { "right_page", action_right_page},
     { "wideinfo", action_info_wide},

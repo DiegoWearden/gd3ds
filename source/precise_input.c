@@ -1,5 +1,6 @@
 #include "precise_input.h"
 #include "state.h"
+#include "main.h"
 #include "menus/settings.h"
 
 // HID shared memory layout (words), per libctru hid.c / 3dbrew:
@@ -75,11 +76,8 @@ static bool jump_touch_from_sample(u32 xy, u32 touching)
     if (!touching) return false;
     u16 px = xy & 0xFFFF;
     u16 py = xy >> 16;
-    // Mirror in_bounds from the gameplay loop: ignore the pause button region
-    // and, in practice mode, the checkpoint button region
-    bool in_bounds = !((px > 320 - 30 && py < 30) ||
-                       (state.practice_mode && (px > 92 && px < 222 && py > 175 && py < 222)));
-    return in_bounds;
+    // Same UI exclusion zones as the vanilla in_bounds path
+    return !gameplay_touch_blocked(px, py);
 }
 
 static void queue_event(u64 tick, bool is_touch, bool held)

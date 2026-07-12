@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stddef.h>
 #include "level/main_levels.h"
 
 #define DATA_ATTEMPTS "attempts"
@@ -40,6 +41,9 @@ extern int players_destroyed;
 void save_level_progress();
 void load_level_progress(char *filename);
 void free_level_progress();
+
+// Hash key identifying the current level's save files (custom or main)
+void get_level_save_key(char *out, size_t size);
 
 void load_main_level_progress();
 void save_main_level_progress(int level);

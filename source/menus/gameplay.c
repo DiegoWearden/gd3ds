@@ -55,6 +55,7 @@ static UISlider *music_slider_bar;
 static UISlider *sound_slider_bar;
 static UICheckBox *auto_checkpoint_toggle;
 static UICheckBox *cbf_toggle;
+static UILabel *cp_switcher_label;
 
 static UIImage *coin_1;
 static UIImage *coin_2;
@@ -179,6 +180,8 @@ static void restart_level() {
         if (checkpoint_count > 0) {
             restore_checkpoint();
         }
+    } else if (perm_checkpoint_selected >= 0) {
+        restore_permanent_checkpoint(perm_checkpoint_selected);
     } else if (song_loaded) seek_mp3(level_info.song_offset);
 
     reset_coins();
@@ -233,6 +236,41 @@ static void action_auto_checkpoint(UIElement *e) {
     cfg_save();
 }
 
+bool cp_switcher_visible() {
+    return cpSwitcherEnabled && !game_paused && !state.practice_mode &&
+           perm_checkpoint_count > 0 && !in_level_complete;
+}
+
+static void action_save_perm(UIElement *e) {
+    make_last_checkpoint_permanent();
+}
+
+static void switch_permanent_checkpoint(int dir) {
+    if (!cp_switcher_visible()) return;
+
+    perm_checkpoint_selected += dir;
+    if (perm_checkpoint_selected >= perm_checkpoint_count) perm_checkpoint_selected = -1;
+    else if (perm_checkpoint_selected < -1) perm_checkpoint_selected = perm_checkpoint_count - 1;
+
+    init_variables();
+    reload_level();
+    reset_coins();
+
+    if (perm_checkpoint_selected >= 0) {
+        restore_permanent_checkpoint(perm_checkpoint_selected);
+    } else if (song_loaded) {
+        seek_mp3(level_info.song_offset);
+    }
+}
+
+static void action_cp_prev(UIElement *e) {
+    switch_permanent_checkpoint(-1);
+}
+
+static void action_cp_next(UIElement *e) {
+    switch_permanent_checkpoint(1);
+}
+
 static void action_cbf(UIElement *e) {
     cbf_enabled = ((UICheckBox *) e)->checked;
 
@@ -253,6 +291,9 @@ static UIAction actions[] = {
     {"remove_check", action_remove_checkpoint },
     {"auto_checkpoint", action_auto_checkpoint },
     {"cbf", action_cbf },
+    {"save_perm", action_save_perm },
+    {"cp_prev", action_cp_prev },
+    {"cp_next", action_cp_next },
 };
 
 void gameplay_screen_init() {
@@ -314,6 +355,8 @@ void gameplay_screen_init() {
     sound_slider_bar = (UISlider*) ui_get_element_by_tag(&default_screen, "sound_slider");
     auto_checkpoint_toggle = (UICheckBox*) ui_get_element_by_tag(&default_screen, "auto_checkpoint_toggle");
     cbf_toggle = (UICheckBox*) ui_get_element_by_tag(&default_screen, "cbf_toggle");
+    cp_switcher_label = (UILabel*) ui_get_element_by_tag(&default_screen, "cp_label");
+    ui_run_func_on_tag(&default_screen, "cp_switcher", ui_disable_element);
 
     if (music_slider_bar) music_slider_bar->value = music_volume;
     if (sound_slider_bar) sound_slider_bar->value = sound_volume;
@@ -421,8 +464,10 @@ int gameplay_screen_bot_loop() {
     
     UIElement *add_checkpoint = ui_get_element_by_tag(&default_screen, "add_checkpoint");
     UIElement *remove_checkpoint = ui_get_element_by_tag(&default_screen, "remove_checkpoint");
+    UIElement *save_perm_checkpoint = ui_get_element_by_tag(&default_screen, "save_perm_checkpoint");
     add_checkpoint->y = complete_y_offset_practice;
     remove_checkpoint->y = complete_y_offset_practice;
+    if (save_perm_checkpoint) save_perm_checkpoint->y = complete_y_offset_practice;
 
     if (state.practice_mode) {
         ui_button_set_image((UIButton *) ui_get_element_by_tag(&default_screen, "practice_mode"), 124, 0);
@@ -436,6 +481,24 @@ int gameplay_screen_bot_loop() {
         if (auto_checkpoint_toggle && auto_checkpoint_toggle->checked != autoCheckpoints) set_checkbox_enabled(auto_checkpoint_toggle, autoCheckpoints);
     } else {
         ui_run_func_on_tag(&default_screen, "practice_options", ui_disable_element);
+    }
+
+    // Permanent checkpoint switcher (normal mode only, toggleable in settings)
+    if (cp_switcher_visible()) {
+        ui_run_func_on_tag(&default_screen, "cp_switcher", ui_enable_element);
+        if (cp_switcher_label) {
+            if (perm_checkpoint_selected < 0) {
+                ui_label_set_text(cp_switcher_label, "Start");
+            } else {
+                char cp_text[24];
+                snprintf(cp_text, sizeof(cp_text), "%d/%d - %.0f%%",
+                         perm_checkpoint_selected + 1, perm_checkpoint_count,
+                         perm_checkpoint_percent(perm_checkpoint_selected));
+                ui_label_set_text(cp_switcher_label, cp_text);
+            }
+        }
+    } else {
+        ui_run_func_on_tag(&default_screen, "cp_switcher", ui_disable_element);
     }
 
     touch.touchPosition = touchPos;

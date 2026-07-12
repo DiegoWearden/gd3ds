@@ -123,6 +123,8 @@ void update_player_effects(float delta);
 void apply_volume_settings();
 float get_volume_slider();
 
+bool gameplay_touch_blocked(int px, int py);
+
 int output_log(const char *fmt, ...);
 
 bool is_citra();

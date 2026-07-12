@@ -223,6 +223,21 @@ void apply_volume_settings() {
     }
 }
 
+// Touch regions covered by gameplay UI, which must not register as jump
+// input. Shared with precise_input.c so the two paths can never drift.
+bool gameplay_touch_blocked(int px, int py) {
+    // Pause button, top-right
+    if (px > 320 - 30 && py < 30) return true;
+
+    // Practice checkpoint buttons (add / remove / save permanent)
+    if (state.practice_mode && px > 92 && px < 305 && py > 175 && py < 222) return true;
+
+    // Permanent checkpoint switcher arrows, bottom corners
+    if (cp_switcher_visible() && py > 180 && (px < 55 || px > 265)) return true;
+
+    return false;
+}
+
 float sprite_drawing_time = 0;
 float physics_calc_time = 0;
 float particle_calc_time = 0;
@@ -547,6 +562,7 @@ void game_loop() {
     precise_input_reset();
     cbf_enabled = (state.custom_level ? level_data.cbf : main_level_data[curr_level_id].cbf);
     memset(cbf_step_hist, 0, sizeof(cbf_step_hist));
+    load_permanent_checkpoints();
     bool old_wide = wideEnabled;
 
     // Main loop
@@ -604,7 +620,7 @@ void game_loop() {
         
         int steps = 0;
 
-        bool in_bounds = !((touchPos.px > 320 - 30 && touchPos.py < 30) || (state.practice_mode && (touchPos.px > 92 && touchPos.px < 222 && touchPos.py > 175 && touchPos.py < 222)));
+        bool in_bounds = !gameplay_touch_blocked(touchPos.px, touchPos.py);
         
         kHeldPaused &= ~kUp;
         if(!game_paused){
@@ -806,6 +822,9 @@ void game_loop() {
                         } else {
                             seek_mp3(level_info.song_offset);
                         }
+                    } else if (perm_checkpoint_selected >= 0) {
+                        // Respawn at the selected permanent checkpoint
+                        restore_permanent_checkpoint(perm_checkpoint_selected);
                     }
 
                     if (song_loaded) unpause_playback_mp3();

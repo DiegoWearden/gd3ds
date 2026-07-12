@@ -23,6 +23,7 @@ extern bool switchTrailColor;
 extern bool switchWaveTrailColor;
 extern bool quickRetry;
 extern bool autoCheckpoints;
+extern bool cpSwitcherEnabled;
 extern bool solidWaveTrail;
 extern bool noPlayerTrail;
 extern bool noWaveTrailBehind;

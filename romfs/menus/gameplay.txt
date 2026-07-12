@@ -14,6 +14,11 @@ image x=90 y=20 id=15 sheet=1 tag="coin_3_full" scale=0.65
 
 button x=130 y=200 id=29 tag="practice_buttons,add_checkpoint,not_paused" action="add_check" keyBinds="LEFT,X"
 button x=200 y=200 id=154 tag="practice_buttons,remove_checkpoint,not_paused" action="remove_check" keyBinds="RIGHT,B"
+button x=270 y=200 id=16 tag="practice_buttons,save_perm_checkpoint,not_paused" action="save_perm" keyBinds="DOWN"
+
+button x=25 y=210 id=376 sx=-1.0 scale=0.85 tag="cp_switcher,not_paused" action="cp_prev" keyBinds="LEFT"
+button x=295 y=210 id=376 scale=0.85 tag="cp_switcher,not_paused" action="cp_next" keyBinds="RIGHT"
+label x=160 y=228 text="Start" scale=0.4 align=CENTER tag="cp_switcher,cp_label,not_paused"
 
 darken opacity=0.5 tag="paused" darkenTime=0.0
 button x=45 y=60 id=127 scale=1 tag="paused" action="settings" keyBinds="SELECT"

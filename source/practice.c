@@ -8,6 +8,13 @@
 #include "color_channels.h"
 #include "utils/gfx.h"
 #include "menus/settings.h"
+#include "utils/json_config.h"
+#include "save/saving.h"
+
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+#include <sys/stat.h>
 
 #define MAX_CHECKPOINTS 100
 #define CHECKPOINT_GFX_ID 6
@@ -61,6 +68,23 @@ int checkpoint_count = 0;
 int checkpoint_pointer = 0;
 static float auto_checkpoint_timer = 0.f;
 static float last_auto_checkpoint_x = 0.f;
+
+// Permanent checkpoints: placed in practice mode, persisted per level on the
+// SD card, usable as start positions in normal mode
+#define MAX_PERM_CHECKPOINTS 16
+#define PERM_CP_MAGIC 0x50434447 // "GDCP"
+#define PERM_CP_VERSION 1
+
+typedef struct {
+    u32 magic;
+    u32 version;
+    u32 struct_size;
+    u32 count;
+} PermCpHeader;
+
+static CheckpointData perm_checkpoints[MAX_PERM_CHECKPOINTS];
+int perm_checkpoint_count = 0;
+int perm_checkpoint_selected = -1; // -1 = level start
 
 // static const int checkpoint_size = sizeof(checkpoints);
 
@@ -118,8 +142,7 @@ void new_checkpoint() {
     reset_auto_checkpoint_timer();
 }
 
-void restore_checkpoint() {
-    CheckpointData *check = &checkpoints[checkpoint_pointer];
+static void restore_checkpoint_data(CheckpointData *check) {
     state.camera_x = check->camera_x;
     state.camera_y = check->camera_y;
 
@@ -150,13 +173,108 @@ void restore_checkpoint() {
     current_fading_effect = check->current_fading_effect;
     p1_trail = check->p1_trail;
 
-    if (practiceMusicSync) seek_mp3(check->song_offset);
-    
     memcpy(channels, check->channels, sizeof(channels));
     memcpy(col_trigger_buffer, check->col_trigger_buffer, sizeof(col_trigger_buffer));
 
     update_attempt_text_pos();
+}
+
+void restore_checkpoint() {
+    CheckpointData *check = &checkpoints[checkpoint_pointer];
+
+    restore_checkpoint_data(check);
+
+    if (practiceMusicSync) seek_mp3(check->song_offset);
+
     reset_auto_checkpoint_timer();
+}
+
+static void perm_checkpoint_path(char *out, size_t size) {
+    char key[32];
+    get_level_save_key(key, sizeof(key));
+    snprintf(out, size, "%s%s.cp", DATA_FOLDER, key);
+}
+
+void load_permanent_checkpoints() {
+    perm_checkpoint_count = 0;
+    perm_checkpoint_selected = -1;
+
+    char path[512];
+    perm_checkpoint_path(path, sizeof(path));
+
+    FILE *f = fopen(path, "rb");
+    if (!f) return;
+
+    PermCpHeader header;
+    if (fread(&header, sizeof(header), 1, f) == 1 &&
+        header.magic == PERM_CP_MAGIC &&
+        header.version == PERM_CP_VERSION &&
+        header.struct_size == sizeof(CheckpointData) &&
+        header.count <= MAX_PERM_CHECKPOINTS) {
+        perm_checkpoint_count = fread(perm_checkpoints, sizeof(CheckpointData), header.count, f);
+    }
+
+    fclose(f);
+}
+
+static void save_permanent_checkpoints() {
+    char path[512];
+    perm_checkpoint_path(path, sizeof(path));
+
+    mkdir(DATA_FOLDER, 0777);
+
+    FILE *f = fopen(path, "wb");
+    if (!f) return;
+
+    PermCpHeader header = {
+        .magic = PERM_CP_MAGIC,
+        .version = PERM_CP_VERSION,
+        .struct_size = sizeof(CheckpointData),
+        .count = perm_checkpoint_count,
+    };
+    fwrite(&header, sizeof(header), 1, f);
+    fwrite(perm_checkpoints, sizeof(CheckpointData), perm_checkpoint_count, f);
+    fclose(f);
+}
+
+bool make_last_checkpoint_permanent() {
+    if (!state.practice_mode || checkpoint_count == 0) return false;
+    if (perm_checkpoint_count >= MAX_PERM_CHECKPOINTS) return false;
+
+    CheckpointData *src = &checkpoints[checkpoint_pointer];
+
+    // Ignore near-duplicates of an already saved position
+    for (int i = 0; i < perm_checkpoint_count; i++) {
+        if (fabsf(perm_checkpoints[i].p1.x - src->p1.x) < 1.f) return false;
+    }
+
+    // Keep the list ordered by level position so the switcher arrows walk
+    // left-to-right through the level
+    int pos = 0;
+    while (pos < perm_checkpoint_count && perm_checkpoints[pos].p1.x < src->p1.x) pos++;
+    memmove(&perm_checkpoints[pos + 1], &perm_checkpoints[pos],
+            (perm_checkpoint_count - pos) * sizeof(CheckpointData));
+    perm_checkpoints[pos] = *src;
+    perm_checkpoint_count++;
+
+    save_permanent_checkpoints();
+    return true;
+}
+
+void restore_permanent_checkpoint(int idx) {
+    if (idx < 0 || idx >= perm_checkpoint_count) return;
+
+    restore_checkpoint_data(&perm_checkpoints[idx]);
+
+    if (song_loaded) seek_mp3(perm_checkpoints[idx].song_offset);
+
+    reset_auto_checkpoint_timer();
+}
+
+float perm_checkpoint_percent(int idx) {
+    if (idx < 0 || idx >= perm_checkpoint_count || level_info.last_obj_x <= 0) return 0.f;
+    float percent = (perm_checkpoints[idx].p1.x / level_info.last_obj_x) * 100.f;
+    return percent < 0.f ? 0.f : (percent > 100.f ? 100.f : percent);
 }
 
 void delete_last_checkpoint() {

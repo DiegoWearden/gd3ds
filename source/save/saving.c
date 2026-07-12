@@ -6,6 +6,8 @@
 
 #include <stdint.h>
 #include "level/main_levels.h"
+#include "state.h"
+#include "menus/level_select.h"
 
 #include <stdio.h>
 #include <dirent.h>
@@ -14,6 +16,9 @@
 
 Config curr_level_config;
 Config main_level_config[MAIN_LEVELS_NUM];
+
+// Save-file key (hash) of the currently loaded custom level
+static char custom_level_key[24] = "";
 
 LevelData level_data;
 LevelData main_level_data[MAIN_LEVELS_NUM];
@@ -109,6 +114,8 @@ void load_level_progress(char *filename) {
 
     mkdir(DATA_FOLDER, 0777);
 
+    snprintf(custom_level_key, sizeof(custom_level_key), "%016llX", fnv1a64(filename));
+
     snprintf(tmp, sizeof(tmp), "%s%016llX.d", DATA_FOLDER, fnv1a64(filename));
 
     // Do not load again
@@ -128,6 +135,16 @@ void save_level_progress() {
     save_values(&curr_level_config, &level_data);
 
     config_save(&curr_level_config);
+}
+
+void get_level_save_key(char *out, size_t size) {
+    if (state.custom_level) {
+        snprintf(out, size, "%s", custom_level_key);
+    } else {
+        char file[16];
+        snprintf(file, sizeof(file), "main_%d", curr_level_id);
+        snprintf(out, size, "%016llX", fnv1a64(file));
+    }
 }
 
 void free_level_progress() {
