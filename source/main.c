@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include "3ds/env.h"
 #include "objects.h"
 #include "level_loading.h"
 #include "main.h"
@@ -1029,6 +1030,13 @@ void game_loop() {
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 110,   150,  DEBUG_TEXT_SCALE, 0, true, "- X: %.2f", state.camera_x);
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 110,   162,  DEBUG_TEXT_SCALE, 0, true, "- Y: %.2f", state.camera_y);
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 110,   174,  DEBUG_TEXT_SCALE, 0, true, "- IntY: %.2f", state.camera_intended_y);
+                
+                struct mallinfo mi = mallinfo();
+                
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 110,   138 + 50,  DEBUG_TEXT_SCALE, 0, true, "Heap");
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 110,   150 + 50,  DEBUG_TEXT_SCALE, 0, true, "- Allocated: 0x%X bytes", mi.uordblks);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 110,   162 + 50,  DEBUG_TEXT_SCALE, 0, true, "- Free:        0x%X bytes",  envGetHeapSize() - mi.uordblks);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 110,   174 + 50,  DEBUG_TEXT_SCALE, 0, true, "- Arena:      0x%X bytes",  envGetHeapSize());
             }
 
             if (state.noclip) {
