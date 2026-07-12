@@ -46,28 +46,30 @@ Tex3DS_SubTexture select_box(const C2D_Image *image, int x, int y, int endX, int
 #define TILE(ix, iy) select_box(&atlas, ix*b, iy*b, ix*b + b, iy*b + b)
 
 // Draw a 9 slice rectangle (useful for things like windows)
-void draw_9_slice(const C2D_Image atlas, const float x, const float y, const int width, const int height, const float border, const u32 color) {
+void draw_9_slice(const C2D_Image atlas, const float x, const float y, const float sx, const float sy, const int width, const int height, const float border, const u32 color) {
     // Set color
     C2D_ImageTint tint;
     C2D_PlainImageTint(&tint, color, 1.f);
 
-
     float cx = x;
     float cy = y;
 
-    float w = width;
-    float h = height;
+    float w = width * fabsf(sx);
+    float h = height * fabsf(sy);
 
     float b = border;
 
-    if (w < 2*b) w = 2*b;
-    if (h < 2*b) h = 2*b;
+    float bx = border * fabsf(sx);
+    float by = border * fabsf(sy);
+
+    if (w < 2 * bx) w = 2 * bx;
+    if (h < 2 * by) h = 2 * by;
 
     float halfW = w * 0.5f;
     float halfH = h * 0.5f;
 
-    float midW = w - 2*b;
-    float midH = h - 2*b;
+    float midW = w - 2 * bx;
+    float midH = h - 2 * by;
 
     C2D_Sprite spr;
 
@@ -75,63 +77,59 @@ void draw_9_slice(const C2D_Image atlas, const float x, const float y, const int
     C2D_Image img;
 
     // Corners
-
-    C2D_SpriteSetScale(&spr, 1.0f, 1.0f);
-
     sub = TILE(0,0);
     img = atlas; img.subtex = &sub;
     C2D_SpriteFromImage(&spr, img);
+    C2D_SpriteSetScale(&spr, sx, sy);
     C3D_TexSetFilter(spr.image.tex, GPU_LINEAR, GPU_LINEAR);
     C2D_SpriteSetCenter(&spr, 0.5f, 0.5f);
-    C2D_SpriteSetPos(&spr, cx - halfW + b*0.5f, cy - halfH + b*0.5f);
+    C2D_SpriteSetPos(&spr, cx - halfW + bx*0.5f, cy - halfH + by*0.5f);
     C2D_DrawSpriteTinted(&spr, &tint);
 
     sub = TILE(2,0);
     img.subtex = &sub;
-    C2D_SpriteSetPos(&spr, cx + halfW - b*0.5f, cy - halfH + b*0.5f);
+    C2D_SpriteSetPos(&spr, cx + halfW - bx*0.5f, cy - halfH + by*0.5f);
     C2D_DrawSpriteTinted(&spr, &tint);
 
     sub = TILE(0,2);
     img.subtex = &sub;
-    C2D_SpriteSetPos(&spr, cx - halfW + b*0.5f, cy + halfH - b*0.5f);
+    C2D_SpriteSetPos(&spr, cx - halfW + bx*0.5f, cy + halfH - by*0.5f);
     C2D_DrawSpriteTinted(&spr, &tint);
 
     sub = TILE(2,2);
     img.subtex = &sub;
-    C2D_SpriteSetPos(&spr, cx + halfW - b*0.5f, cy + halfH - b*0.5f);
+    C2D_SpriteSetPos(&spr, cx + halfW - bx*0.5f, cy + halfH - by*0.5f);
     C2D_DrawSpriteTinted(&spr, &tint);
 
     // Edges
 
     sub = TILE(1,0);
     img.subtex = &sub;
-    C2D_SpriteSetScale(&spr, midW / b, 1.0f);
-    C2D_SpriteSetPos(&spr, cx, cy - halfH + b*0.5f);
+    C2D_SpriteSetScale(&spr, sx * (midW / bx), sy);
+    C2D_SpriteSetPos(&spr, cx, cy - halfH + by*0.5f);
     C2D_DrawSpriteTinted(&spr, &tint);
 
     sub = TILE(1,2);
     img.subtex = &sub;
-    C2D_SpriteSetScale(&spr, midW / b, 1.0f);
-    C2D_SpriteSetPos(&spr, cx, cy + halfH - b*0.5f);
+    C2D_SpriteSetPos(&spr, cx, cy + halfH - by*0.5f);
     C2D_DrawSpriteTinted(&spr, &tint);
 
     sub = TILE(0,1);
     img.subtex = &sub;
-    C2D_SpriteSetScale(&spr, 1.0f, midH / b);
-    C2D_SpriteSetPos(&spr, cx - halfW + b*0.5f, cy);
+    C2D_SpriteSetScale(&spr, sx, sy * (midH / by));
+    C2D_SpriteSetPos(&spr, cx - halfW + bx*0.5f, cy);
     C2D_DrawSpriteTinted(&spr, &tint);
 
     sub = TILE(2,1);
     img.subtex = &sub;
-    C2D_SpriteSetScale(&spr, 1.0f, midH / b);
-    C2D_SpriteSetPos(&spr, cx + halfW - b*0.5f, cy);
+    C2D_SpriteSetPos(&spr, cx + halfW - bx*0.5f, cy);
     C2D_DrawSpriteTinted(&spr, &tint);
 
     // Center
 
     sub = TILE(1,1);
     img.subtex = &sub;
-    C2D_SpriteSetScale(&spr, midW / b, midH / b);
+    C2D_SpriteSetScale(&spr, sx * (midW / bx), sy * (midH / by));
     C2D_SpriteSetPos(&spr, cx, cy);
     C2D_DrawSpriteTinted(&spr, &tint);
 }

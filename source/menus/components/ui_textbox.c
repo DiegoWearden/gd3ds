@@ -1,4 +1,4 @@
-#include "ui_element.h"
+#include "menus/core/ui_element.h"
 #include <citro2d.h>
 #include "ui_image.h"
 #include "text.h"
@@ -6,14 +6,16 @@
 #include "easing.h"
 #include "utils/gfx.h"
 #include "ui_checkbox.h"
-#include "ui_screen.h"
+#include "menus/core/ui_screen.h"
+#include "menus/core/ui_props.h"
 #include "ui_textbox.h"
 
 #include "utils/keyboard.h"
 
-static void ui_textbox_update(UIElement* e, UIInput* touch) {
-    bool inside = touch->touchPosition.px >= e->x - (e->w / 2) && touch->touchPosition.px < e->x + (e->w / 2) &&
-                  touch->touchPosition.py >= e->y - (e->h / 2) && touch->touchPosition.py < e->y + (e->h / 2);
+static void ui_textbox_update(UIElement* e, UIInput* touch, UITransform *transform) {
+    UITextbox *textbox = (UITextbox *) e;
+
+    bool inside = ui_element_basic_bound_check(e, touch, transform);
     
     // Mask background elements
     if (inside) {
@@ -21,16 +23,18 @@ static void ui_textbox_update(UIElement* e, UIInput* touch) {
         touch->interacted = true;
 
         if (hidKeysDown() & KEY_TOUCH) {
-            read_text(e->textbox.text, e->textbox.title, e->textbox.character_limit);
+            read_text(textbox->text, textbox->title, textbox->character_limit);
         }
     }
 }
 
-static void ui_textbox_draw(UIElement* e) {
-    draw_9_slice(e->textbox.atlas, e->x, e->y, e->w, e->h, e->textbox.border, C2D_Color32(0, 0, 0, 127));
+static void ui_textbox_draw(UIElement* e, UITransform *transform) {
+    UITextbox *textbox = (UITextbox *) e;
+
+    draw_9_slice(textbox->atlas, transform->x, transform->y, transform->scaleX, transform->scaleY, e->w, e->h, textbox->border, C2D_Color32(0, 0, 0, 127));
     
     // Get text length in pixels
-    float length = get_text_length(&bigFont_fontCharset, 1.f, e->textbox.text);
+    float length = get_text_length(&bigFont_fontCharset, 1.f, false, textbox->text);
 
     // Resize it to fit the button bounds
     float txt_scale;
@@ -40,29 +44,50 @@ static void ui_textbox_draw(UIElement* e) {
         txt_scale = 1.0f;
     }
 
-    draw_text(&bigFont_fontCharset, &bigFont_sheet, e->x - e->w / 2 + (TEXTBOX_MARGIN / 2), e->y, txt_scale, txt_scale, 0.f, "%s", e->textbox.text);
+    draw_text(&bigFont_fontCharset, &bigFont_sheet, transform->x - e->w / 2 + (TEXTBOX_MARGIN / 2), transform->y, txt_scale, txt_scale, 0.f, false, "%s", textbox->text);
 }
 
-UIElement ui_create_textbox(
-    int x, int y, int w, int limit, char *title,
-    char (*tag)[TAG_LENGTH]
-) {
-    UIElement e = {
-        .type = UI_TEXTBOX,
-        .x = x, .y = y,
-        .w = w, .h = 30,
-        .enabled = true,
-        .update = ui_textbox_update,
-        .draw = ui_textbox_draw
-    };
+static void ui_textbox_destroy(UIElement *e) {
+    if (e) {
+        free(e);
+        e = NULL;
+    }
+}
 
-    strncpy(e.textbox.title, title, 63);
+UITextbox *ui_create_textbox(const UIContext *ctx) {
+    UITextbox *e = malloc(sizeof(UITextbox));
 
-    // Copy tag
-    copy_tag_array(&e, tag);
-    e.textbox.atlas = C2D_SpriteSheetGetImage(window_sheet, TEXTBOX_STYLE);
-    e.textbox.border = e.textbox.atlas.subtex->width / 3;
+    if (!e) return NULL;
 
-    e.textbox.character_limit = limit;
+    memset(e, 0, sizeof(UITextbox));
+    e->base.type = UI_TEXTBOX;
+    e->base.enabled = true;
+    e->base.update = ui_textbox_update;
+    e->base.draw = ui_textbox_draw;
+    e->base.destroy = ui_textbox_destroy;
+    
+    ui_element_apply_default_properties(&e->base, ctx);
+
+    e->atlas = C2D_SpriteSheetGetImage(window_sheet, TEXTBOX_STYLE);
+    e->border = e->atlas.subtex->width / 3;
+
     return e;
+}
+
+UIElement *ui_create_textbox_from_props(const UIContext *ctx, const UIPropertyList *props) {
+    UITextbox *textbox = ui_create_textbox(ctx);
+
+    if (!textbox) return NULL;
+
+    ui_element_apply_properties(&textbox->base, ctx, props);
+
+    if (textbox->base.h == 0) {
+        textbox->base.h = 30;
+    }
+    
+    textbox->character_limit = ui_prop_int(props, "limit", 16);
+
+    strncpy(textbox->title, ui_prop_string(props, "title", "Enter text:"), sizeof(textbox->title) - 1);
+
+    return &textbox->base;
 }

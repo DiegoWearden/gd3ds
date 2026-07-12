@@ -1,52 +1,82 @@
-#include "ui_element.h"
+#include "c2d/base.h"
+#include "menus/core/ui_element.h"
 #include <citro2d.h>
+#include "menus/core/ui_props.h"
 #include "ui_image.h"
 #include "text.h"
 #include "fonts/bigFont.h"
 #include "easing.h"
 #include "utils/gfx.h"
 #include "ui_checkbox.h"
-#include "ui_screen.h"
+#include "menus/core/ui_screen.h"
+#include "math_helpers.h"
 
-static void ui_window_update(UIElement* e, UIInput* touch) {
-    bool inside = touch->touchPosition.px >= e->x - (e->w / 2) && touch->touchPosition.px < e->x + (e->w / 2) &&
-                  touch->touchPosition.py >= e->y - (e->h / 2) && touch->touchPosition.py < e->y + (e->h / 2);
+void ui_window_set_tint(UIWindow* e, u32 color) {
+    if (!e) return;
+
+    e->color = color;
+}
+
+void ui_window_set_atlas(UIWindow* e, int index) {
+    if (!e) return;
+
+    e->atlas = C2D_SpriteSheetGetImage(window_sheet, index);
+    if (e->atlas.tex) {
+        e->border = e->atlas.subtex->width / 3;
+    }
+}
+
+static void ui_window_update(UIElement* e, UIInput* touch, UITransform *transform) {
+    bool inside = ui_element_basic_bound_check(e, touch, transform);
     
     // Mask background elements
     if (inside) touch->did_something = true;
 }
 
-void ui_window_set_tint(UIElement* e, u32 color) {
-    if (e->type != UI_WINDOW) return;
+static void ui_window_draw(UIElement* e, UITransform *transform) {
+    UIWindow *window = (UIWindow *) e;
 
-    e->window.color = color;
-    e->image.useTint = true;
+    draw_9_slice(window->atlas, transform->x, transform->y, transform->scaleX, transform->scaleY, e->w, e->h, window->border, window->color);
 }
 
-static void ui_window_draw(UIElement* e) {
-    draw_9_slice(e->window.atlas, e->x, e->y, e->w, e->h, e->window.border, e->window.color);
+static void ui_window_destroy(UIElement *e) {
+    if (e) {
+        free(e);
+        e = NULL;
+    }
 }
 
-UIElement ui_create_window(
-    int x, int y, int w, int h, int style,
-    char (*tag)[TAG_LENGTH]
-) {
-    UIElement e = {
-        .type = UI_WINDOW,
-        .x = x, .y = y,
-        .w = w, .h = h,
-        .enabled = true,
-        .update = ui_window_update,
-        .draw = ui_window_draw
-    };
+UIWindow *ui_create_window(const UIContext *ctx) {
+    UIWindow *e = malloc(sizeof(UIWindow));
 
-    e.window.color = C2D_Color32(255, 255, 255, 255);
+    if (!e) return NULL;
 
-    // Copy tag
-    copy_tag_array(&e, tag);
-    e.window.atlas = C2D_SpriteSheetGetImage(window_sheet, style);
+    memset(e, 0, sizeof(UIWindow));
+    e->base.type = UI_WINDOW;
+    e->base.enabled = true;
 
-    e.window.border = e.window.atlas.subtex->width / 3;
+    e->base.update = ui_window_update;
+    e->base.draw = ui_window_draw;
+    e->base.destroy = ui_window_destroy;
+    
+    ui_element_apply_default_properties(&e->base, ctx);
+
+    ui_window_set_atlas(e, 0);
+    ui_window_set_tint(e, C2D_Color32(255, 255, 255, 255));
 
     return e;
+}
+
+UIElement *ui_create_window_from_props(const UIContext *ctx, const UIPropertyList *props) {
+    UIWindow *window = ui_create_window(ctx);
+
+    if (!window) return NULL;
+
+    ui_element_apply_properties(&window->base, ctx, props);
+
+    ui_window_set_atlas(window, ui_prop_int(props, "style", 0));
+
+    ui_window_set_tint(window, ui_prop_color(props, "color", ABGR8(255, 255, 255, 255)));
+
+    return &window->base;
 }

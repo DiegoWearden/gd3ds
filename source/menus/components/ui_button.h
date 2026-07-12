@@ -1,17 +1,18 @@
 #pragma once
-#include "ui_element.h"
+#include "menus/core/ui_element.h"
+#include "menus/core/ui_screen.h"
 
 
 #define BUTTON_HOVER_SCALE 1.25f
 #define BUTTON_HOVER_ANIM_TIME 0.4f
 
-void ui_button_set_image(UIElement *e, int sprite_index, int sheet);
-UIElement ui_create_button(
-    int x, int y, float sx, float sy, int sprite_index, int sheet, float opacity,
-    UIActionFn action,
-    char *text,
-    int font,
-    char (*tag)[TAG_LENGTH],
-    float textScale,
-    u32 keyBinds
-);
+void ui_button_draw_text(UIElement *e, UITransform *transform);
+void ui_button_update(UIElement* e, UIInput* touch, UITransform *transform);
+
+void ui_button_set_image(UIButton *e, int sprite_index, int sheet);
+void ui_button_set_text(UIButton *e, const char *text);
+
+void ui_button_modify_transform(UIElement *e, UITransform *t);
+
+UIButton *ui_create_button(const UIContext *ctx);
+UIElement *ui_create_button_from_props(const UIContext *ctx, const UIPropertyList *props);

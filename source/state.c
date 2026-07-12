@@ -11,6 +11,7 @@
 #include "menus/icon_kit.h"
 #include "utils/json_config.h"
 #include "level/main_levels.h"
+#include "level_loading.h"
 #include "menus/level_select.h"
 #include "save/saving.h"
 #include "practice.h"
@@ -470,9 +471,13 @@ bool play_level_song_at(float seek) {
     if (seek < 0) seek = 0;
 
     if (level_info.custom_song_id > 0) {
-        static char full_path[273];
-        snprintf(full_path, sizeof(full_path), "%s/%d.mp3", USER_SONGS_DIR, level_info.custom_song_id);
-        song_loaded = play_mp3(full_path, false, seek);
+        size_t sz = 0;
+        void *buf = load_user_song(level_info.custom_song_id, &sz);
+        if (buf) {
+            song_loaded = play_mp3_buf(buf, sz, false, seek);
+        } else {
+            song_loaded = false;
+        }
     } else {
         if (state.custom_level) {
             song_loaded = play_mp3(main_levels[level_info.song_id].song_path, false, seek);
@@ -589,4 +594,9 @@ bool is_coin_collected(int obj) {
     }
 
     return false;
+}
+
+void kill_player(DeathReason reason) {
+    state.dead = true;
+    state.death_reason = reason;
 }

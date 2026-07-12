@@ -1,12 +1,9 @@
-#include "ui_element.h"
+#include "menus/components/ui_button.h"
+#include "menus/core/ui_element.h"
 #include <citro2d.h>
-#include "ui_image.h"
-#include "text.h"
-#include "fonts/bigFont.h"
 #include "ui_color_button.h"
-#include "easing.h"
-#include "math_helpers.h"
-#include "ui_screen.h"
+#include "menus/core/ui_screen.h"
+#include "menus/core/ui_props.h"
 #include "graphics.h"
 
 #include "menus/palette_kit.h"
@@ -14,121 +11,96 @@
 #include "main.h"
 #include "ui_slider.h"
 
-static void ui_color_button_update(UIElement* e, UIInput* touch) {
-    bool pressedTouch = hidKeysDown() & KEY_TOUCH;
-    bool releasedTouch = hidKeysUp() & KEY_TOUCH;
-
-    bool inside = touch->touchPosition.px >= e->x - (e->w / 2) && touch->touchPosition.px < e->x + (e->w / 2) &&
-                  touch->touchPosition.py >= e->y - (e->h / 2) && touch->touchPosition.py < e->y + (e->h / 2);
-
-    // Check if pressed the color
-    if (inside && pressedTouch && !touch->did_something) {
-        e->color.hovered = true;
-        e->color.pressed = true;
-    }
-
-    // If previously pressed on it, hover
-    if (inside && !sliding) {
-        e->color.hovered = true;
-    }
-    
-    EaseTypes bounce_type;
-    // Animation
-    if (e->color.hovered) {
-        e->color.hoverTimer += DT;
-        bounce_type = BOUNCE_OUT;
-    } else {
-        e->color.hoverTimer -= DT;
-        // As the animation plays in reverse, we just use bounce in
-        bounce_type = BOUNCE_IN;
-    }
-
-    e->color.hoverTimer = clampf(e->color.hoverTimer, 0.f, COLOR_BUTTON_HOVER_ANIM_TIME);
-    e->color.hoverScale = easeValue(bounce_type, 1.0f, COLOR_BUTTON_HOVER_SCALE, e->color.hoverTimer, COLOR_BUTTON_HOVER_ANIM_TIME, 0);
-
-
-    // If released on color, do its action
-    if (e->color.hovered && releasedTouch) {
-        e->color.pressed = false;
-        e->color.hovered = false;
-        e->color.hoverTimer = 0.f;
-        e->color.hoverScale = 1.f;
-        if (e->action)
-            e->action(e);
-    }
-    
-    // Unpress the color
-    if (!inside) {
-        e->color.hovered = false;
-    }
-    
-    // Mask background elements
-    if (inside) {
-        touch->interacted = true;
-        touch->did_something = true;
-    }
+static void ui_color_button_update(UIElement* e, UIInput* touch, UITransform *transform) {
+    ui_button_update(e, touch, transform);
 }
 
-static void ui_color_button_draw(UIElement* e) {
-    float scale = e->color.hoverScale;
+static void ui_color_button_draw(UIElement* e, UITransform *transform) {
+    UIColor *color = (UIColor *) e;
+    UIButton *button = (UIButton *) e;
 
-    int color = e->color.color_index;
+    float scale = button->hoverScale;
 
-    if (color >= NUM_COLORS) color = NUM_COLORS - 1;
+    int color_idx = color->color_index;
+
+    if (color_idx >= NUM_COLORS) color_idx = NUM_COLORS - 1;
 
     C2D_ImageTint tint = { 0 };
-    C2D_PlainImageTint(&tint, colors[color], 1.0f);
+    C2D_PlainImageTint(&tint, colors[color_idx], 1.0f);
     
-    C2D_SpriteSetCenter(&e->color.button.sprite, 0.5f, 0.5f);
-    C2D_SpriteSetPos(&e->color.button.sprite, e->x, e->y);
-    C2D_SpriteSetScale(&e->color.button.sprite, e->color.scaleX * scale, e->color.scaleX * scale);
-    C2D_DrawSpriteTinted(&e->color.button.sprite, &tint);
+    C2D_SpriteSetCenter(&button->image.sprite, 0.5f, 0.5f);
+    C2D_SpriteSetPos(&button->image.sprite, transform->x, transform->y);
+    C2D_SpriteSetScale(&button->image.sprite, transform->scaleX * scale, transform->scaleY * scale);
+    C2D_DrawSpriteTinted(&button->image.sprite, &tint);
 
-    if (e->color.isSelected) {
-        C2D_SpriteSetCenter(&e->color.image.sprite, 0.5f, 0.5f);
-        C2D_SpriteSetPos(&e->color.image.sprite, e->x, e->y);
-        C2D_SpriteSetScale(&e->color.image.sprite, e->color.scaleX + 0.05f, e->color.scaleX + 0.05f);
-        C2D_DrawSprite(&e->color.image.sprite);
+    if (color->isSelected) {
+        C2D_SpriteSetCenter(&color->image.sprite, 0.5f, 0.5f);
+        C2D_SpriteSetPos(&color->image.sprite, transform->x, transform->y);
+        C2D_SpriteSetScale(&color->image.sprite, transform->scaleX + 0.05f, transform->scaleY + 0.05f);
+        C2D_DrawSprite(&color->image.sprite);
     }
 }
 
-void ui_color_button_set_index(UIElement *e, int index, int color_index) {
-    if (e->type != UI_COLOR_BUTTON) return;
+void ui_color_button_set_index(UIColor *e, int index, int color_index) {
+    if (!e) return;
 
-    e->color.isSelected = *current_colors[index] == color_index,
-    e->color.index = index;
-    e->color.color_index = color_index;
+    e->isSelected = *current_colors[index] == color_index,
+    e->index = index;
+    e->color_index = color_index;
 }
 
-UIElement ui_create_color_button(
-    int x, int y, float scale, int index, int color_index,
-    UIActionFn action,
-    char (*tag)[TAG_LENGTH]
-) {
-    UIElement e = {
-        .type = UI_COLOR_BUTTON,
-        .x = x, .y = y,
-        .w = 30*scale, .h = 30*scale,
-        .enabled = true,
-        .action = action,
-        .update = ui_color_button_update,
-        .draw = ui_color_button_draw
-    };
+static void ui_color_button_destroy(UIElement *e) {
+    if (e) {
+        free(e);
+        e = NULL;
+    }
+}
 
-    // Copy tag
-    copy_tag_array(&e, tag);
+UIColor *ui_create_color_button(const UIContext *ctx) {
+    UIColor *e = malloc(sizeof(UIColor));
 
-    e.color.scaleX = scale;
-
-    C2D_SpriteFromSheet(&e.color.image.sprite, ui_sheet, 175);
-    C3D_TexSetFilter(e.color.image.sprite.image.tex, GPU_LINEAR, GPU_LINEAR);
+    if (!e) return NULL;
     
-    C2D_SpriteFromSheet(&e.color.button.sprite, ui_sheet, 35);
-    C3D_TexSetFilter(e.color.button.sprite.image.tex, GPU_LINEAR, GPU_LINEAR);
+    UIButton *button = (UIButton *) e;
 
-    ui_color_button_set_index(&e, index, color_index);
+    memset(e, 0, sizeof(UIColor));
+    button->base.type = UI_COLOR_BUTTON;
+    button->base.enabled = true;
+
+    button->base.update = ui_color_button_update;
+    button->base.draw = ui_color_button_draw;
+    button->base.destroy = ui_color_button_destroy;
     
-    e.color.hoverScale = 1.f;
+    ui_element_apply_default_properties(&button->base, ctx);
+    
+    button->hoverScale = 1;
+    button->hoverFactor = 1;
+
+    C2D_SpriteFromSheet(&e->image.sprite, ui_sheet, 175);
+    C3D_TexSetFilter(e->image.sprite.image.tex, GPU_LINEAR, GPU_LINEAR);
+    
+    C2D_SpriteFromSheet(&button->image.sprite, ui_sheet, 35);
+    C3D_TexSetFilter(button->image.sprite.image.tex, GPU_LINEAR, GPU_LINEAR);
 
     return e;
+}
+
+UIElement *ui_create_color_button_from_props(const UIContext *ctx, const UIPropertyList *props) {
+    UIColor *color_button = ui_create_color_button(ctx);
+
+    if (!color_button) return NULL;
+    
+    UIButton *button = (UIButton *) color_button;
+
+    ui_element_apply_properties(&button->base, ctx, props);
+    
+    ui_element_set_size(&button->base, 30, 30);
+
+    button->hoverFactor = ui_prop_float(props, "hoverFactor", 1);
+
+    ui_color_button_set_index(color_button,  
+        ui_prop_int(props, "id", 0), 
+        ui_prop_int(props, "color_index", 0));
+
+    return &button->base;
 }

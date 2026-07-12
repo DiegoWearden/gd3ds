@@ -11,7 +11,7 @@
 #include "graphics.h"
 #include "text.h"
 #include "fonts/bigFont.h"
-#include "menus/components/ui_screen.h"
+#include "menus/core/ui_screen.h"
 #include "math_helpers.h"
 #include "main.h"
 
@@ -325,7 +325,7 @@ void slope_calc(int obj, Player *player) {
         bool gravSnap = (player->ceiling_inv_time > 0) || (player->gravObj_id >= 0 && GET_HITBOX_COUNTER(player->gravObj_id) == 1);
         
         if (player->gamemode == GAMEMODE_PLAYER && !gravSnap) {
-            state.dead = true;
+            kill_player(DEATH_SLOPE);
         }
 
         // On slope
@@ -374,7 +374,7 @@ void slope_calc(int obj, Player *player) {
         bool gravSnap = (player->ceiling_inv_time > 0) || (player->gravObj_id >= 0 && GET_HITBOX_COUNTER(player->gravObj_id) == 1);
         
         if (player->gamemode == GAMEMODE_PLAYER && !gravSnap) {
-            state.dead = true;
+            kill_player(DEATH_SLOPE);
         }
 
         // On slope
@@ -501,7 +501,7 @@ void slope_collide(int obj, Player *player) {
         );
 
         // Die if so
-        if (internalCollidingSlope) state.dead = true;
+        if (internalCollidingSlope) kill_player(DEATH_SLOPE);
     }
 
     // Normal slope - resting on bottom
@@ -521,7 +521,7 @@ void slope_collide(int obj, Player *player) {
                 objects.x[obj], objects.y[obj], objects.width[obj], objects.height[obj], 0
             );
 
-            if (internalCollidingSlope) state.dead = true;
+            if (internalCollidingSlope) kill_player(DEATH_SLOPE);
         }
 
         return;
@@ -544,7 +544,7 @@ void slope_collide(int obj, Player *player) {
                 objects.x[obj], objects.y[obj], objects.width[obj], objects.height[obj], 0
             );
 
-            if (internalCollidingSlope) state.dead = true;
+            if (internalCollidingSlope) kill_player(DEATH_SLOPE);
         }
         
         return;
@@ -563,7 +563,7 @@ void slope_collide(int obj, Player *player) {
                 objects.x[obj], objects.y[obj], objects.width[obj], objects.height[obj], 0
             );
 
-            if (internalCollidingSlope) state.dead = true;
+            if (internalCollidingSlope) kill_player(DEATH_SLOPE);
             return;
         }
         
@@ -639,7 +639,7 @@ void slope_collide(int obj, Player *player) {
         if ((projectedHit && clip) || snapDown) {
             // If wave, just die, nothing else, wave hates slopes
             if (player->gamemode == GAMEMODE_DART) {
-                state.dead = true;
+                kill_player(DEATH_SLOPE);
                 return;
             }
 
@@ -651,7 +651,7 @@ void slope_collide(int obj, Player *player) {
             //slope_snap_y(obj, player);
 
             if (is_spike_slope(obj)) {
-                state.dead = true;
+                kill_player(DEATH_SLOPE);
             }
 
             // If player is on an slope that goes down, and is in the top corner, snap down

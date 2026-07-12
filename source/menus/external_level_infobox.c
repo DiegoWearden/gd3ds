@@ -1,26 +1,17 @@
 #include <3ds.h>
 #include <citro2d.h>
-#include "menus/components/ui_element.h"
-#include "menus/components/ui_screen.h"
-#include "math_helpers.h"
-#include "menus/components/ui_window.h"
-#include "menus/components/ui_textbox.h"
-#include "menus/components/ui_image.h"
+#include "menus/core/ui_element.h"
+#include "menus/core/ui_screen.h"
 #include "menus/components/ui_label.h"
-#include "main.h"
-#include "graphics.h"
 #include "save/saving.h"
-
-#include "save/config.h"
 
 static bool yes_exit = false;
 
 static UIScreen screen = {
-    .isBottom = true,
-    .open_anim = ANIM_ZOOM
+    .isBottom = true
 };
 
-static UIElement *name;
+static UILabel *name;
 
 void exit_external_level_infobox(UIElement* e) {
     yes_exit = true;
@@ -32,8 +23,9 @@ static UIAction actions[] = {
 
 void external_level_infobox_init() {
     ui_load_screen(&screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/level_info_pop_up.txt");
+    ui_screen_open(&screen, ANIM_ZOOM);
 
-    name = ui_get_element_by_tag(&screen, "levelname");
+    name = (UILabel *) ui_get_element_by_tag(&screen, "levelname");
 
     ui_label_set_text(name, level_info.level_name);
 
@@ -51,10 +43,10 @@ void external_level_infobox_init() {
     char practice[256];
     snprintf(practice, sizeof(practice), "<#ffa54b>Practice</>: %d%%", data->practice_progress);
 
-    ui_label_set_text(ui_get_element_by_tag(&screen, "totalattempts"), attempts);
-    ui_label_set_text(ui_get_element_by_tag(&screen, "totaljumps"), jumps);
-    ui_label_set_text(ui_get_element_by_tag(&screen, "normalprogressvalue"), normal);
-    ui_label_set_text(ui_get_element_by_tag(&screen, "practiceprogressvalue"), practice);
+    ui_label_set_text((UILabel *) ui_get_element_by_tag(&screen, "totalattempts"), attempts);
+    ui_label_set_text((UILabel *) ui_get_element_by_tag(&screen, "totaljumps"), jumps);
+    ui_label_set_text((UILabel *) ui_get_element_by_tag(&screen, "normalprogressvalue"), normal);
+    ui_label_set_text((UILabel *) ui_get_element_by_tag(&screen, "practiceprogressvalue"), practice);
 
     yes_exit = false;
 }

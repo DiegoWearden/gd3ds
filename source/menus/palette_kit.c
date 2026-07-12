@@ -1,30 +1,20 @@
 #include <3ds.h>
 #include <citro2d.h>
-#include "menus/components/ui_element.h"
-#include "menus/components/ui_screen.h"
+#include "main.h"
+#include "menus/core/ui_element.h"
+#include "menus/core/ui_screen.h"
 #include "math_helpers.h"
 #include "menus/components/ui_list.h"
 #include "menus/components/ui_window.h"
-#include "menus/components/ui_textbox.h"
-#include "menus/components/ui_image.h"
 #include "menus/components/ui_color_button.h"
 #include "menus/components/ui_window_button.h"
-#include "fonts/bigFont.h"
-#include "main.h"
-#include "easing.h"
-#include "color_channels.h"
-#include "mp3_player.h"
 #include "graphics.h"
-#include "main_menu.h"
-#include "level_select.h"
 #include "palette_kit.h"
-#include "icons.h"
 
 static bool yes_exit = false;
 
 static UIScreen screen = {
-    .isBottom = true,
-    .open_anim = ANIM_SLIDE_RIGHT
+    .isBottom = true
 };
 
 const u32 colors[] = {
@@ -171,6 +161,8 @@ const u32 colors[] = {
     ABGR8(0, 0, 0, 255)
 };
 
+const size_t NUM_COLORS = ARRAY_LEN(colors);
+
 static int color_counter = 0;
 
 static int color_page = 0;
@@ -184,12 +176,14 @@ static void enable_glow_setting(UIElement *e) {
 }
 
 static void set_color_index(UIElement *e) {
-    ui_color_button_set_index(e, color_page, color_counter);
+    UIColor *color = (UIColor *) e;
+    ui_color_button_set_index(color, color_page, color_counter);
     color_counter++;
 }
 
 static void action_color_selected(UIElement *e) {
-    *current_colors[color_page] = e->color.color_index;
+    UIColor *color = (UIColor *) e;
+    *current_colors[color_page] = color->color_index;
     update_player_colors();
     color_counter = 0;
     ui_run_func_on_tag(&screen, "color", set_color_index);
@@ -200,12 +194,12 @@ void exit_palette_kit(UIElement* e) {
 }
 
 static void disable_all_color_buttons(UIElement *e) {
-    ui_window_button_set_style(e, 4);
+    ui_window_button_set_style((UIWindowButton *) e, 4);
 }
 
 static void set_p1_page(UIElement *e) {    
     ui_run_func_on_tag(&screen, "color_buttons", disable_all_color_buttons);
-    ui_window_button_set_style(e, 5);
+    ui_window_button_set_style((UIWindowButton *) e, 5);
     color_page = 0;
     color_counter = 0;
     ui_run_func_on_tag(&screen, "glow_option", disable_glow_setting);
@@ -214,7 +208,7 @@ static void set_p1_page(UIElement *e) {
 
 static void set_p2_page(UIElement *e) {
     ui_run_func_on_tag(&screen, "color_buttons", disable_all_color_buttons);
-    ui_window_button_set_style(e, 5);
+    ui_window_button_set_style((UIWindowButton *) e, 5);
     color_page = 1;
     color_counter = 0;
     ui_run_func_on_tag(&screen, "glow_option", disable_glow_setting);
@@ -223,7 +217,7 @@ static void set_p2_page(UIElement *e) {
 
 static void set_glow_page(UIElement *e) {
     ui_run_func_on_tag(&screen, "color_buttons", disable_all_color_buttons);
-    ui_window_button_set_style(e, 5);
+    ui_window_button_set_style((UIWindowButton *) e, 5);
     color_page = 2;
     color_counter = 0;
     ui_run_func_on_tag(&screen, "glow_option", enable_glow_setting);
@@ -231,7 +225,8 @@ static void set_glow_page(UIElement *e) {
 }
 
 void player_glow_settings(UIElement* e) {
-    player_glow_enabled = e->checkbox.checked;
+    UICheckBox *checkbox = (UICheckBox *) e;
+    player_glow_enabled = checkbox->checked;
 }
 
 static UIAction actions[] = {
@@ -246,13 +241,14 @@ static UIAction actions[] = {
 
 void palette_kit_init() {
     ui_load_screen(&screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/palette_kit.txt");
+    ui_screen_open(&screen, ANIM_SLIDE_RIGHT);
     yes_exit = false;
-    ui_window_set_tint(ui_get_element_by_tag(&screen, "bg_window"), C2D_Color32(0, 0, 0, 64));
+    ui_window_set_tint((UIWindow *) ui_get_element_by_tag(&screen, "bg_window"), C2D_Color32(0, 0, 0, 64));
     color_counter = 0;
     color_page = 0;
     ui_run_func_on_tag(&screen, "color", set_color_index);
     ui_run_func_on_tag(&screen, "glow_option", disable_glow_setting);
-    ui_get_element_by_tag(&screen, "chk_glow")->checkbox.checked = player_glow_enabled;
+    ((UICheckBox *) ui_get_element_by_tag(&screen, "chk_glow"))->checked = player_glow_enabled;
 }
 
 int palette_kit_loop() {

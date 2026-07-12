@@ -22,6 +22,10 @@
 #define LIKELY(x)   __builtin_expect(!!(x), 1)
 #define UNLIKELY(x) __builtin_expect(!!(x), 0)
 
+#define UNUSED __attribute__((unused)) 
+
+#define ARRAY_LEN(arr) (sizeof(arr) / sizeof(arr[0]))
+
 typedef struct {
     float x, y;
 } Vec2D;
@@ -69,6 +73,7 @@ enum GameState {
     STATE_GAME,
     STATE_EXTERNAL_LEVELS,
     STATE_SAVED_LEVELS,
+    STATE_ONLINE_LEVEL,
     STATE_CREATOR_MENU,
     STATE_SEARCH_MENU,
     STATE_SOGGY,

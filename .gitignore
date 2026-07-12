@@ -88,3 +88,6 @@ fabric.properties
 # Debug files
 *.dSYM/
 .gitignore
+
+.clangd
+compile_commands.json

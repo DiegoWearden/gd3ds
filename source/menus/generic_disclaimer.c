@@ -1,7 +1,7 @@
 #include <3ds.h>
 #include <citro2d.h>
-#include "menus/components/ui_element.h"
-#include "menus/components/ui_screen.h"
+#include "menus/core/ui_element.h"
+#include "menus/core/ui_screen.h"
 #include "math_helpers.h"
 #include "menus/components/ui_list.h"
 #include "menus/components/ui_window.h"
@@ -33,6 +33,7 @@ static UIAction actions[] = {
 
 void disclaimer_init() {
     ui_load_screen(&screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/generic_disclaimer.txt");
+    ui_screen_open(&screen, ANIM_ZOOM);
     yes_exit = false;
 }
 

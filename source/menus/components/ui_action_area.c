@@ -1,4 +1,4 @@
-#include "ui_element.h"
+#include "menus/core/ui_element.h"
 #include <citro2d.h>
 #include "ui_image.h"
 #include "text.h"
@@ -6,36 +6,36 @@
 #include "ui_button.h"
 #include "easing.h"
 #include "math_helpers.h"
-#include "ui_screen.h"
+#include "menus/core/ui_screen.h"
 
-static void ui_action_area_update(UIElement* e, UIInput* touch) {
+static void ui_action_area_update(UIElement* e, UIInput* touch, UITransform *transform) {
+    UIActionArea *area = (UIActionArea *) e;
     bool pressedTouch = hidKeysDown() & KEY_TOUCH;
     bool releasedTouch = hidKeysUp() & KEY_TOUCH;
 
-    bool inside = touch->touchPosition.px >= e->x - (e->w / 2) && touch->touchPosition.px < e->x + (e->w / 2) &&
-                  touch->touchPosition.py >= e->y - (e->h / 2) && touch->touchPosition.py < e->y + (e->h / 2);
+    bool inside = ui_element_basic_bound_check(e, touch, transform);
 
     // Check if pressed the button
     if (inside && pressedTouch && !touch->did_something) {
-        e->action_area.hovered = true;
-        e->action_area.pressed = true;
+        area->hovered = true;
+        area->pressed = true;
     }
 
     // If previously pressed on it, hover
-    if (inside && e->action_area.pressed) {
-        e->action_area.hovered = true;
+    if (inside && area->pressed) {
+        area->hovered = true;
     }
 
     // If released on button, do its action
-    if (e->action_area.hovered && releasedTouch) {
-        e->action_area.pressed = false;
+    if (area->hovered && releasedTouch) {
+        area->pressed = false;
         if (e->action)
             e->action(e);
     }
     
     // Unpress the button
     if (!inside) {
-        e->action_area.hovered = false;
+        area->hovered = false;
     }
     
     // Mask background elements
@@ -45,30 +45,41 @@ static void ui_action_area_update(UIElement* e, UIInput* touch) {
     }
 }
 
-static void ui_action_area_draw(UIElement* e) {
+static void ui_action_area_draw(UIElement* e, UITransform *transform) {
     (void)e;
 }
 
-UIElement ui_create_action_area(
-    int x, int y, float w, float h, 
-    UIActionFn action,
-    char (*tag)[TAG_LENGTH]
-) {
-    UIElement e = {
-        .type = UI_ACTION_AREA,
-        .x = x, .y = y,
-        .w = 0, .h = 0,
-        .enabled = true,
-        .action = action,
-        .update = ui_action_area_update,
-        .draw = ui_action_area_draw
-    };
+static void ui_action_area_destroy(UIElement *e) {
+    if (e) {
+        free(e);
+        e = NULL;
+    }
+}
 
-    // Copy tag
-    copy_tag_array(&e, tag);
+UIActionArea *ui_create_action_area(const UIContext *ctx) {
+    UIActionArea *e = malloc(sizeof(UIActionArea));
+
+    if (!e) return NULL;
+
+    memset(e, 0, sizeof(UIActionArea));
+
+    e->base.type = UI_ACTION_AREA;
+    e->base.enabled = true;
+    e->base.update = ui_action_area_update;
+    e->base.draw = ui_action_area_draw;
+    e->base.destroy = ui_action_area_destroy;
     
-    e.w = w;
-    e.h = h;
+    ui_element_apply_default_properties(&e->base, ctx);
 
     return e;
+}
+
+UIElement *ui_create_action_area_from_props(const UIContext *ctx, const UIPropertyList *props) {
+    UIActionArea *action_area = ui_create_action_area(ctx);
+
+    if (!action_area) return NULL;
+
+    ui_element_apply_properties(&action_area->base, ctx, props);
+
+    return &action_area->base;
 }

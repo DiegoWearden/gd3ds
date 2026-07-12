@@ -1,22 +1,11 @@
 #include <3ds.h>
 #include <citro2d.h>
-#include "menus/components/ui_element.h"
-#include "menus/components/ui_screen.h"
-#include "math_helpers.h"
+#include "menus/core/ui_element.h"
+#include "menus/core/ui_screen.h"
+#include "menus/components/ui_checkbox.h"
 #include "menus/components/ui_list.h"
-#include "menus/components/ui_window.h"
-#include "menus/components/ui_textbox.h"
-#include "menus/components/ui_image.h"
-#include "fonts/bigFont.h"
-#include "main.h"
-#include "easing.h"
-#include "color_channels.h"
-#include "mp3_player.h"
-#include "graphics.h"
 #include "main_menu.h"
-#include "level_select.h"
 #include "settings.h"
-#include "info_card.h"
 #include "practice.h"
 #include "state.h"
 
@@ -27,8 +16,7 @@ static bool yes_exit = false;
 static int current_page = 0;
 
 static UIScreen screen = {
-    .isBottom = true,
-    .open_anim = ANIM_ZOOM
+    .isBottom = true
 };
 
 bool particlesDisabled = false;
@@ -124,9 +112,6 @@ static Setting settings[] = {
 };
 
 
-#define NUMBER_SETTINGS (sizeof(settings) / sizeof(Setting))
-
-
 const char *pages_tags[] = {
     "page1",
     "page2",
@@ -137,11 +122,9 @@ const char *pages_tags[] = {
     "page7",
 };
 
-#define NUMBER_PAGES (sizeof(pages_tags) / sizeof(char *))
-
 
 void switch_page(int page) {
-    for (int i = 0; i < NUMBER_PAGES; i++) {
+    for (int i = 0; i < ARRAY_LEN(pages_tags); i++) {
         if (i == page) {
             ui_run_func_on_tag(&screen, pages_tags[page], ui_enable_element);
         } else {
@@ -155,71 +138,71 @@ void exit_settings(UIElement* e) {
 }
 
 void wide_settings(UIElement* e) {
-    wideEnabled = e->checkbox.checked;
+    wideEnabled = ((UICheckBox *)e)->checked;
 }
 
 void particles_settings(UIElement* e) {
-    particlesDisabled = e->checkbox.checked;
+    particlesDisabled = ((UICheckBox *)e)->checked;
 }
 
 void glow_settings(UIElement* e) {
-    glowEnabled = e->checkbox.checked;
+    glowEnabled = ((UICheckBox *)e)->checked;
 }
 
 void y_button_settings(UIElement* e) {
-    yJump = e->checkbox.checked;
+    yJump = ((UICheckBox *)e)->checked;
 }
 
 void touch_effect_settings(UIElement* e) {
-    touchEffectEverywhere = e->checkbox.checked;
+    touchEffectEverywhere = ((UICheckBox *)e)->checked;
 }
 
 void debug_settings(UIElement* e) {
-    enableDebugBindings = e->checkbox.checked;
+    enableDebugBindings = ((UICheckBox *)e)->checked;
 }
 
 void hitboxes_settings(UIElement* e) {
-    hitboxesEnabled = e->checkbox.checked;
+    hitboxesEnabled = ((UICheckBox *)e)->checked;
 }
 
 void hitbox_trail_settings(UIElement* e) {
-    hitboxTrail = e->checkbox.checked;
+    hitboxTrail = ((UICheckBox *)e)->checked;
 }
 
 void hitboxes_on_death_settings(UIElement* e) {
-    hitboxesOnDeath = e->checkbox.checked;
+    hitboxesOnDeath = ((UICheckBox *)e)->checked;
 }
 
 void progressbar_settings(UIElement* e) {
-    showProgressBar = e->checkbox.checked;
+    showProgressBar = ((UICheckBox *)e)->checked;
 }
 
 void progresspercent_settings(UIElement* e) {
-    showProgressPercent = e->checkbox.checked;
+    showProgressPercent = ((UICheckBox *)e)->checked;
 }
 
 void decimalpercent_settings(UIElement* e) {
-    decimalPercent = e->checkbox.checked;
+    decimalPercent = ((UICheckBox *)e)->checked;
 }
 
 void ultradecimalpercent_settings(UIElement* e) {
-    ultraDecimalPercent = e->checkbox.checked;
+    ultraDecimalPercent = ((UICheckBox *)e)->checked;
 }
 
 void switchTrailColor_settings(UIElement* e) {
-    switchTrailColor = e->checkbox.checked;
+    switchTrailColor = ((UICheckBox *)e)->checked;
 }
 
 void switchWaveTrailColor_settings(UIElement* e) {
-    switchWaveTrailColor = e->checkbox.checked;
+    switchWaveTrailColor = ((UICheckBox *)e)->checked;
 }
 
 void quickRetry_settings(UIElement* e) {
-    quickRetry = e->checkbox.checked;
+    quickRetry = ((UICheckBox *)e)->checked;
 }
 
 void practiceLevelMusic_settings(UIElement* e) {
-    practiceLevelMusic = e->checkbox.checked;
+    practiceLevelMusic = ((UICheckBox *)e)->checked;
 
     if (game_state == STATE_GAME && state.practice_mode) {
         apply_practice_music_mode();
@@ -227,29 +210,29 @@ void practiceLevelMusic_settings(UIElement* e) {
 }
 
 void autoCheckpoints_settings(UIElement* e) {
-    autoCheckpoints = e->checkbox.checked;
+    autoCheckpoints = ((UICheckBox *)e)->checked;
 }
 
 void solidWaveTrail_settings(UIElement* e) {
-    solidWaveTrail = e->checkbox.checked;
+    solidWaveTrail = ((UICheckBox *)e)->checked;
 }
 
 void noPlayerTrail_settings(UIElement* e) {
-    noPlayerTrail = e->checkbox.checked;
+    noPlayerTrail = ((UICheckBox *)e)->checked;
 }
 
 void noWaveTrailBehind_settings(UIElement* e) {
-    noWaveTrailBehind = e->checkbox.checked;
+    noWaveTrailBehind = ((UICheckBox *)e)->checked;
 }
 
 void doNot_settings(UIElement* e) {
-    doNot = e->checkbox.checked;
+    doNot = ((UICheckBox *)e)->checked;
 }
 
 void action_left_page(UIElement *e) {
     current_page--;
     if (current_page < 0) {
-        current_page = NUMBER_PAGES - 1;
+        current_page = ARRAY_LEN(pages_tags) - 1;
     }
 
     switch_page(current_page);
@@ -257,7 +240,7 @@ void action_left_page(UIElement *e) {
 
 void action_right_page(UIElement *e) {
     current_page++;
-    if (current_page >= NUMBER_PAGES) {
+    if (current_page >= ARRAY_LEN(pages_tags)) {
         current_page = 0;
     }
 
@@ -370,10 +353,15 @@ static UIAction actions[] = {
 
 void settings_init() {
     ui_load_screen(&screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/settings.txt");
+    ui_screen_open(&screen, ANIM_ZOOM);
     yes_exit = false;
 
-    for (int i = 0; i < NUMBER_SETTINGS; i++) {
-        ui_get_element_by_tag(&screen, settings[i].chk_name)->checkbox.checked = *settings[i].var;
+    for (int i = 0; i < ARRAY_LEN(settings); i++) {
+        UICheckBox *checkbox = (UICheckBox *)ui_get_element_by_tag(&screen, settings[i].chk_name);
+        if (checkbox) {
+            checkbox->checked = *settings[i].var;
+            set_checkbox_enabled(checkbox, checkbox->checked);
+        }
     }
 
     current_page = 0;

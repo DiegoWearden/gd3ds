@@ -1,16 +1,16 @@
 #include <3ds.h>
 #include <citro2d.h>
-#include "menus/components/ui_element.h"
-#include "menus/components/ui_screen.h"
-#include "math_helpers.h"
+#include "menus/core/common_setters.h"
+#include "menus/core/ui_element.h"
+#include "menus/core/ui_screen.h"
 #include "menus/components/ui_list.h"
 #include "menus/components/ui_window.h"
-#include "menus/components/ui_textbox.h"
 #include "menus/components/ui_image.h"
 #include "menus/components/ui_progress_bar.h"
 #include "menus/components/ui_label.h"
 #include "menus/components/ui_button.h"
-#include "fonts/bigFont.h"
+#include "menus/components/ui_checkbox.h"
+#include "menus/components/ui_slider.h"
 #include "main.h"
 #include "easing.h"
 #include "color_channels.h"
@@ -19,8 +19,6 @@
 #include "main_menu.h"
 #include "level_select.h"
 #include "state.h"
-#include "endwall.h"
-#include "menus/components/ui_darken.h"
 #include "menus/components/ui_use_effect.h"
 #include "particles/circles.h"
 
@@ -29,12 +27,12 @@
 
 #include "gameplay.h"
 
-#include "save/config.h"
 #include "info_card.h"
 
 #include "practice.h"
 
 #include "save/saving.h"
+#include "save/config.h"
 
 #include "precise_input.h"
 
@@ -43,41 +41,41 @@ bool in_level_complete = false;
 static bool in_disclaimer = false;
 static bool in_settings = false;
 
-static UIElement *bg_gradient;
-static UIElement *progress_bar;
-static UIElement *percent;
-static UIElement *level_name;
+static UIImage *bg_gradient;
+static UIProgressBar *progress_bar;
+static UILabel *percent;
+static UILabel *level_name;
 
-static UIElement *normal_progress;
-static UIElement *normal_progress_val;
-static UIElement *practice_progress;
-static UIElement *practice_progress_val;
+static UIProgressBar *normal_progress;
+static UILabel *normal_progress_val;
+static UIProgressBar *practice_progress;
+static UILabel *practice_progress_val;
 
-static UIElement *music_slider_bar;
-static UIElement *sound_slider_bar;
-static UIElement *auto_checkpoint_toggle;
-static UIElement *cbf_toggle;
+static UISlider *music_slider_bar;
+static UISlider *sound_slider_bar;
+static UICheckBox *auto_checkpoint_toggle;
+static UICheckBox *cbf_toggle;
 
-static UIElement *coin_1;
-static UIElement *coin_2;
-static UIElement *coin_3;
+static UIImage *coin_1;
+static UIImage *coin_2;
+static UIImage *coin_3;
 
-static UIElement *coins_full[3];
+static UIImage *coins_full[3];
 static bool coins_got[3];
 static float coin_anims[3];
 static bool coins_circles_spawned[3];
 
-static UIElement *coin_1_top;
-static UIElement *coin_2_top;
-static UIElement *coin_3_top;
+static UIImage *coin_1_top;
+static UIImage *coin_2_top;
+static UIImage *coin_3_top;
 
 int decimal;
 
 static void update_progress_bars() {
     LevelData *level_data_sel = (state.custom_level ? &level_data : &main_level_data[curr_level_id]);
 
-    normal_progress->progress_bar.value = level_data_sel->normal_progress;
-    practice_progress->progress_bar.value = level_data_sel->practice_progress;
+    normal_progress->value = level_data_sel->normal_progress;
+    practice_progress->value = level_data_sel->practice_progress;
 
     char normal[32];
     char practice[32];
@@ -96,16 +94,16 @@ static void reset_coin(LevelData *level_data_sel, int i){
     if((!level_data_sel->coin1 && i == 0)
         || (!level_data_sel->coin2 && i == 1)
         || (!level_data_sel->coin3 && i == 2)) { 
-            coins_full[i]->enabled = false;
+            coins_full[i]->base.enabled = false;
         } else {
-            coins_full[i]->enabled = true;
+            coins_full[i]->base.enabled = true;
     }
 }
 
 void reset_coins(){
     LevelData *level_data_sel = (state.custom_level ? &level_data : &main_level_data[curr_level_id]);
 
-    ui_use_effect_clear(ui_get_element_by_tag(&default_screen, "coin_circle"));
+    ui_use_effect_clear((UIUseEffect *) ui_get_element_by_tag(&default_screen, "coin_circle"));
 
     for(int i = 0; i < 3; i++){
         reset_coin(level_data_sel, i);
@@ -232,12 +230,12 @@ static void action_remove_checkpoint(UIElement *e) {
 }
 
 static void action_auto_checkpoint(UIElement *e) {
-    autoCheckpoints = e->checkbox.checked;
+    autoCheckpoints = ((UICheckBox *) e)->checked;
     cfg_save();
 }
 
 static void action_cbf(UIElement *e) {
-    cbf_enabled = e->checkbox.checked;
+    cbf_enabled = ((UICheckBox *) e)->checked;
 
     LevelData *level_data_sel = (state.custom_level ? &level_data : &main_level_data[curr_level_id]);
     level_data_sel->cbf = cbf_enabled;
@@ -260,25 +258,25 @@ static UIAction actions[] = {
 
 void gameplay_screen_init() {
     ui_load_screen(&default_screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/gameplay.txt");
-    bg_gradient = ui_get_element_by_tag(&default_screen, "gradient");
+    bg_gradient = (UIImage *) ui_get_element_by_tag(&default_screen, "gradient");
 
     ui_load_screen(&default_screen_top, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/gameplay_top.txt");;
-    progress_bar = ui_get_element_by_tag(&default_screen_top, "progressalert");
-    percent = ui_get_element_by_tag(&default_screen_top, "percent");
-    level_name = ui_get_element_by_tag(&default_screen_top, "level_title");
+    progress_bar = (UIProgressBar *) ui_get_element_by_tag(&default_screen_top, "progressalert");
+    percent = (UILabel *) ui_get_element_by_tag(&default_screen_top, "percent");
+    level_name = (UILabel *) ui_get_element_by_tag(&default_screen_top, "level_title");
 
     Color color = get_white_if_black(p1_color);
 
     ui_progress_bar_set_tint(progress_bar, C2D_Color32(color.r, color.g, color.b, 255));
     
-    ui_window_set_tint(ui_get_element_by_tag(&default_screen_top, "bgwindow"), C2D_Color32(0, 0, 0, 127));
+    ui_window_set_tint((UIWindow *) ui_get_element_by_tag(&default_screen_top, "bgwindow"), C2D_Color32(0, 0, 0, 127));
 
     ui_label_set_text(level_name, level_info.level_name);
 
-    normal_progress = ui_get_element_by_tag(&default_screen_top, "normalprogress");
-    normal_progress_val = ui_get_element_by_tag(&default_screen_top, "normalprogressvalue");
-    practice_progress = ui_get_element_by_tag(&default_screen_top, "practiceprogress");
-    practice_progress_val = ui_get_element_by_tag(&default_screen_top, "practiceprogressvalue");
+    normal_progress = (UIProgressBar *) ui_get_element_by_tag(&default_screen_top, "normalprogress");
+    normal_progress_val = (UILabel *) ui_get_element_by_tag(&default_screen_top, "normalprogressvalue");
+    practice_progress = (UIProgressBar *) ui_get_element_by_tag(&default_screen_top, "practiceprogress");
+    practice_progress_val = (UILabel *) ui_get_element_by_tag(&default_screen_top, "practiceprogressvalue");
     
     ui_progress_bar_set_tint(normal_progress, C2D_Color32(0, 255, 0, 255));
     ui_progress_bar_set_tint(practice_progress, C2D_Color32(0, 255, 255, 255));
@@ -299,27 +297,27 @@ void gameplay_screen_init() {
     ui_run_func_on_tag(&default_screen, "practice_buttons", ui_disable_element);
     ui_run_func_on_tag(&default_screen, "practice_options", ui_disable_element);
 
-    coin_1 = ui_get_element_by_tag(&default_screen, "coin_1");
-    coin_2 = ui_get_element_by_tag(&default_screen, "coin_2");
-    coin_3 = ui_get_element_by_tag(&default_screen, "coin_3");
+    coin_1 = (UIImage *) ui_get_element_by_tag(&default_screen, "coin_1");
+    coin_2 = (UIImage *) ui_get_element_by_tag(&default_screen, "coin_2");
+    coin_3 = (UIImage *) ui_get_element_by_tag(&default_screen, "coin_3");
 
-    coins_full[0] = ui_get_element_by_tag(&default_screen, "coin_1_full");
-    coins_full[1] = ui_get_element_by_tag(&default_screen, "coin_2_full");
-    coins_full[2] = ui_get_element_by_tag(&default_screen, "coin_3_full");
+    coins_full[0] = (UIImage *) ui_get_element_by_tag(&default_screen, "coin_1_full");
+    coins_full[1] = (UIImage *) ui_get_element_by_tag(&default_screen, "coin_2_full");
+    coins_full[2] = (UIImage *) ui_get_element_by_tag(&default_screen, "coin_3_full");
     
     reset_coins();
 
-    coin_1_top = ui_get_element_by_tag(&default_screen_top, "coin_1");
-    coin_2_top = ui_get_element_by_tag(&default_screen_top, "coin_2");
-    coin_3_top = ui_get_element_by_tag(&default_screen_top, "coin_3");
+    coin_1_top = (UIImage *) ui_get_element_by_tag(&default_screen_top, "coin_1");
+    coin_2_top = (UIImage *) ui_get_element_by_tag(&default_screen_top, "coin_2");
+    coin_3_top = (UIImage *) ui_get_element_by_tag(&default_screen_top, "coin_3");
 
-    music_slider_bar = ui_get_element_by_tag(&default_screen, "music_slider");
-    sound_slider_bar = ui_get_element_by_tag(&default_screen, "sound_slider");
-    auto_checkpoint_toggle = ui_get_element_by_tag(&default_screen, "auto_checkpoint_toggle");
-    cbf_toggle = ui_get_element_by_tag(&default_screen, "cbf_toggle");
+    music_slider_bar = (UISlider*) ui_get_element_by_tag(&default_screen, "music_slider");
+    sound_slider_bar = (UISlider*) ui_get_element_by_tag(&default_screen, "sound_slider");
+    auto_checkpoint_toggle = (UICheckBox*) ui_get_element_by_tag(&default_screen, "auto_checkpoint_toggle");
+    cbf_toggle = (UICheckBox*) ui_get_element_by_tag(&default_screen, "cbf_toggle");
 
-    if (music_slider_bar) music_slider_bar->slider.value = music_volume;
-    if (sound_slider_bar) sound_slider_bar->slider.value = sound_volume;
+    if (music_slider_bar) music_slider_bar->value = music_volume;
+    if (sound_slider_bar) sound_slider_bar->value = sound_volume;
 }
 
 int gameplay_screen_top_loop() { 
@@ -331,18 +329,18 @@ int gameplay_screen_top_loop() {
     if (decimalPercent) decimal = 2;
     if (ultraDecimalPercent) decimal = MAX_DECIMAL_PERCENT;
 
-    progress_bar->progress_bar.value = state.level_progress;
-    snprintf(percent->label.text, 32, "%.*f%%", decimal, state.level_progress);
+    progress_bar->value = state.level_progress;
+    snprintf(percent->text, 32, "%.*f%%", decimal, state.level_progress);
 
     ui_run_func_on_tag(&default_screen_top, "progressalert", ui_disable_element);
     ui_run_func_on_tag(&default_screen_top, "percent", ui_disable_element);
     ui_set_pos_on_tag(&default_screen_top, 200, 8, "percent");
-    percent->label.alignment = 0.5;
+    percent->alignment = 0.5;
 
     if (showProgressBar) {
         ui_run_func_on_tag(&default_screen_top, "progressalert", ui_enable_element);
         ui_set_pos_on_tag(&default_screen_top, 282, 8, "percent");
-        percent->label.alignment = 0;
+        percent->alignment = 0;
     }
 
     if (showProgressPercent) {
@@ -379,17 +377,16 @@ int gameplay_screen_bot_loop() {
             float scale = easeValue(BOUNCE_OUT, 2.f, 0.65f, coin_anims[i], 0.35f, 1.f);
             float opacity = easeValue(EASE_LINEAR, 0.f, 1.f, coin_anims[i], 0.1f, 1.f);
 
-            coins_full[i]->enabled = true;
-            coins_full[i]->image.scaleX = scale;
-            coins_full[i]->image.scaleY = scale;
+            coins_full[i]->base.enabled = true;
+            ui_element_set_scale((UIElement *) coins_full[i], scale);
             ui_image_set_tint(coins_full[i], C2D_Color32f(1, 1, 1, opacity));
 
             if(coin_anims[i] >= 0.05f){
                 if(!coins_circles_spawned[i]){
                     ui_set_use_effect_col(
                         ui_add_use_effect(
-                            ui_get_element_by_tag(&default_screen, "coin_circle"), 
-                        coins_full[i]->x, coins_full[i]->y, &end_wall_firework_circle),
+                            (UIUseEffect *) ui_get_element_by_tag(&default_screen, "coin_circle"), 
+                        coins_full[i]->base.x, coins_full[i]->base.y, &end_wall_firework_circle),
                     1.f, 0.75f, 0.f);
                     
                     coins_circles_spawned[i] = true;
@@ -401,9 +398,9 @@ int gameplay_screen_bot_loop() {
     }
 
     if (game_paused) {
-        if (music_slider_bar) music_volume = music_slider_bar->slider.value;
-        if (sound_slider_bar) sound_volume = sound_slider_bar->slider.value;
-        if (cbf_toggle) cbf_toggle->checkbox.checked = cbf_enabled;
+        if (music_slider_bar) music_volume = music_slider_bar->value;
+        if (sound_slider_bar) sound_volume = sound_slider_bar->value;
+        if (cbf_toggle && cbf_toggle->checked != cbf_enabled) set_checkbox_enabled(cbf_toggle, cbf_enabled);
 
         apply_volume_settings();
     }
@@ -413,12 +410,12 @@ int gameplay_screen_bot_loop() {
     float complete_y_offset = easeValue(EASE_IN, 20.f, -20.f, cutscene_timer, 0.3f, 1.3f);
     float complete_y_offset_practice = easeValue(EASE_IN, 200.f, 270.f, cutscene_timer, 0.3f, 1.8f);
 
-    coin_1->y = complete_y_offset;
-    coin_2->y = complete_y_offset;
-    coin_3->y = complete_y_offset;
-    coins_full[0]->y = complete_y_offset;
-    coins_full[1]->y = complete_y_offset;
-    coins_full[2]->y = complete_y_offset;
+    coin_1->base.y = complete_y_offset;
+    coin_2->base.y = complete_y_offset;
+    coin_3->base.y = complete_y_offset;
+    coins_full[0]->base.y = complete_y_offset;
+    coins_full[1]->base.y = complete_y_offset;
+    coins_full[2]->base.y = complete_y_offset;
 
     UIElement *pause_btn = ui_get_element_by_tag(&default_screen, "pause_btn");
     pause_btn->y = complete_y_offset;
@@ -429,15 +426,15 @@ int gameplay_screen_bot_loop() {
     remove_checkpoint->y = complete_y_offset_practice;
 
     if (state.practice_mode) {
-        ui_button_set_image(ui_get_element_by_tag(&default_screen, "practice_mode"), 124, 0);
+        ui_button_set_image((UIButton *) ui_get_element_by_tag(&default_screen, "practice_mode"), 124, 0);
     } else {
         ui_run_func_on_tag(&default_screen, "practice_buttons", ui_disable_element);
-        ui_button_set_image(ui_get_element_by_tag(&default_screen, "practice_mode"), 146, 0);
+        ui_button_set_image((UIButton *) ui_get_element_by_tag(&default_screen, "practice_mode"), 146, 0);
     }
 
     if (game_paused && state.practice_mode) {
         ui_run_func_on_tag(&default_screen, "practice_options", ui_enable_element);
-        if (auto_checkpoint_toggle) auto_checkpoint_toggle->checkbox.checked = autoCheckpoints;
+        if (auto_checkpoint_toggle && auto_checkpoint_toggle->checked != autoCheckpoints) set_checkbox_enabled(auto_checkpoint_toggle, autoCheckpoints);
     } else {
         ui_run_func_on_tag(&default_screen, "practice_options", ui_disable_element);
     }

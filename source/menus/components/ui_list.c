@@ -1,4 +1,5 @@
-#include "ui_element.h"
+#include "main.h"
+#include "menus/core/ui_element.h"
 #include <citro2d.h>
 #include "ui_image.h"
 #include "text.h"
@@ -6,52 +7,69 @@
 #include "ui_button.h"
 #include "easing.h"
 #include "math_helpers.h"
-#include "ui_screen.h"
+#include "menus/core/ui_screen.h"
+#include "menus/core/ui_props.h"
 #include "ui_list.h"
 #include "utils/gfx.h"
 #include <stdlib.h>
 
-void ui_list_reset(UIElement *list) {
-    UIList* l = &list->list;
-    l->scrollY = 0;
-    l->itemCount = 0;
-    l->contentHeight = 0;
-    l->lastTouchY = 0;
-}
-
-void ui_list_add(UIElement* list, UIElement* item) {
-    UIList* l = &list->list;
-
-    if (l->itemCount >= UI_LIST_MAX_ITEMS) return;
-
-    // Add item and increase content height
-    l->items[l->itemCount++] = item;
-    l->contentHeight += item->h;
-}
-
-static void ui_list_forward_touch(UIElement* list, UIInput* touch) {
-    UIList* l = &list->list;
-
-    float initial_y = list->y - (list->h / 2) + l->scrollY;
+void ui_list_reset(UIList *list) {
+    if (!list) return;
     
-    for (int i = 0; i < l->itemCount; i++) {
-        UIElement* item = l->items[i];
-        // Set position
-        item->y = initial_y + (item->h / 2) + (item->h) * i;
+    list->scrollY = 0;
 
-        if (!item->enabled) continue;
+    UIElement *child = list->base.first_child;
 
-        item->update(item, touch);
+    while (child) {
+        UIElement *next = child->next_sibling;
+        ui_destroy_tree(child);
+        child = next;
+    }
+
+    list->base.first_child = NULL;
+    list->base.last_child = NULL;
+    
+    list->contentHeight = 0;
+    list->lastTouchY = 0;
+}
+
+
+void ui_list_add(UIList* list, UIElement* item) {
+    if (!list) return;
+
+    ui_element_add_child((UIElement *) list, item);
+
+    list->contentHeight += item->h;
+}
+
+void ui_list_set_bg_color(UIList *list, u32 color) {
+    if (!list) return;
+
+    list->background_color = color;
+}
+
+static void ui_list_forward_touch(UIList *list, UIInput *input, UITransform *transform) {
+    UITransform child = *transform;
+    child.y += list->scrollY;
+
+    float y = list->scrollY - list->base.h * 0.5f;
+
+    for (UIElement *item = list->base.first_child; item; item = item->next_sibling) {
+        UITransform t = *transform;
+        t.y += y + (item->h * 0.5f);
+
+        ui_update_tree(item, input, &t);
+
+        y += item->h;
     }
 }
 
-static void ui_list_update(UIElement* e, UIInput* touch) {
-    UIList* l = &e->list;
+static void ui_list_update(UIElement* e, UIInput* touch, UITransform *transform) {
+    UIList* l = (UIList *) e;
 
-    bool inside = touch->touchPosition.px >= e->x - (e->w / 2) && touch->touchPosition.px < e->x + (e->w / 2) &&
-                  touch->touchPosition.py >= e->y - (e->h / 2) && touch->touchPosition.py < e->y + (e->h / 2);
+    bool inside = ui_element_basic_bound_check(e, touch, transform);
 
-    ui_list_forward_touch(e, touch);
+    ui_list_forward_touch(l, touch, transform);
     if (inside) {  
         touch->did_something = true;
 
@@ -120,31 +138,32 @@ static void ui_list_update(UIElement* e, UIInput* touch) {
     }
 }
 
-static void ui_list_draw(UIElement* e) {
-    UIList* l = &e->list;
+static void ui_list_draw(UIElement* e, UITransform *transform) {
+    UIList* l = (UIList *) e;
 
-    float x = e->x - (e->w / 2);
-    float y = e->y - (e->h / 2);
+    float width = e->w * transform->scaleX;
+    float height = e->h * transform->scaleY;
 
-    // Draw border
-    C2D_DrawRectSolid(x, y, 0, e->w, e->h,
-    C2D_Color32(40,40,40,255));
+    float scissor_x = transform->x - (width / 2);
+    float scissor_y = transform->y - (height / 2);
 
+    // Draw background
+    C2D_DrawRectSolid(scissor_x, scissor_y, 0, width, height, l->background_color);
+    
     // Enable clipping
-    set_scissor(GPU_SCISSOR_NORMAL, x, y, e->w, e->h);
+    set_scissor(GPU_SCISSOR_NORMAL, scissor_x, scissor_y, width, height);
 
-    float initial_y = y + l->scrollY;
+    float y = l->scrollY - e->h * 0.5f;
 
-    for (int i = 0; i < l->itemCount; i++) {
-        UIElement* item = l->items[i];
+    for (UIElement *item = e->first_child; item; item = item->next_sibling) {
+        UITransform t = *transform;
+        t.y += (y + (item->h * 0.5f)) * transform->scaleY;
 
-        // Set position
-        item->x = e->x;
-        item->y = initial_y + (item->h / 2) + (item->h) * i;
-        item->w = e->w; // Set width to container width
+        item->w = e->w;
 
-        // Draw item
-        item->draw(item);
+        ui_draw_tree(item, &t);
+
+        y += item->h;
     }
 
     // Disable scissor
@@ -153,26 +172,41 @@ static void ui_list_draw(UIElement* e) {
     C2D_Prepare();
 }
 
-UIElement ui_create_list(
-    int x, int y, int w, int h,
-    char (*tag)[TAG_LENGTH]
-) {
-    UIElement e = {0};
+static void ui_list_destroy(UIElement *e) {
+    if (e) {
+        free(e);
+        e = NULL;
+    }
+}
 
-    e.type = UI_LIST;
-    e.x = x;
-    e.y = y;
-    e.w = w;
-    e.h = h;
-    e.enabled = true;
+UIList *ui_create_list(const UIContext *ctx) {
+    UIList *e = malloc(sizeof(UIList));
 
-    // Copy tag
-    copy_tag_array(&e, tag);
+    if (!e) return NULL;
 
-    e.update = ui_list_update;
-    e.draw = ui_list_draw;
+    memset(e, 0, sizeof(UIList));
+    e->base.type = UI_LIST;
+    e->base.enabled = true;
+
+    e->base.update = ui_list_update;
+    e->base.draw = ui_list_draw;
+    e->base.destroy = ui_list_destroy;
+
+    e->base.draws_children = true;
     
-    ui_list_reset(&e);
+    ui_list_reset(e);
 
     return e;
+}
+
+UIElement *ui_create_list_from_props(const UIContext *ctx, const UIPropertyList *props) {
+    UIList *list = ui_create_list(ctx);
+
+    if (!list) return NULL;
+    
+    ui_element_apply_properties(&list->base, ctx, props);
+
+    ui_list_set_bg_color(list, ui_prop_color(props, "bgColor", ABGR8(0, 0, 0, 0)));
+
+    return &list->base;
 }

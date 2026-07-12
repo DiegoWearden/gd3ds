@@ -1,12 +1,13 @@
 #include <stdlib.h>
 #include <3ds.h>
 #include <citro2d.h>
-#include "menus/components/ui_element.h"
-#include "menus/components/ui_screen.h"
+#include "menus/core/common_setters.h"
+#include "menus/core/ui_element.h"
+#include "menus/core/ui_screen.h"
 #include "math_helpers.h"
 #include "menus/components/ui_list.h"
 #include "menus/components/ui_window.h"
-#include "menus/components/ui_textbox.h"
+#include "menus/components/ui_window_button.h"
 #include "menus/components/ui_image.h"
 #include "menus/components/ui_label.h"
 #include "menus/components/ui_progress_bar.h"
@@ -43,37 +44,36 @@ static int dragDir;
 //hopefully
 static bool cardCorrection;
 
-static UIElement *bg_gradient = NULL;
-static UIElement *bg_gradient_top = NULL;
-static UIElement *level_card_window = NULL;
-static UIElement *level_card_title_top = NULL;
+static UIImage *bg_gradient = NULL;
+static UIImage *bg_gradient_top = NULL;
+static UIWindowButton *level_card_window = NULL;
+static UILabel *level_card_title_top = NULL;
 
-static UIElement *level_card_title = NULL;
-static UIElement *level_card_stars = NULL;
-static UIElement *level_card_face = NULL;
+static UILabel *level_card_title = NULL;
+static UILabel *level_card_stars = NULL;
+static UIImage *level_card_face = NULL;
 
-static UIElement *level_card_2_window = NULL;
+static UIWindowButton *level_card_2_window = NULL;
 
-static UIElement *level_card_2_title = NULL;
-static UIElement *level_card_2_stars = NULL;
+static UILabel *level_card_2_title = NULL;
+static UILabel *level_card_2_stars = NULL;
 
+static UIProgressBar *level_card_normal_progress = NULL;
+static UILabel *level_card_normal_progress_val = NULL;
+static UIProgressBar *level_card_2_normal_progress = NULL;
+static UILabel *level_card_2_normal_progress_val = NULL;
 
-static UIElement *level_card_normal_progress = NULL;
-static UIElement *level_card_normal_progress_val = NULL;
-static UIElement *level_card_2_normal_progress = NULL;
-static UIElement *level_card_2_normal_progress_val = NULL;
+static UIProgressBar *level_card_practice_progress = NULL;
+static UILabel *level_card_practice_progress_val = NULL;
+static UIProgressBar *level_card_2_practice_progress = NULL;
+static UILabel *level_card_2_practice_progress_val = NULL;
 
-static UIElement *level_card_practice_progress = NULL;
-static UIElement *level_card_practice_progress_val = NULL;
-static UIElement *level_card_2_practice_progress = NULL;
-static UIElement *level_card_2_practice_progress_val = NULL;
-
-static UIElement *level_card_coin_1 = NULL;
-static UIElement *level_card_coin_2 = NULL;
-static UIElement *level_card_coin_3 = NULL;
-static UIElement *level_card_2_coin_1 = NULL;
-static UIElement *level_card_2_coin_2 = NULL;
-static UIElement *level_card_2_coin_3 = NULL;
+static UIImage *level_card_coin_1 = NULL;
+static UIImage *level_card_coin_2 = NULL;
+static UIImage *level_card_coin_3 = NULL;
+static UIImage *level_card_2_coin_1 = NULL;
+static UIImage *level_card_2_coin_2 = NULL;
+static UIImage *level_card_2_coin_3 = NULL;
 
 #define ANIM_DURATION 0.8f
 #define COLOR_FADE_DURATION 0.1f
@@ -91,6 +91,8 @@ const u32 default_lvl_colors[] = {
     C2D_Color32Const(0, 227, 228, 255),
     C2D_Color32Const(0, 112, 229, 255),
 };
+
+const size_t NUM_MENU_COLORS = ARRAY_LEN(default_lvl_colors);
 
 #define DOTS_SCALE 0.75f
 
@@ -155,17 +157,17 @@ void update_level_progress(int level, int card) {
     char practice[256];
     snprintf(practice, sizeof(practice), "<#ffa54b>Practice</>: %d%%", data->practice_progress);
 
-    UIElement *normal_prog = (card) ? level_card_2_normal_progress : level_card_normal_progress;
-    UIElement *practice_prog = (card) ? level_card_2_practice_progress : level_card_practice_progress;
-    UIElement *normal_progval = (card) ? level_card_2_normal_progress_val : level_card_normal_progress_val;
-    UIElement *practice_progval = (card) ? level_card_2_practice_progress_val : level_card_practice_progress_val;
+    UIProgressBar *normal_prog = (card) ? level_card_2_normal_progress : level_card_normal_progress;
+    UIProgressBar *practice_prog = (card) ? level_card_2_practice_progress : level_card_practice_progress;
+    UILabel *normal_progval = (card) ? level_card_2_normal_progress_val : level_card_normal_progress_val;
+    UILabel *practice_progval = (card) ? level_card_2_practice_progress_val : level_card_practice_progress_val;
 
-    UIElement *coin_1 = (card) ? level_card_2_coin_1 : level_card_coin_1;
-    UIElement *coin_2 = (card) ? level_card_2_coin_2 : level_card_coin_2;
-    UIElement *coin_3 = (card) ? level_card_2_coin_3 : level_card_coin_3;
+    UIImage *coin_1 = (card) ? level_card_2_coin_1 : level_card_coin_1;
+    UIImage *coin_2 = (card) ? level_card_2_coin_2 : level_card_coin_2;
+    UIImage *coin_3 = (card) ? level_card_2_coin_3 : level_card_coin_3;
 
-    normal_prog->progress_bar.value = data->normal_progress;
-    practice_prog->progress_bar.value = data->practice_progress;
+    normal_prog->value = data->normal_progress;
+    practice_prog->value = data->practice_progress;
 
     snprintf(normal, sizeof(normal), "%d%%", data->normal_progress);
     snprintf(practice, sizeof(practice), "%d%%", data->practice_progress);
@@ -182,18 +184,18 @@ void update_level_name(int level, int card) {
     if (level < 0) level = MAIN_LEVELS_NUM-1;
     if (level >= MAIN_LEVELS_NUM) level = 0;
 
-    UIElement *e = (card) ? level_card_2_title : level_card_title;
-    level_card_title_top = ui_get_element_by_tag(&default_screen_top, "levelname");
-    float length = get_text_length(&bigFont_fontCharset, 1 / 0.85f, main_levels[level].level_name);
+    UILabel *e = (card) ? level_card_2_title : level_card_title;
+    level_card_title_top = (UILabel *) ui_get_element_by_tag(&default_screen_top, "levelname");
+    float length = get_text_length(&bigFont_fontCharset, 1 / 0.85f, false, main_levels[level].level_name);
 
     float txt_scale;
-    if (level_card_window->w < length) {
-        txt_scale = (level_card_window->w / length);
+    if (level_card_window->base.base.w < length) {
+        txt_scale = (level_card_window->base.base.w / length);
     } else {
         txt_scale = 0.85f;
     }
-
-    e->label.scale = txt_scale;
+    
+    ui_element_set_scale((UIElement *) e, txt_scale);
 
     ui_label_set_text(e, main_levels[level].level_name);
 }
@@ -202,7 +204,7 @@ void update_level_stars(int level, int card) {
     if (level < 0) level = MAIN_LEVELS_NUM-1;
     if (level >= MAIN_LEVELS_NUM) level = 0;
 
-    UIElement *e = (card) ? level_card_2_stars : level_card_stars;
+    UILabel *e = (card) ? level_card_2_stars : level_card_stars;
     char stars[10] = { 0 };
     snprintf(stars, 9, "%d", main_levels[level].stars);
     ui_label_set_text(e, stars);
@@ -230,10 +232,10 @@ void update_level_top(int level){
     snprintf(practice, sizeof(practice), "<#ffa54b>Practice</>: %d%%", data->practice_progress);
 
     ui_label_set_text(level_card_title_top, main_levels[level].level_name);
-    ui_label_set_text(ui_get_element_by_tag(&default_screen_top, "totalattempts"), attempts);
-    ui_label_set_text(ui_get_element_by_tag(&default_screen_top, "totaljumps"), jumps);
-    ui_label_set_text(ui_get_element_by_tag(&default_screen_top, "normalprogress"), normal);
-    ui_label_set_text(ui_get_element_by_tag(&default_screen_top, "practiceprogress"), practice);
+    ui_label_set_text((UILabel *) ui_get_element_by_tag(&default_screen_top, "totalattempts"), attempts);
+    ui_label_set_text((UILabel *) ui_get_element_by_tag(&default_screen_top, "totaljumps"), jumps);
+    ui_label_set_text((UILabel *) ui_get_element_by_tag(&default_screen_top, "normalprogress"), normal);
+    ui_label_set_text((UILabel *) ui_get_element_by_tag(&default_screen_top, "practiceprogress"), practice);
 }
 
 void action_open_level(UIElement* e) { 
@@ -371,7 +373,7 @@ void action_exit(UIElement* e) {
 
 void tint_ground(UIElement *e) {
     ColorChannel channel = channels[0];
-    ui_image_set_tint(e, C2D_Color32(channel.color.r, channel.color.g, channel.color.b, 255));
+    ui_image_set_tint((UIImage *) e, C2D_Color32(channel.color.r, channel.color.g, channel.color.b, 255));
 }
 
 static UIAction actions[] = {
@@ -396,38 +398,38 @@ void level_select_loop() {
     ui_load_screen(&default_screen_top, actions_top, sizeof(actions_top) / sizeof(actions_top[0]), "romfs:/menus/level_select_top.txt");
 
     // Set window color
-    level_card_window = ui_get_element_by_tag(&default_screen, "card_window");
-    ui_window_set_tint(level_card_window, C2D_Color32(0, 0, 0, 127));
+    level_card_window = (UIWindowButton *) ui_get_element_by_tag(&default_screen, "card_window");
+    ui_window_button_set_tint(level_card_window, C2D_Color32(0, 0, 0, 127));
 
-    level_card_2_window = ui_get_element_by_tag(&default_screen, "card_window_2");
-    ui_window_set_tint(level_card_2_window, C2D_Color32(0, 0, 0, 127));
+    level_card_2_window = (UIWindowButton *) ui_get_element_by_tag(&default_screen, "card_window_2");
+    ui_window_button_set_tint(level_card_2_window, C2D_Color32(0, 0, 0, 127));
     
-    ui_window_set_tint(ui_get_element_by_tag(&default_screen_top, "face_card"), C2D_Color32(0, 0, 0, 127));
+    ui_window_set_tint((UIWindow *) ui_get_element_by_tag(&default_screen_top, "face_card"), C2D_Color32(0, 0, 0, 127));
 
     // Get level card components
-    level_card_title = ui_get_element_by_tag(&default_screen, "level_title");
-    level_card_stars = ui_get_element_by_tag(&default_screen, "level_stars");
-    level_card_face = ui_get_element_by_tag(&default_screen_top, "level_face");
+    level_card_title = (UILabel *) ui_get_element_by_tag(&default_screen, "level_title");
+    level_card_stars = (UILabel *) ui_get_element_by_tag(&default_screen, "level_stars");
+    level_card_face  = (UIImage *) ui_get_element_by_tag(&default_screen_top, "level_face");
 
-    level_card_2_title = ui_get_element_by_tag(&default_screen, "level_title_2");
-    level_card_2_stars = ui_get_element_by_tag(&default_screen, "level_stars_2");
+    level_card_2_title = (UILabel *) ui_get_element_by_tag(&default_screen, "level_title_2");
+    level_card_2_stars = (UILabel *) ui_get_element_by_tag(&default_screen, "level_stars_2");
 
-    level_card_normal_progress = ui_get_element_by_tag(&default_screen, "normalprogress");
-    level_card_normal_progress_val = ui_get_element_by_tag(&default_screen, "normalprogressvalue");
-    level_card_2_normal_progress = ui_get_element_by_tag(&default_screen, "normalprogress_2");
-    level_card_2_normal_progress_val = ui_get_element_by_tag(&default_screen, "normalprogressvalue_2");
+    level_card_normal_progress = (UIProgressBar *) ui_get_element_by_tag(&default_screen, "normalprogress");
+    level_card_normal_progress_val = (UILabel *) ui_get_element_by_tag(&default_screen, "normalprogressvalue");
+    level_card_2_normal_progress = (UIProgressBar *) ui_get_element_by_tag(&default_screen, "normalprogress_2");
+    level_card_2_normal_progress_val = (UILabel *) ui_get_element_by_tag(&default_screen, "normalprogressvalue_2");
     
-    level_card_practice_progress = ui_get_element_by_tag(&default_screen, "practiceprogress");
-    level_card_practice_progress_val = ui_get_element_by_tag(&default_screen, "practiceprogressvalue");
-    level_card_2_practice_progress = ui_get_element_by_tag(&default_screen, "practiceprogress_2");
-    level_card_2_practice_progress_val = ui_get_element_by_tag(&default_screen, "practiceprogressvalue_2");
+    level_card_practice_progress = (UIProgressBar *) ui_get_element_by_tag(&default_screen, "practiceprogress");
+    level_card_practice_progress_val = (UILabel *) ui_get_element_by_tag(&default_screen, "practiceprogressvalue");
+    level_card_2_practice_progress = (UIProgressBar *) ui_get_element_by_tag(&default_screen, "practiceprogress_2");
+    level_card_2_practice_progress_val = (UILabel *) ui_get_element_by_tag(&default_screen, "practiceprogressvalue_2");
     
-    level_card_coin_1 = ui_get_element_by_tag(&default_screen, "coin_1");
-    level_card_coin_2 = ui_get_element_by_tag(&default_screen, "coin_2");
-    level_card_coin_3 = ui_get_element_by_tag(&default_screen, "coin_3");
-    level_card_2_coin_1 = ui_get_element_by_tag(&default_screen, "coin_1_2");
-    level_card_2_coin_2 = ui_get_element_by_tag(&default_screen, "coin_2_2");
-    level_card_2_coin_3 = ui_get_element_by_tag(&default_screen, "coin_3_2");
+    level_card_coin_1 = (UIImage *) ui_get_element_by_tag(&default_screen, "coin_1");
+    level_card_coin_2 = (UIImage *) ui_get_element_by_tag(&default_screen, "coin_2");
+    level_card_coin_3 = (UIImage *) ui_get_element_by_tag(&default_screen, "coin_3");
+    level_card_2_coin_1 = (UIImage *) ui_get_element_by_tag(&default_screen, "coin_1_2");
+    level_card_2_coin_2 = (UIImage *) ui_get_element_by_tag(&default_screen, "coin_2_2");
+    level_card_2_coin_3 = (UIImage *) ui_get_element_by_tag(&default_screen, "coin_3_2");
 
     ui_progress_bar_set_tint(level_card_normal_progress, C2D_Color32(0, 255, 0, 255));
     ui_progress_bar_set_tint(level_card_2_normal_progress, C2D_Color32(0, 255, 0, 255));
@@ -460,8 +462,8 @@ void level_select_loop() {
     set_fade_status(FADE_STATUS_IN);
         
     // Set bg color
-    bg_gradient = ui_get_element_by_tag(&default_screen, "gradient");
-    bg_gradient_top = ui_get_element_by_tag(&default_screen_top, "gradient");
+    bg_gradient = (UIImage *) ui_get_element_by_tag(&default_screen, "gradient");
+    bg_gradient_top = (UIImage *) ui_get_element_by_tag(&default_screen_top, "gradient");
 
     if (!playing_menu_loop) {
         play_mp3("romfs:/songs/menuLoop.mp3", true, 0);
@@ -562,11 +564,11 @@ void level_select_loop() {
         if(dragging){
             touch.touchPosition.px = -99;
             touch.touchPosition.py = -99;
-            ui_get_element_by_tag(&default_screen, "left")->button.keyBinds = 0;
-            ui_get_element_by_tag(&default_screen, "right")->button.keyBinds = 0;
+            ((UIButton *)ui_get_element_by_tag(&default_screen, "left"))->keyBinds = 0;
+            ((UIButton *)ui_get_element_by_tag(&default_screen, "right"))->keyBinds = 0;
         } else{
-            ui_get_element_by_tag(&default_screen, "left")->button.keyBinds = (KEY_DLEFT | KEY_L | KEY_ZL | KEY_CPAD_LEFT | KEY_CSTICK_LEFT);
-            ui_get_element_by_tag(&default_screen, "right")->button.keyBinds = (KEY_DRIGHT | KEY_R | KEY_ZR | KEY_CPAD_RIGHT | KEY_CSTICK_RIGHT);
+            ((UIButton *)ui_get_element_by_tag(&default_screen, "left"))->keyBinds = (KEY_DLEFT | KEY_L | KEY_ZL | KEY_CPAD_LEFT | KEY_CSTICK_LEFT);
+            ((UIButton *)ui_get_element_by_tag(&default_screen, "right"))->keyBinds = (KEY_DRIGHT | KEY_R | KEY_ZR | KEY_CPAD_RIGHT | KEY_CSTICK_RIGHT);
         }
 
         ui_screen_update(&default_screen, &touch);

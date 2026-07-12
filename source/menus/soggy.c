@@ -1,36 +1,13 @@
 #include <3ds.h>
 #include <citro2d.h>
-#include "menus/components/ui_element.h"
-#include "menus/components/ui_screen.h"
-#include "math_helpers.h"
+#include "menus/core/ui_element.h"
+#include "menus/core/ui_screen.h"
 #include "menus/components/ui_list.h"
-#include "menus/components/ui_window.h"
-#include "menus/components/ui_textbox.h"
-#include "menus/components/ui_image.h"
-#include "menus/components/ui_progress_bar.h"
-#include "menus/components/ui_label.h"
-#include "menus/components/ui_external_level_card.h"
-#include "fonts/bigFont.h"
 #include "main.h"
-#include "easing.h"
-#include "color_channels.h"
 #include "mp3_player.h"
 #include "graphics.h"
-#include "main_menu.h"
-#include "level_select.h"
-#include "state.h"
-
-#include "settings.h"
-#include "saved_levels.h"
-#include "external_levels.h"
-#include "search_menu.h"
-#include "creator_menu.h"
-
-#include "gameplay.h"
 
 #include "save/config.h"
-#include "utils/folders.h"
-#include "level_loading.h"
 
 static bool exit_flag = false;
 

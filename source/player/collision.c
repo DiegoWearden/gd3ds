@@ -6,7 +6,7 @@
 #include "graphics.h"
 #include "text.h"
 #include "fonts/bigFont.h"
-#include "menus/components/ui_screen.h"
+#include "menus/core/ui_screen.h"
 #include "math_helpers.h"
 #include "slope.h"
 #include "main.h"
@@ -1140,7 +1140,7 @@ void handle_collision(Player *player, int obj, const ObjectHitbox *hitbox) {
                     objects.toggled[obj] = true;
                 } else {
                     // Not a brick, die
-                    state.dead = true;
+                    kill_player(DEATH_BLOCK);
                 }
 
                 return;
@@ -1221,7 +1221,7 @@ void handle_collision(Player *player, int obj, const ObjectHitbox *hitbox) {
             }
             break;
         case HITBOX_HAZARD:
-            state.dead = true;
+            kill_player(hitbox->type == COLLISION_CIRCLE ? DEATH_SAW : DEATH_SPIKE);
             break;
         case HITBOX_SPECIAL:
             handle_special_hitbox(player, obj, hitbox);

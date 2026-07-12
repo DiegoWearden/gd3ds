@@ -1,31 +1,19 @@
 #include <3ds.h>
 #include <citro2d.h>
-#include "menus/components/ui_element.h"
-#include "menus/components/ui_screen.h"
-#include "math_helpers.h"
+#include <stdlib.h>
+#include "menus/core/ui_element.h"
+#include "menus/core/ui_screen.h"
 #include "menus/components/ui_list.h"
-#include "menus/components/ui_window.h"
-#include "menus/components/ui_textbox.h"
 #include "menus/components/ui_image.h"
 #include "menus/components/ui_label.h"
 #include "menus/components/ui_progress_bar.h"
-#include "fonts/bigFont.h"
 #include "main.h"
-#include "easing.h"
-#include "color_channels.h"
-#include "mp3_player.h"
-#include "graphics.h"
-#include "main_menu.h"
-#include "level_select.h"
-#include "first_boot_disclaimer.h"
 #include "external_level_infobox.h"
 #include "menus/external_levels.h"
 
 #include "save/saving.h"
 
 #include "fonts/chatFont.h"
-
-#include "save/config.h"
 
 #include "state.h"
 
@@ -34,30 +22,28 @@ static bool yes_exit = false;
 static bool in_infobox = false;
 
 static UIScreen screen_top = {
-    .open_anim = ANIM_ZOOM
 };
 static UIScreen screen = {
     .isBottom = true,
-    .open_anim = ANIM_ZOOM
 };
 
-static UIElement *level_name;
-static UIElement *creator_name;
-static UIElement *description;
+static UILabel *level_name;
+static UILabel *creator_name;
+static UILabel *description;
 
-static UIElement *downloads_label;
-static UIElement *likes_label;
-static UIElement *stars_label;
-static UIElement *level_id_label;
-static UIElement *song_label;
+static UILabel *downloads_label;
+static UILabel *likes_label;
+static UILabel *stars_label;
+static UILabel *level_id_label;
+static UILabel *song_label;
 
-static UIElement *difficulty_face;
-static UIElement *like_image;
+static UIImage *difficulty_face;
+static UIImage *like_image;
 
-static UIElement *normal_progress;
-static UIElement *normal_progress_val;
-static UIElement *practice_progress;
-static UIElement *practice_progress_val;
+static UIProgressBar *normal_progress;
+static UILabel *normal_progress_val;
+static UIProgressBar *practice_progress;
+static UILabel *practice_progress_val;
 
 static int stars_num = 0;
 
@@ -173,7 +159,7 @@ static void set_description(char *gmd) {
             if (decoded2_len > 0) {
                 decoded2[decoded2_len] = '\0';
 
-                char *wrapped = wrap_text(&chatFont_fontCharset, description->label.scale, (char *)decoded2, MAX_DESCRIPTION_WIDTH);
+                char *wrapped = wrap_text(&chatFont_fontCharset, description->base.scaleX, (char *)decoded2, MAX_DESCRIPTION_WIDTH);
 
                 ui_label_set_text(description, wrapped);
             }
@@ -181,7 +167,7 @@ static void set_description(char *gmd) {
             free(decoded2);
         // Normal description, as it should be
         } else {
-            char *wrapped = wrap_text(&chatFont_fontCharset, description->label.scale, (char *)decoded, MAX_DESCRIPTION_WIDTH);
+            char *wrapped = wrap_text(&chatFont_fontCharset, description->base.scaleX, (char *)decoded, MAX_DESCRIPTION_WIDTH);
 
             ui_label_set_text(description, wrapped);
 
@@ -287,8 +273,8 @@ static void set_song_id(char *gmd) {
 }
 
 static void set_progress() {
-    normal_progress->progress_bar.value = level_data.normal_progress;
-    practice_progress->progress_bar.value = level_data.practice_progress;
+    normal_progress->value = level_data.normal_progress;
+    practice_progress->value = level_data.practice_progress;
 
     char normal[32];
     char practice[32];
@@ -312,22 +298,25 @@ void external_popup_init() {
     ui_load_screen(&screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/external_pop_up.txt");
     ui_load_screen(&screen_top, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/external_pop_up_top.txt");
 
-    level_name = ui_get_element_by_tag(&screen_top, "levelname");
-    creator_name = ui_get_element_by_tag(&screen_top, "creatorname");
-    description = ui_get_element_by_tag(&screen_top, "description");
-    downloads_label = ui_get_element_by_tag(&screen_top, "downloadcount");
-    likes_label = ui_get_element_by_tag(&screen_top, "likecount");
-    stars_label = ui_get_element_by_tag(&screen_top, "stars");
-    difficulty_face = ui_get_element_by_tag(&screen_top, "difficultyface");
-    level_id_label = ui_get_element_by_tag(&screen_top, "levelid");
-    song_label = ui_get_element_by_tag(&screen, "songid");
-    
-    like_image = ui_get_element_by_tag(&screen_top, "likeimage");
+    ui_screen_open(&screen, ANIM_ZOOM);
+    ui_screen_open(&screen_top, ANIM_ZOOM);
 
-    normal_progress = ui_get_element_by_tag(&screen, "normalprogress");
-    normal_progress_val = ui_get_element_by_tag(&screen, "normalprogressvalue");
-    practice_progress = ui_get_element_by_tag(&screen, "practiceprogress");
-    practice_progress_val = ui_get_element_by_tag(&screen, "practiceprogressvalue");
+    level_name      = (UILabel *) ui_get_element_by_tag(&screen_top, "levelname");
+    creator_name    = (UILabel *) ui_get_element_by_tag(&screen_top, "creatorname");
+    description     = (UILabel *) ui_get_element_by_tag(&screen_top, "description");
+    downloads_label = (UILabel *) ui_get_element_by_tag(&screen_top, "downloadcount");
+    likes_label     = (UILabel *) ui_get_element_by_tag(&screen_top, "likecount");
+    stars_label     = (UILabel *) ui_get_element_by_tag(&screen_top, "stars");
+    difficulty_face = (UIImage *) ui_get_element_by_tag(&screen_top, "difficultyface");
+    level_id_label  = (UILabel *) ui_get_element_by_tag(&screen_top, "levelid");
+    song_label      = (UILabel *) ui_get_element_by_tag(&screen, "songid");
+    
+    like_image = (UIImage *) ui_get_element_by_tag(&screen_top, "likeimage");
+
+    normal_progress = (UIProgressBar *) ui_get_element_by_tag(&screen, "normalprogress");
+    normal_progress_val = (UILabel *) ui_get_element_by_tag(&screen, "normalprogressvalue");
+    practice_progress = (UIProgressBar *) ui_get_element_by_tag(&screen, "practiceprogress");
+    practice_progress_val = (UILabel *) ui_get_element_by_tag(&screen, "practiceprogressvalue");
 
     ui_progress_bar_set_tint(normal_progress, C2D_Color32(0, 255, 0, 255));
     ui_progress_bar_set_tint(practice_progress, C2D_Color32(0, 255, 255, 255));

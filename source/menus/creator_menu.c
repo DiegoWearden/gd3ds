@@ -1,7 +1,7 @@
 #include <3ds.h>
 #include <citro2d.h>
-#include "menus/components/ui_element.h"
-#include "menus/components/ui_screen.h"
+#include "menus/core/ui_element.h"
+#include "menus/core/ui_screen.h"
 #include "math_helpers.h"
 #include "menus/components/ui_list.h"
 #include "menus/components/ui_window.h"
@@ -10,7 +10,6 @@
 #include "menus/components/ui_progress_bar.h"
 #include "menus/components/ui_label.h"
 #include "menus/components/ui_button.h"
-#include "menus/components/ui_external_level_card.h"
 #include "fonts/bigFont.h"
 #include "main.h"
 #include "easing.h"
@@ -39,8 +38,8 @@ static int new_state = 0;
 static bool exit_flag = false;
 static bool in_disclaimer = false;
 
-static UIElement *bg_gradient;
-static UIElement *bg_gradient_top;
+static UIImage *bg_gradient;
+static UIImage *bg_gradient_top;
 
 static void action_exit(UIElement *e) {
     exit_flag = true;
@@ -54,18 +53,18 @@ static void action_open_external_menu(UIElement *e) {
 
 static void action_open_saved_menu(UIElement *e) {
     //disabled for release build
-    // new_state = STATE_SAVED_LEVELS;
-    // set_fade_status(FADE_STATUS_OUT);
-    in_disclaimer = true;
-    disclaimer_init();
+    new_state = STATE_SAVED_LEVELS;
+    set_fade_status(FADE_STATUS_OUT);
+//     in_disclaimer = true;
+//     disclaimer_init();
 }
 
 static void action_open_search_menu(UIElement *e) {
     // disabled for release build
-    // new_state = STATE_SEARCH_MENU;
-    // set_fade_status(FADE_STATUS_OUT);
-    in_disclaimer = true;
-    disclaimer_init();
+    new_state = STATE_SEARCH_MENU;
+    set_fade_status(FADE_STATUS_OUT);
+    // in_disclaimer = true;
+    // disclaimer_init();
 }
 
 static void action_open_soggy_menu(UIElement *e) {
@@ -87,14 +86,14 @@ void creator_menu_loop() {
     new_state = STATE_CREATOR_MENU;
 
     ui_load_screen(&default_screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/creator_menu.txt");
-    bg_gradient = ui_get_element_by_tag(&default_screen, "gradient");
+    bg_gradient = (UIImage *) ui_get_element_by_tag(&default_screen, "gradient");
     ui_load_screen(&default_screen_top, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/creator_menu_top.txt");
-    bg_gradient_top = ui_get_element_by_tag(&default_screen_top, "gradient_top");
+    bg_gradient_top = (UIImage *) ui_get_element_by_tag(&default_screen_top, "gradient_top");
 
     ui_image_set_tint(bg_gradient, C2D_Color32(50, 110, 255, 255));
     ui_image_set_tint(bg_gradient_top, C2D_Color32(50, 110, 255, 255));
 
-    if (gotSogged) ui_button_set_image(ui_get_element_by_tag(&default_screen, "create_button"), 20, 1);
+    if (gotSogged) ui_button_set_image((UIButton *) ui_get_element_by_tag(&default_screen, "create_button"), 20, 1);
 
     set_fade_status(FADE_STATUS_IN);
 

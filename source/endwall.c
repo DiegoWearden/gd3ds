@@ -10,7 +10,7 @@
 #include "particles/rays.h"
 #include "particles/circles.h"
 
-#include "menus/components/ui_screen.h"
+#include "menus/core/ui_screen.h"
 #include "menus/level_complete.h"
 #include "practice.h"
 #include "menus/level_select.h"

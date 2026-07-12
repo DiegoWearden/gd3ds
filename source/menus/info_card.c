@@ -1,7 +1,7 @@
 #include <3ds.h>
 #include <citro2d.h>
-#include "menus/components/ui_element.h"
-#include "menus/components/ui_screen.h"
+#include "menus/core/ui_element.h"
+#include "menus/core/ui_screen.h"
 #include "math_helpers.h"
 #include "menus/components/ui_list.h"
 #include "menus/components/ui_window.h"
@@ -23,10 +23,9 @@
 static bool yes_exit = false;
 
 static UIScreen screen = {
-    .isBottom = true,
-    .open_anim = ANIM_ZOOM
+    .isBottom = true
 };
-static UIElement *content;
+static UILabel *content;
 
 void exit_info_card(UIElement* e) {
     yes_exit = true;
@@ -37,12 +36,13 @@ static UIAction actions[] = {
 };
 
 void set_info_content(char *text) {
-    content = ui_get_element_by_tag(&screen, "content");
+    content = (UILabel *) ui_get_element_by_tag(&screen, "content");
     ui_label_set_text(content, text);
 }
 
 void info_card_init() {
     ui_load_screen(&screen, actions, sizeof(actions) / sizeof(actions[0]), "romfs:/menus/info_card.txt");
+    ui_screen_open(&screen, ANIM_ZOOM);
     yes_exit = false;
 }
 

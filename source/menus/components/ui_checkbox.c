@@ -1,126 +1,113 @@
-#include "ui_element.h"
+#include "menus/core/ui_element.h"
 #include <citro2d.h>
-#include "ui_image.h"
+#include "ui_button.h"
 #include "text.h"
 #include "fonts/bigFont.h"
 #include "easing.h"
 #include "math_helpers.h"
 #include "ui_checkbox.h"
-#include "ui_screen.h"
+#include "menus/core/ui_screen.h"
+#include "menus/core/ui_props.h"
 
 #include "main.h"
 
-static void set_checkbox_texture(UIElement* e, bool enabled) {
+static void set_checkbox_texture(UICheckBox* e, bool enabled) {
+    if (!e) return;
+    UIButton *button = (UIButton *) e;
     int tex = enabled ? 28 : 27;
-    C2D_SpriteFromSheet(&e->checkbox.image.sprite, ui_sheet, tex);
-    C3D_TexSetFilter(e->checkbox.image.sprite.image.tex, GPU_LINEAR, GPU_LINEAR);
+    C2D_SpriteFromSheet(&button->image.sprite, ui_sheet, tex);
+    C3D_TexSetFilter(button->image.sprite.image.tex, GPU_LINEAR, GPU_LINEAR);
 
-    e->w = fabsf(e->checkbox.image.sprite.image.subtex->width * e->checkbox.scaleX);
-    e->h = fabsf(e->checkbox.image.sprite.image.subtex->height * e->checkbox.scaleY);
+    button->base.w = button->image.sprite.image.subtex->width;
+    button->base.h = button->image.sprite.image.subtex->height;
 }
 
 // Set checkbox checked state
-void set_checkbox_enabled(UIElement *e, bool enabled) {
-    if (e->type != UI_CHECKBOX) return;
+void set_checkbox_enabled(UICheckBox *e, bool enabled) {
+    if (!e) return;
 
     set_checkbox_texture(e, enabled);
-    e->checkbox.checked = enabled;
+    e->checked = enabled;
 }
 
+static void ui_checkbox_update(UIElement* e, UIInput* touch, UITransform *transform) {
+    ui_button_update(e, touch, transform);
+}
 
-static void ui_checkbox_update(UIElement* e, UIInput* touch) {
-    bool pressedTouch = hidKeysDown() & KEY_TOUCH;
-    bool releasedTouch = hidKeysUp() & KEY_TOUCH;
+static void ui_checkbox_draw(UIElement* e, UITransform *transform) {
+    UIButton *checkbox = (UIButton *) e;
 
-    bool inside = touch->touchPosition.px >= e->x - (e->w / 2) && touch->touchPosition.px < e->x + (e->w / 2) &&
-                  touch->touchPosition.py >= e->y - (e->h / 2) && touch->touchPosition.py < e->y + (e->h / 2);
+    C2D_SpriteSetCenter(&checkbox->image.sprite, 0.5f, 0.5f);
+    C2D_SpriteSetPos(&checkbox->image.sprite, transform->x, transform->y);
+    C2D_SpriteSetScale(&checkbox->image.sprite, transform->scaleX, transform->scaleY);
+    C2D_DrawSprite(&checkbox->image.sprite);
+}
 
-    // Check if pressed the checkbox
-    if (inside && pressedTouch && !touch->did_something) {
-        e->checkbox.hovered = true;
-        e->checkbox.pressed = true;
-    }
-
-    // If previously pressed on it, hover
-    if (inside && e->checkbox.pressed) {
-        e->checkbox.hovered = true;
-    }
-    
-    EaseTypes bounce_type;
-    // Animation
-    if (e->checkbox.hovered) {
-        e->checkbox.hoverTimer += DT;
-        bounce_type = BOUNCE_OUT;
-    } else {
-        e->checkbox.hoverTimer -= DT;
-        // As the animation plays in reverse, we just use bounce in
-        bounce_type = BOUNCE_IN;
-    }
-
-    e->checkbox.hoverTimer = clampf(e->checkbox.hoverTimer, 0.f, CHECKBOX_HOVER_ANIM_TIME);
-    
-    e->checkbox.hoverScale = easeValue(bounce_type, 1.0f, CHECKBOX_HOVER_SCALE, e->checkbox.hoverTimer, CHECKBOX_HOVER_ANIM_TIME, 0);
-
-    // If released on checkbox, do its action
-    if (e->checkbox.hovered && releasedTouch) {
-        e->checkbox.checked ^= 1;
-        e->checkbox.pressed = false;
-        e->checkbox.hovered = false;
-        e->checkbox.hoverTimer = 0.f;
-        e->checkbox.hoverScale = 1.f;
-        if (e->action)
-            e->action(e);
-    }
-    
-    // Unpress the checkbox
-    if (!inside) {
-        e->checkbox.hovered = false;
-    }
-                      
-    // Mask background elements
-    if (inside) {
-        touch->interacted = true;
-        touch->did_something = true;
-    }
-
-    if (e->checkbox.checked != e->checkbox.image_id) {
-        set_checkbox_texture(e, e->checkbox.checked);
-        e->checkbox.image_id = e->checkbox.checked;
+static void ui_checkbox_destroy(UIElement *e) {
+    if (e) {
+        free(e);
+        e = NULL;
     }
 }
 
-static void ui_checkbox_draw(UIElement* e) {
-    float scale = e->checkbox.hoverScale;
+static void ui_checkbox_pre_action(UIElement *e) {
+    UICheckBox *checkbox = (UICheckBox *) e;
 
-
-    C2D_SpriteSetCenter(&e->checkbox.image.sprite, 0.5f, 0.5f);
-    C2D_SpriteSetPos(&e->checkbox.image.sprite, e->x, e->y);
-    C2D_SpriteSetScale(&e->checkbox.image.sprite, scale * e->checkbox.scaleX, scale * e->checkbox.scaleY);
-    C2D_DrawSprite(&e->checkbox.image.sprite);
+    checkbox->checked ^= 1;
+    set_checkbox_texture(checkbox, checkbox->checked);
 }
 
-UIElement ui_create_checkbox(
-    int x, int y, float sx, float sy, bool enabled,
-    UIActionFn action,
-    char (*tag)[TAG_LENGTH]
-) {
-    UIElement e = {
-        .type = UI_CHECKBOX,
-        .x = x, .y = y,
-        .w = 0, .h = 0,
-        .enabled = true,
-        .action = action,
-        .update = ui_checkbox_update,
-        .draw = ui_checkbox_draw
-    };
+static void ui_checkbox_on_disable(UIElement *e) {
+    UIButton *checkbox = (UIButton *) e;
+    checkbox->hovered = false;
+    checkbox->hoverScale = 1.f;
+    checkbox->hoverTimer = 0.f;
+}
 
-    // Copy tag
-    copy_tag_array(&e, tag);
+UICheckBox *ui_create_checkbox(const UIContext *ctx) {
+    UICheckBox *e = malloc(sizeof(UICheckBox));
 
-    e.checkbox.scaleX = sx;
-    e.checkbox.scaleY = sy;
+    if (!e) return NULL;
 
-    set_checkbox_texture(&e, enabled);
+    UIButton *button = (UIButton* ) e;
+    
+    memset(e, 0, sizeof(UICheckBox));
+    button->base.type = UI_CHECKBOX;
+    button->base.enabled = true;
+    button->base.update = ui_checkbox_update;
+    button->base.draw = ui_checkbox_draw;
+    button->base.destroy = ui_checkbox_destroy;
+
+    button->pre_action = ui_checkbox_pre_action;
+
+    button->base.modify_transform = ui_button_modify_transform;
+
+    button->base.on_disable = ui_checkbox_on_disable;
+
+    ui_element_apply_default_properties(&button->base, ctx);
+    
+    button->hoverScale = 1;
+    button->hoverFactor = 1;
+
+    set_checkbox_texture(e, e->checked);
 
     return e;
+}
+
+UIElement *ui_create_checkbox_from_props(const UIContext *ctx, const UIPropertyList *props) {
+    UICheckBox *checkbox = ui_create_checkbox(ctx);
+
+    if (!checkbox) return NULL;
+
+    UIButton *button = (UIButton* ) checkbox;
+
+    ui_element_apply_properties(&button->base, ctx, props);
+    
+    checkbox->checked = ui_prop_bool(props, "checked", false);
+    
+    button->hoverFactor = ui_prop_float(props, "hoverFactor", 1);
+
+    set_checkbox_texture(checkbox, checkbox->checked);
+
+    return &button->base;
 }

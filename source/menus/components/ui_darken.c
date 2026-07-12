@@ -1,76 +1,116 @@
-#include "ui_element.h"
+#include "menus/core/ui_element.h"
 #include <citro2d.h>
-#include "ui_screen.h"
+#include "menus/core/ui_screen.h"
+#include "menus/core/ui_props.h"
 
-void ui_darken_reset_opacity(UIElement* e){
-    C2D_PlainImageTint(&e->darken.tint, C2D_Color32f(0, 0, 0, e->opacity), 1.0f);
+void ui_darken_set_opacity(UIDarken* e, float opacity) {
+    if (!e) return;
+
+    C2D_PlainImageTint(&e->image.tint, C2D_Color32f(0, 0, 0, opacity), 1.0f);
 }
 
-static void ui_darken_update(UIElement* e, UIInput* touch) {
-    bool inside = touch->touchPosition.px >= e->x - (e->w / 2) && touch->touchPosition.px < e->x + (e->w / 2) &&
-                  touch->touchPosition.py >= e->y - (e->h / 2) && touch->touchPosition.py < e->y + (e->h / 2);
+void ui_darken_reset_opacity(UIDarken* e){
+    if (!e) return;
+
+    C2D_PlainImageTint(&e->image.tint, C2D_Color32f(0, 0, 0, e->base.opacity), 1.0f);
+}
+
+static void ui_darken_update(UIElement* e, UIInput* touch, UITransform *transform) {
+    UIDarken *darken = (UIDarken *) e;
+
+    bool inside = ui_element_basic_bound_check(e, touch, transform);
     
     // Mask background elements
     if (inside) touch->did_something = true;
 
-    if(!e->darken.darkenOver){
-        e->opacity = (e->darken.darkenTimeElapsed / e->darken.darkenTime) * e->darken.targetOpacity;
-        e->darken.darkenTimeElapsed += 1.f / 60.f;
+    if(!darken->darkenOver){
+        e->opacity = (darken->darkenTimeElapsed / darken->darkenTime) * darken->targetOpacity;
+        darken->darkenTimeElapsed += 1.f / 60.f;
     }
 
-    if(e->darken.darkenTimeElapsed > e->darken.darkenTime && !e->darken.darkenOver){
-        e->darken.darkenOver = true;
+    if(darken->darkenTimeElapsed > darken->darkenTime && !darken->darkenOver){
+        darken->darkenOver = true;
     }
 }
 
-static void ui_darken_draw(UIElement* e) {
-    if(!e->darken.darkenOver){
-        ui_darken_reset_opacity(e);
+static void ui_darken_draw(UIElement* e, UITransform *transform) {
+    UIDarken *darken = (UIDarken *) e;
+
+    if(!darken->darkenOver){
+        ui_darken_reset_opacity(darken);
     }
 
-    if (e->darken.fullScreen) {
-        C2D_SpriteSetPos(&e->darken.sprite, SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
-        C2D_SpriteSetScale(&e->darken.sprite, SCREEN_WIDTH/16.f, SCREEN_HEIGHT/16.f);
+    if (darken->fullScreen) {
+        C2D_SpriteSetPos(&darken->image.sprite, SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
+        C2D_SpriteSetScale(&darken->image.sprite, SCREEN_WIDTH/16.f, SCREEN_HEIGHT/16.f);
     } else {
-        C2D_SpriteSetPos(&e->darken.sprite, e->x, e->y);
-        C2D_SpriteSetScale(&e->darken.sprite, e->w/16.f, e->h/16.f);
+        C2D_SpriteSetPos(&darken->image.sprite, transform->x, transform->y);
+        C2D_SpriteSetScale(&darken->image.sprite, e->w/16.f, e->h/16.f);
     }
-    C2D_DrawSpriteTinted(&e->darken.sprite, &e->darken.tint);
+    C2D_DrawSpriteTinted(&darken->image.sprite, &darken->image.tint);
 }
 
-UIElement ui_create_darken(float x, float y, float width, float height, float opacity, float darkenTime, bool fullScreen, char (*tag)[TAG_LENGTH]) {
-    UIElement e = {0};
-
-    e.type = UI_DARKEN;
-    e.x = x;
-    e.y = y;
-    e.w = width;
-    e.h = height;
-    e.enabled = true;
-    e.opacity = 0.0f;
-    e.darken.fullScreen = fullScreen;
-
-    if (darkenTime <= 0.f) {
-        ui_darken_reset_opacity(&e);
-        
-        e.opacity = opacity;
-        e.darken.darkenOver = true;
-    } else {
-        e.darken.darkenTime = darkenTime;
-        e.darken.darkenTimeElapsed = 0.f;
-        e.darken.darkenOver = false;
-        e.darken.targetOpacity = opacity;
+static void ui_darken_destroy(UIElement *e) {
+    if (e) {
+        free(e);
+        e = NULL;
     }
+}
 
-    // Copy tag
-    copy_tag_array(&e, tag);
+UIDarken *ui_create_darken(const UIContext *ctx) {
+    UIDarken *e = malloc(sizeof(UIDarken));
 
-    C2D_PlainImageTint(&e.darken.tint, C2D_Color32f(0, 0, 0, opacity), 1.0f);
-    C2D_SpriteFromSheet(&e.darken.sprite, ui_sheet, 416);
-    C2D_SpriteSetCenter(&e.darken.sprite, 0.5f, 0.5f);
+    if (!e) return NULL;
 
-    e.update = ui_darken_update;
-    e.draw = ui_darken_draw;
+    memset(e, 0, sizeof(UIDarken));
+    e->base.type = UI_DARKEN;
+    e->base.enabled = true;
+    e->base.opacity = 0.0f;
+
+    e->darkenTime = 0.1f;
+    e->darkenTimeElapsed = 0.f;
+    e->darkenOver = false;
+    e->targetOpacity = 0.4f;
+    
+    ui_element_apply_default_properties(&e->base, ctx);
+    
+    C2D_SpriteFromSheet(&e->image.sprite, ui_sheet, 416);
+    C2D_SpriteSetCenter(&e->image.sprite, 0.5f, 0.5f);
+
+    e->base.update = ui_darken_update;
+    e->base.draw = ui_darken_draw;
+    e->base.destroy = ui_darken_destroy;
 
     return e;
+}
+
+UIElement *ui_create_darken_from_props(const UIContext *ctx, const UIPropertyList *props) {
+    UIDarken *darken = ui_create_darken(ctx);
+
+    if (!darken) return NULL;
+
+    ui_element_apply_properties(&darken->base, ctx, props);
+
+    if (darken->base.w == 0 || darken->base.h == 0) {
+        darken->fullScreen = true;
+    }
+
+    float darkenTime = ui_prop_float(props, "darkenTime", 0.1f);
+    float opacity = ui_prop_float(props, "opacity", 0.4f);
+    
+    if (darkenTime <= 0.f) {
+        ui_darken_reset_opacity(darken );
+        
+        darken->base.opacity = opacity;
+        darken->darkenOver = true;
+    } else {
+        darken->darkenTime = darkenTime;
+        darken->darkenTimeElapsed = 0.f;
+        darken->darkenOver = false;
+        darken->targetOpacity = opacity;
+    }
+
+    C2D_PlainImageTint(&darken->image.tint, C2D_Color32f(0, 0, 0, opacity), 1.0f);
+
+    return &darken->base;
 }

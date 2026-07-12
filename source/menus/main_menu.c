@@ -3,19 +3,13 @@
 
 #include <stdlib.h>
 
-#include "menus/components/ui_element.h"
-#include "menus/components/ui_screen.h"
+#include "menus/core/ui_element.h"
+#include "menus/core/ui_screen.h"
 #include "math_helpers.h"
 #include "menus/components/ui_list.h"
-#include "menus/components/ui_window.h"
-#include "menus/components/ui_textbox.h"
 #include "menus/components/ui_image.h"
-#include "menus/components/ui_button.h"
 #include "menus/palette_kit.h"
-#include "fonts/bigFont.h"
-#include "fonts/chatFont.h"
 #include "main.h"
-#include "easing.h"
 #include "color_channels.h"
 #include "mp3_player.h"
 #include "graphics.h"
@@ -25,13 +19,10 @@
 #include "settings.h"
 #include "statistics.h"
 #include "credits.h"
-#include "creator_menu.h"
-#include "external_levels.h"
 #include "first_boot_disclaimer.h"
 #include "info_card.h"
 #include "state.h"
 #include "particles/object_particles.h"
-#include "save/config.h"
 #include "particles/circles.h"
 
 #include "save/saving.h"
@@ -94,7 +85,7 @@ void action_open_credits(UIElement* e) {
     credits_init();
 }
 
-void action_open_info_card(int id, UIElement* e) {
+void action_open_info_card(int id) {
     info_card_init();
     switch (id) {
         case 1:
@@ -111,7 +102,7 @@ void action_open_info_card(int id, UIElement* e) {
             break;
         case 4:
             // hitboxes info
-            set_info_content("Shows object hitboxes while in a level<p>WARNING: AFFECTS PERFORMANCE!");
+            set_info_content("Shows object hitboxes while in a level.<p>WARNING: AFFECTS PERFORMANCE!");
             break;
         case 5:
             // debug info
@@ -123,7 +114,7 @@ void action_open_info_card(int id, UIElement* e) {
             break;
         case 7:
             // ULTRA accurate percentage info
-            set_info_content("But mom! I want more decimals!!!!<p>(use at your own risk)");
+            set_info_content("But mom, I want more decimals!!!!<p>(use at your own risk)");
             break;
         case 8:
             // Switch trail color
@@ -135,7 +126,7 @@ void action_open_info_card(int id, UIElement* e) {
             break;
         case 10:
             // quick retry info
-            set_info_content("Restarts in 0,5 seconds instead of 1.");
+            set_info_content("Restarts in 0.5 seconds instead of 1.");
             break;
         case 11:
             // solid trail info
@@ -318,7 +309,7 @@ void main_menu_loop() {
     channels[chan_ground].color = col;
     channels[chan_line].color = white;
 
-    UIElement *title = ui_get_element_by_tag(&default_screen_top, "title");
+    UIImage *title = (UIImage *) ui_get_element_by_tag(&default_screen_top, "title");
 
     if (title && alt_title_screen) {
         ui_image_set_image(title, 3, 1);
@@ -431,7 +422,7 @@ void main_menu_loop() {
 
         // Ded
         if (kill && !state.dead && !in_menu) {
-            state.dead = true;
+            kill_player(DEATH_TITLE_SCREEN_KILL);
             players_destroyed++;
             handle_death(&title_screen_player, false);
             death_wait_timer = DEATH_WAITING_TIME;

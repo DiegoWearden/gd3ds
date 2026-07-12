@@ -1,4 +1,6 @@
 #include "graphics.h"
+#include "c2d/base.h"
+#include "c2d/spritesheet.h"
 #include "objects.h"
 #include "main.h"
 #include "math_helpers.h"
@@ -22,7 +24,7 @@
 #include "menus/settings.h"
 #include "menus/gameplay.h"
 
-#include "menus/components/ui_screen.h"
+#include "menus/core/ui_screen.h"
 
 #include "fonts/bigFont.h"
 #include "particles/rays.h"
@@ -976,6 +978,10 @@ void change_blending(bool blending) {
         C3D_TexEnvInit(env);
     }
 
+    // Draw dummy image for changes to apply
+    C2D_Image dummy = C2D_SpriteSheetGetImage(spriteSheet, 0);
+    C2D_DrawImageAt(dummy, 0, 0, 0, NULL, 0, 0);
+
     blending_state = blending;
 }
 
@@ -1115,7 +1121,7 @@ void draw_attempt_text() {
     float calc_y = SCREEN_HEIGHT - ((state.attempt_text_pos.y - state.camera_y));  
 
     if (calc_x > -200) {
-        draw_text(&bigFont_fontCharset, &bigFont_sheet, get_mirror_x(calc_x, state.mirror_factor), calc_y, 1, (doNot ? -1 : 1), 0.5f, "Attempt %d", attempts);
+        draw_text(&bigFont_fontCharset, &bigFont_sheet, get_mirror_x(calc_x, state.mirror_factor), calc_y, 1, (doNot ? -1 : 1), 0.5f, true, "Attempt %d", attempts);
     }
 }
 

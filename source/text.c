@@ -8,6 +8,8 @@
 #include "fonts/bigFont.h"
 #include <stdarg.h>
 
+#include "menus/core/ui_screen.h"
+
 static const u32 white = ABGR8(255, 255, 255, 255);
 static char wrap_buffer[4096];
 
@@ -23,6 +25,7 @@ typedef struct {
 // now you can also put it in decimal like "<255,0,0>red</>" and also include opacity "<255,255,255,127>half</>""
 // </> ALWAYS resets to white and doesn't care if there is a tag before, its just so it looks like html
 // <p> makes a new line
+// you can display an image like if it was an emoji via "<i(id)s(s)>", where id is the iamge index and s the spritesheet id, for example, "<i19s1>" display image #19 in sheet #1, which is soggy
 
 // Even thought the macro is called "ABGR8", the paremeters are still in this order: red, green, blue, alpha
 static const TagColor color_table[] = {
@@ -31,10 +34,8 @@ static const TagColor color_table[] = {
     { "blue",  ABGR8(0, 0, 255, 255)},
 };
 
-#define NUM_COLORS sizeof(color_table) / sizeof(color_table[0])
-
 static bool parse_named_color_tag(const char *tag, u32 *out) {
-    for (int i = 0; i < NUM_COLORS; i++) {
+    for (int i = 0; i < ARRAY_LEN(color_table); i++) {
         if (strcasecmp(tag, color_table[i].name) == 0) {
             *out = color_table[i].color;
             return true;
@@ -44,13 +45,17 @@ static bool parse_named_color_tag(const char *tag, u32 *out) {
     return false;
 }
 
-static bool parse_hex_color(const char *str, u32 *out) {
+bool parse_hex_color(const char *str, u32 *out) {
     unsigned int r, g, b, a;
 
-    // #RRGGBB
     if (str[0] == '#') {
-        unsigned int r, g, b;
+        // RRGGBBAA
+        if (sscanf(str + 1, "%02x%02x%02x%02x", &r, &g, &b, &a) == 4 && strlen(str) == 9) {
+            *out = ABGR8(r, g, b, a);
+            return true;
+        }
 
+        // #RRGGBB
         if (sscanf(str + 1, "%02x%02x%02x", &r, &g, &b) == 3 && strlen(str) == 7) {
             *out = ABGR8(r, g, b, 255);
             return true;
@@ -126,8 +131,14 @@ static bool read_tag(const char *text, int *i, char *tag_out, int max) {
     return true;
 }
 
+static bool parse_image_tag(const char *tag, int *image, int *sheet) {
+    return sscanf(tag, "i%ds%d", image, sheet) == 2;
+}
+
 // Count da lines
-static int count_lines(const char *text) {
+static int count_lines(const char *text, bool parse_tags) {
+    if (!parse_tags) return 1;
+    
     int lines = 1;
 
     for (int i = 0; text[i]; i++) {
@@ -202,10 +213,10 @@ char *wrap_text(const Charset *font, float zoom_x, const char *text, float max_w
         word[len] = '\0';
 
         float word_width =
-            get_text_length(font, zoom_x, word);
+            get_text_length(font, zoom_x, true, word);
 
         float space_width =
-            get_text_length(font, zoom_x, " ");
+            get_text_length(font, zoom_x, true, " ");
 
         // Wrap if needed
         if (line_width > 0 && line_width + space_width + word_width > max_width) {
@@ -228,20 +239,89 @@ char *wrap_text(const Charset *font, float zoom_x, const char *text, float max_w
     return wrap_buffer;
 }
 
-float get_line_length(const Charset *font, const float zoom_x, const char *text, int start) {
+static float get_image_tag_length(const Charset *font, const float zoom_x, char *tag) {
+    int image_index = -1;
+    int image_sheet = 0;
+    if (parse_image_tag(tag, &image_index, &image_sheet)) {
+        float height = HEIGHT_OFFSET;
+
+        const Glyph *aCharacter = get_glyph(font, 'A');
+        if (aCharacter) {
+            height = aCharacter->height * HEIGHT_OFFSET_MULT;
+        }
+
+        C2D_Image image = C2D_SpriteSheetGetImage(*get_sheet(image_sheet), image_index);
+        if (!image.subtex) return 0;
+
+        float tex_w = image.subtex->width;
+        float tex_h = image.subtex->height;
+
+        float image_scale = height / tex_h;
+        
+        float image_scale_x = zoom_x * image_scale;
+
+        float image_width = tex_w * image_scale_x;
+        return image_width;
+    }
+
+    return 0;
+}
+
+static void get_line_metrics(const Charset *font, float zoom_x, bool parse_tags, const char *text, int start, float *out_length, float *out_first_char, float *out_last_char) {
+    float length = 0.f;
+    float first_char = 0.f, last_char = 0.f;
+    bool first = true;
+
+    for (int i = start; text[i]; i++) {
+        // Skip tags
+        if (text[i] == '<' && parse_tags) {
+            char tag[64];
+            if (read_tag(text, &i, tag, sizeof(tag))) {
+                if (strcmp(tag, "p") == 0) {
+                    break;
+                }
+
+                length += get_image_tag_length(font, zoom_x, tag);
+                
+                continue;
+            }
+        }
+
+        const Glyph *character = get_glyph(font, text[i]);
+        if (character) {
+            // First character
+            if (first) { 
+                first_char = character->xOffset * zoom_x; 
+                first = false; 
+            }
+
+            // Calculate gap between visual end and xadvance end
+            last_char = (character->xAdvance - character->xOffset - character->width) * zoom_x;
+            length += character->xAdvance * zoom_x;
+        }
+    }
+
+    *out_length = length;
+    *out_first_char = first_char;
+    *out_last_char = last_char;
+}
+
+float get_line_length(const Charset *font, const float zoom_x, bool parse_tags, const char *text, int start) {
     float text_length = 0;
 
     for (int i = start; text[i]; i++) {
         const Glyph *character = get_glyph(font, text[i]);
 
         // Skip tags
-        if (text[i] == '<') {
+        if (text[i] == '<' && parse_tags) {
             char tag[64];
 
             if (read_tag(text, &i, tag, sizeof(tag))) {
                 if (strcmp(tag, "p") == 0) {
                     break;
                 }
+
+                text_length += get_image_tag_length(font, zoom_x, tag);
 
                 continue;
             }
@@ -279,7 +359,7 @@ float get_longest_line_length(const Charset *font, const float zoom_x, const cha
 
             // Measure line
             if (newline || text[i] == '\0') {
-                float length = get_line_length(font, zoom_x, text, start);
+                float length = get_line_length(font, zoom_x, true, text, start);
 
                 // Set if longer than last saved line
                 if (length > longest) {
@@ -301,17 +381,22 @@ float get_longest_line_length(const Charset *font, const float zoom_x, const cha
     return longest;
 }
 
-float get_text_length(const Charset *font, const float zoom_x, const char *text) {
+float get_text_length(const Charset *font, const float zoom_x, bool parse_tags, const char *text) {
     float text_length = 0;
     int size = strlen(text);
     for (int i = 0; i < size; i++) {
         const Glyph *character = get_glyph(font, text[i]);
         
         // Skip tags
-        if (text[i] == '<') {
+        if (text[i] == '<' && parse_tags) {
             char tag[64];
 
             if (read_tag(text, &i, tag, sizeof(tag))) {
+                if (strcmp(tag, "p") == 0) {
+                    continue;
+                }
+
+                text_length += get_image_tag_length(font, zoom_x, tag);
                 continue;
             }
         }
@@ -327,7 +412,7 @@ float get_text_length(const Charset *font, const float zoom_x, const char *text)
 
 #define SPACING 6.f
 
-void draw_text(const Charset *font, C2D_SpriteSheet *sheet, const float x, const float y, const float scaleX, const float scaleY, float alignment, const char *text, ...) {
+void draw_text(const Charset *font, C2D_SpriteSheet *sheet, const float x, const float y, const float scaleX, const float scaleY, float alignment, bool parse_tags, const char *text, ...) {
     if (!text || !sheet) {
         return;
     }
@@ -346,13 +431,17 @@ void draw_text(const Charset *font, C2D_SpriteSheet *sheet, const float x, const
         height = aCharacter->height * HEIGHT_OFFSET_MULT;
     }
 
-    float line_length = get_line_length(font, fabsf(scaleX), tmp, 0);
+    float line_length;
+    float first_char;
+    float last_char;
+
+    get_line_metrics(font, fabsf(scaleX), parse_tags, tmp, 0, &line_length, &first_char, &last_char);
 
     float offset_x = 0;
     float offset_y = 0;
 
     // Get total text height
-    int line_count = count_lines(tmp) - 1;
+    int line_count = count_lines(tmp, parse_tags) - 1;
     float line_height = (height * fabsf(scaleY)) + SPACING * fabsf(scaleY);
     float total_height = (line_count * line_height);
 
@@ -360,63 +449,109 @@ void draw_text(const Charset *font, C2D_SpriteSheet *sheet, const float x, const
     u32 current_color = white;
 
     for (int i = 0; i < size; i++) {
+        bool is_image = false;
+        int image_index = -1;
+        int image_sheet = 0;
+        
         // Parse tags
-        if (tmp[i] == '<') {
+        if (tmp[i] == '<' && parse_tags) {
             char tag[64];
 
-            if (read_tag(tmp, &i, tag, sizeof(tag))) {                
-                if (strcmp(tag, "p") == 0) {
-                    offset_x = 0;
-                    
-                    offset_y += line_height;
+            if (read_tag(tmp, &i, tag, sizeof(tag))) {   
+                if (parse_image_tag(tag, &image_index, &image_sheet)) {
+                    is_image = true;
+                } else {
+                    if (strcmp(tag, "p") == 0) {
+                        offset_x = 0;
+                        
+                        offset_y += line_height;
 
-                    // Measure next line
-                    line_length = get_line_length(
-                        font,
-                        fabsf(scaleX),
-                        tmp,
-                        i + 1
-                    );
+                        get_line_metrics(font, fabsf(scaleX), true, tmp, i + 1, &line_length, &first_char, &last_char);
 
+                        continue;
+                    }
+
+                    parse_color_tag(tag, &current_color);
                     continue;
                 }
-
-                parse_color_tag(tag, &current_color);
-                continue;
             }
         }
 
         C2D_PlainImageTint(&tint, current_color, 1.f);
         
-        const Glyph *character = get_glyph(font, tmp[i]);
-        
-        if (character != NULL) {
+        float width_offset = alignment * (line_length - first_char - last_char) + first_char;
+
+        if (!is_image) {
+            const Glyph *character = get_glyph(font, tmp[i]);
+            
+            if (character != NULL) {
+                C2D_Sprite sprite = { 0 };
+
+                float xoffset = (character->xOffset) * scaleX;
+                float yoffset = (character->yOffset) * scaleY;
+                float xadvance = character->xAdvance * scaleX;
+
+                int index = character->spriteIndex;
+                
+                float base_y = y - total_height / 2.f;
+
+                float final_x = x + offset_x + xoffset - width_offset;
+                float final_y = base_y + offset_y + yoffset - height * scaleY;
+
+                final_x += (character->width  * scaleX) * 0.5f;
+                final_y += (character->height * scaleY) * 0.5f;
+
+                if (index >= 0) { 
+                    // Draw glyph so its center is at (final_x, final_y)
+                    C2D_SpriteFromSheet(&sprite, *sheet, index);
+                    C3D_TexSetFilter(sprite.image.tex, GPU_LINEAR, GPU_LINEAR);
+                    C2D_SpriteSetCenter(&sprite, 0.5f, 0.5f);
+                    C2D_SpriteSetPos(&sprite, final_x, final_y);
+                    C2D_SpriteSetScale(&sprite, scaleX, scaleY);
+                    C2D_DrawSpriteTinted(&sprite, &tint);
+                }
+
+                offset_x += xadvance;
+            }
+        } else {
+            // Math slop
             C2D_Sprite sprite = { 0 };
 
-            float xoffset = (character->xOffset) * scaleX;
-            float yoffset = (character->yOffset) * scaleY;
-            float xadvance = character->xAdvance * scaleX;
+            if (image_index >= 0) { 
+                C2D_Image image = C2D_SpriteSheetGetImage(*get_sheet(image_sheet), image_index);
+                if (image.subtex) {
+                    C2D_SpriteFromSheet(&sprite, *get_sheet(image_sheet), image_index);
+                    C3D_TexSetFilter(sprite.image.tex, GPU_LINEAR, GPU_LINEAR);
+                
+                    float tex_w = sprite.image.subtex->width;
+                    float tex_h = sprite.image.subtex->height;
 
-            int index = character->spriteIndex;
-            
-            float base_y = y - total_height / 2.f;
-            float final_x = x + offset_x + xoffset - line_length * alignment;
-            float final_y = base_y + offset_y + yoffset - height * scaleY;
+                    float image_scale = height / tex_h;
+                    
+                    float image_scale_x = scaleX * image_scale;
+                    float image_scale_y = scaleY * image_scale;
 
-            final_x += (character->width  * scaleX) * 0.5f;
-            final_y += (character->height * scaleY) * 0.5f;
+                    float image_width = tex_w * image_scale_x;
+                    float image_height = tex_h * image_scale_y;
 
-            if (index >= 0) { 
-                // Draw glyph so its center is at (final_x, final_y)
-                C2D_SpriteFromSheet(&sprite, *sheet, index);
-                C3D_TexSetFilter(sprite.image.tex, GPU_LINEAR, GPU_LINEAR);
-                C2D_SpriteSetCenter(&sprite, 0.5f, 0.5f);
-                C2D_SpriteSetPos(&sprite, final_x, final_y);
-                C2D_SpriteSetScale(&sprite, scaleX, scaleY);
-                C2D_DrawSpriteTinted(&sprite, &tint);
+                    float xadvance = image_width;
+                    
+                    float base_y = y - total_height / 2.f;
+                    float final_x = x + offset_x - width_offset;
+                    float final_y = base_y + offset_y - image_height * 0.5f;
+
+                    final_x += image_width * 0.5f;
+                    final_y += image_height * 0.5f;
+
+                    // Draw image so its center is at (final_x, final_y)
+                    C2D_SpriteSetCenter(&sprite, 0.5f, 0.5f);
+                    C2D_SpriteSetPos(&sprite, final_x, final_y);
+                    C2D_SpriteSetScale(&sprite, image_scale_x, image_scale_y);
+                    C2D_DrawSpriteTinted(&sprite, &tint);
+                    
+                    offset_x += xadvance;
+                }
             }
-
-            offset_x += xadvance;
         }
     }
 }
