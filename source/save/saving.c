@@ -47,6 +47,7 @@ static void init_default(Config *config) {
     config_init_bool(config, DATA_COIN1, false);
     config_init_bool(config, DATA_COIN2, false);
     config_init_bool(config, DATA_COIN3, false);
+    config_init_bool(config, DATA_CBF, true);
 }
 
 static void init_values(Config *config, LevelData *level_data) {
@@ -58,6 +59,7 @@ static void init_values(Config *config, LevelData *level_data) {
     level_data->coin1 = config_get_bool(config, DATA_COIN1, false);
     level_data->coin2 = config_get_bool(config, DATA_COIN2, false);
     level_data->coin3 = config_get_bool(config, DATA_COIN3, false);
+    level_data->cbf = config_get_bool(config, DATA_CBF, true);
 }
 
 static void save_values(Config *config, LevelData *level_data) {
@@ -69,6 +71,7 @@ static void save_values(Config *config, LevelData *level_data) {
     config_set_bool(config, DATA_COIN1, level_data->coin1);
     config_set_bool(config, DATA_COIN2, level_data->coin2);
     config_set_bool(config, DATA_COIN3, level_data->coin3);
+    config_set_bool(config, DATA_CBF, level_data->cbf);
 }
 
 void load_main_level_progress() {

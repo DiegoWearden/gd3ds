@@ -11,6 +11,7 @@
 #define DATA_COIN2 "coin2"
 #define DATA_COIN3 "coin3"
 #define DATA_STARS "stars"
+#define DATA_CBF "cbf"
 
 typedef struct LevelData {
     int attempts;
@@ -21,6 +22,7 @@ typedef struct LevelData {
     bool coin1;
     bool coin2;
     bool coin3;
+    bool cbf;
 } LevelData;
 
 extern LevelData level_data;

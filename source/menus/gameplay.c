@@ -36,6 +36,8 @@
 
 #include "save/saving.h"
 
+#include "precise_input.h"
+
 bool game_paused = false;
 bool in_level_complete = false;
 static bool in_disclaimer = false;
@@ -54,6 +56,7 @@ static UIElement *practice_progress_val;
 static UIElement *music_slider_bar;
 static UIElement *sound_slider_bar;
 static UIElement *auto_checkpoint_toggle;
+static UIElement *cbf_toggle;
 
 static UIElement *coin_1;
 static UIElement *coin_2;
@@ -233,6 +236,15 @@ static void action_auto_checkpoint(UIElement *e) {
     cfg_save();
 }
 
+static void action_cbf(UIElement *e) {
+    cbf_enabled = e->checkbox.checked;
+
+    LevelData *level_data_sel = (state.custom_level ? &level_data : &main_level_data[curr_level_id]);
+    level_data_sel->cbf = cbf_enabled;
+    if (state.custom_level) save_level_progress();
+    else save_main_level_progress(curr_level_id);
+}
+
 static UIAction actions[] = {
     {"pause", action_pause },
     {"unpause", action_unpause },
@@ -243,6 +255,7 @@ static UIAction actions[] = {
     {"add_check", action_add_checkpoint },
     {"remove_check", action_remove_checkpoint },
     {"auto_checkpoint", action_auto_checkpoint },
+    {"cbf", action_cbf },
 };
 
 void gameplay_screen_init() {
@@ -303,6 +316,7 @@ void gameplay_screen_init() {
     music_slider_bar = ui_get_element_by_tag(&default_screen, "music_slider");
     sound_slider_bar = ui_get_element_by_tag(&default_screen, "sound_slider");
     auto_checkpoint_toggle = ui_get_element_by_tag(&default_screen, "auto_checkpoint_toggle");
+    cbf_toggle = ui_get_element_by_tag(&default_screen, "cbf_toggle");
 
     if (music_slider_bar) music_slider_bar->slider.value = music_volume;
     if (sound_slider_bar) sound_slider_bar->slider.value = sound_volume;
@@ -389,6 +403,7 @@ int gameplay_screen_bot_loop() {
     if (game_paused) {
         if (music_slider_bar) music_volume = music_slider_bar->slider.value;
         if (sound_slider_bar) sound_volume = sound_slider_bar->slider.value;
+        if (cbf_toggle) cbf_toggle->checkbox.checked = cbf_enabled;
 
         apply_volume_settings();
     }

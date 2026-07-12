@@ -30,3 +30,6 @@ slider x=180 y=100 max_value=1 scale=0.9 tag="paused,sound_slider"
 
 checkbox x=64 y=135 tag="paused,practice_options,auto_checkpoint_toggle" scale=0.6 action="auto_checkpoint"
 label x=82 y=135 text="Auto checkpoints" scale=0.38 tag="paused,practice_options"
+
+checkbox x=64 y=224 tag="paused,cbf_toggle" scale=0.6 action="cbf"
+label x=82 y=224 text="CBF input" scale=0.38 tag="paused"

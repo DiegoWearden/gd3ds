@@ -28,6 +28,7 @@
 
 #include "player/collision.h"
 #include "state.h"
+#include "precise_input.h"
 
 #include "particles/particles.h"
 #include "particles/object_particles.h"
@@ -536,6 +537,8 @@ void game_loop() {
     u64 lastTime = svcGetSystemTick();
     u64 start = svcGetSystemTick();
     bool fixed_dt = true;
+    precise_input_reset();
+    cbf_enabled = (state.custom_level ? level_data.cbf : main_level_data[curr_level_id].cbf);
     bool old_wide = wideEnabled;
 
     // Main loop
@@ -608,6 +611,14 @@ void game_loop() {
         state.old_input = state.input;
         state.input.pressedJump = (buttonPressed || (in_bounds && (kDown & KEY_TOUCH))) == true;
         state.input.holdJump = (state.input.pressedJump || buttonHeld || (in_bounds && (kHeld & KEY_TOUCH))) == true;
+
+        // Sub-frame input: replay timestamped HID samples per physics step.
+        // Falls back to the per-frame snapshot above while paused, dead, or
+        // when physics runs on a fixed dt decoupled from real time (fades).
+        bool precise_frame = cbf_enabled && !game_paused && state.death_timer <= 0 && !fixed_dt;
+        precise_input_poll(game_paused ? PRECISE_POLL_PAUSED
+                         : precise_frame ? PRECISE_POLL_NORMAL
+                                         : PRECISE_POLL_DISCARD);
         
         for (int i = 0; i < 2; i++) {
             drag_particles[i].emitting = false;
@@ -651,6 +662,14 @@ void game_loop() {
                 accumulator += physics_delta;
                 // Run simulation in fixed steps
                 while (accumulator >= STEPS_DT_UNMOD) {
+                    // This step simulates the real-time window ending at
+                    // now - (accumulator - STEPS_DT); apply the input state
+                    // reconstructed at that moment
+                    if (precise_frame && precise_input_ready()) {
+                        u64 window_end = (u64)((s64)now - (s64)((accumulator - STEPS_DT) * 1000.0 * CPU_TICKS_PER_MSEC));
+                        precise_input_step(window_end);
+                    }
+
                     u64 start_physics = svcGetSystemTick();
                     state.current_player = 0;
                     state.old_player = state.player;
@@ -1006,6 +1025,7 @@ void game_loop() {
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 114, DEBUG_TEXT_SCALE, 0, " - Coll: %6.2f%%", collision_time * 6);
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 126, DEBUG_TEXT_SCALE, 0, " - Play: %6.2f%%", player_time * 6);
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 138, DEBUG_TEXT_SCALE, 0, " - Hndl: %6.2f%%", handle_player_time * 6);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 180, 150, DEBUG_TEXT_SCALE, 0, "Input: %.2fms %dev", precise_input_sample_ms(), precise_input_event_count());
 
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   54,  DEBUG_TEXT_SCALE, 0, "SprDraw:  %6.2f%%", (sprite_drawing_time) * 6);
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 0,   66,  DEBUG_TEXT_SCALE, 0, " - Creating: %6.2f%%", (object_creating_time) * 6);
