@@ -10,6 +10,7 @@
 #include "mp3_player.h"
 #include "graphics.h"
 #include "math_helpers.h"
+#include "particles/object_particles.h"
 #include "utils/json_config.h"
 #include "state.h"
 
@@ -1311,6 +1312,7 @@ void load_level_info(char *data, char *level_string) {
     char *level_name_data = extract_gmd_key((const char *) data, "k2", "s");
     if (level_name_data) {
         level_info.level_name = level_name_data;
+        free(level_name_data);
     } else {
         level_info.level_name = (char *) default_name;
     }
@@ -1318,6 +1320,7 @@ void load_level_info(char *data, char *level_string) {
     char *creator_name_data = extract_gmd_key((const char *) data, "k5", "s");
     if (creator_name_data) {
         level_info.creator_name = creator_name_data;
+        free(creator_name_data);
     } else {
         level_info.creator_name = (char *) default_name;
     }
@@ -1389,6 +1392,7 @@ void reload_level() {
 void unload_level() {
     free_arrays();
     free_sections();
+    free_object_particles();
     
     channelCount = 0;
     if (colorChannels) {

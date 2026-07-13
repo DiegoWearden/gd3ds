@@ -56,6 +56,10 @@
 
 #include "math_helpers.h"
 
+#ifdef DEBUG_LEAKS
+#include "utils/leaks_dbg.h"
+#endif
+
 #define CITRA_TYPE 0x20000
 #define CITRA_VERSION 11
 
@@ -482,6 +486,11 @@ void init_particles(Color p1_color, Color p2_color) {
 }
 
 void game_loop() {
+#ifdef DEBUG_LEAKS
+    current_generation++;
+    dump_leaks();
+#endif
+
     C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
     C2D_SceneBegin(top);
     C2D_TargetClear(top, C2D_Color32(0, 0, 0, 255));
