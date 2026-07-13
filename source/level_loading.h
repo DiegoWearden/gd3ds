@@ -98,8 +98,8 @@ typedef struct {
     bool initial_dual;
     bool initial_upsidedown;
 
-    char *level_name;
-    char *creator_name;
+    char level_name[256];
+    char creator_name[256];
 } LoadedLevelInfo;
 
 extern LoadedLevelInfo level_info;

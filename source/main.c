@@ -519,7 +519,7 @@ void game_loop() {
     }
 
     if (!state.custom_level) {
-        level_info.level_name = main_levels[curr_level_id].level_name;
+        snprintf(level_info.level_name, sizeof(level_info.level_name), "%s", main_levels[curr_level_id].level_name);
     }
 
     play_level_song(level_info.song_offset);
