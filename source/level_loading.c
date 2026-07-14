@@ -10,6 +10,7 @@
 #include "mp3_player.h"
 #include "graphics.h"
 #include "math_helpers.h"
+#include "particles/object_particles.h"
 #include "utils/json_config.h"
 #include "state.h"
 
@@ -763,6 +764,22 @@ int convert_object(int id) {
             return 199;
         case 1892:
             return 393;
+
+        // Default slabs
+        case 1903:
+            return 40;
+
+        case 1904:
+            return 369;
+
+        case 1905:
+            return 370;
+
+        case 1910:
+            return 195;
+
+        case 1911:
+            return 196;
         
     }
     return id;
@@ -1310,16 +1327,18 @@ void load_level_info(char *data, char *level_string) {
 
     char *level_name_data = extract_gmd_key((const char *) data, "k2", "s");
     if (level_name_data) {
-        level_info.level_name = level_name_data;
+        snprintf(level_info.level_name, sizeof(level_info.level_name), "%s", level_name_data);
+        free(level_name_data);
     } else {
-        level_info.level_name = (char *) default_name;
+        snprintf(level_info.level_name, sizeof(level_info.level_name), "%s", default_name);
     }
 
     char *creator_name_data = extract_gmd_key((const char *) data, "k5", "s");
     if (creator_name_data) {
-        level_info.creator_name = creator_name_data;
+        snprintf(level_info.creator_name, sizeof(level_info.creator_name), "%s", creator_name_data);
+        free(creator_name_data);
     } else {
-        level_info.creator_name = (char *) default_name;
+        snprintf(level_info.creator_name, sizeof(level_info.creator_name), "%s", default_name);
     }
 }
 
@@ -1389,6 +1408,7 @@ void reload_level() {
 void unload_level() {
     free_arrays();
     free_sections();
+    free_object_particles();
     
     channelCount = 0;
     if (colorChannels) {

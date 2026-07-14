@@ -112,9 +112,10 @@ static void set_name_creator(char *gmd) {
     if (name) {
         ui_label_set_scale_from_width(level_name, name, MAX_NAME_WIDTH);
         ui_label_set_text(level_name, name);
-        level_info.level_name = name;
+        snprintf(level_info.level_name, sizeof(level_info.level_name), "%s", name);
+        free(name);
     } else {
-        level_info.level_name = (char *) default_name;
+        snprintf(level_info.level_name, sizeof(level_info.level_name), "%s", default_name);
     }
 
     char tmp[512];
@@ -122,13 +123,14 @@ static void set_name_creator(char *gmd) {
     if (creator) {
         snprintf(tmp, sizeof(tmp), "By %s", creator);
         ui_label_set_text(creator_name, tmp);
-        level_info.creator_name = creator;
+        snprintf(level_info.creator_name, sizeof(level_info.creator_name), "%s", creator);
+        free(creator);
     } else {
-        level_info.creator_name = (char *) default_name;
+        snprintf(level_info.creator_name, sizeof(level_info.creator_name), "%s", default_name);
     }
 
     // Load data
-    char file[256];
+    char file[516];
     snprintf(file, sizeof(file), "ext_%s_%s", level_info.level_name, level_info.creator_name);
     load_level_progress(file);
 }

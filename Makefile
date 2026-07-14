@@ -57,6 +57,11 @@ endif
 ASFLAGS := -g $(ARCH)
 LDFLAGS = -specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map) 
 
+ifeq ($(ENABLE_DEBUG_LEAKS),1)
+	COMMON_FLAGS += -DDEBUG_LEAKS
+	LDFLAGS += -Wl,--wrap=malloc,--wrap=free,--wrap=realloc
+endif
+
 LIBS := -lcitro2d -lcitro3d -lctru -lz -lmpg123 -lm -ljson-c `$(PREFIX)pkg-config mbedtls libcurl --libs`
 LIBDIRS := $(PORTLIBS) $(CTRULIB) ./lib
 

@@ -224,6 +224,8 @@ void calculate_stats() {
                     total_demons++;
                 }
             }
+
+            config_free(&curr_level_config);
         }
 
         closedir(dir);

@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include "3ds/env.h"
 #include "objects.h"
 #include "level_loading.h"
 #include "main.h"
@@ -55,6 +56,10 @@
 #include "new_best.h"
 
 #include "math_helpers.h"
+
+#ifdef DEBUG_LEAKS
+#include "utils/leaks_dbg.h"
+#endif
 
 #define CITRA_TYPE 0x20000
 #define CITRA_VERSION 11
@@ -503,6 +508,11 @@ void init_particles(Color p1_color, Color p2_color) {
 }
 
 void game_loop() {
+#ifdef DEBUG_LEAKS
+    current_generation++;
+    dump_leaks();
+#endif
+
     C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
     C2D_SceneBegin(top);
     C2D_TargetClear(top, C2D_Color32(0, 0, 0, 255));
@@ -531,7 +541,7 @@ void game_loop() {
     }
 
     if (!state.custom_level) {
-        level_info.level_name = main_levels[curr_level_id].level_name;
+        snprintf(level_info.level_name, sizeof(level_info.level_name), "%s", main_levels[curr_level_id].level_name);
     }
 
     play_level_song(level_info.song_offset);
@@ -1089,6 +1099,13 @@ void game_loop() {
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 110,   150,  DEBUG_TEXT_SCALE, 0, true, "- X: %.2f", state.camera_x);
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 110,   162,  DEBUG_TEXT_SCALE, 0, true, "- Y: %.2f", state.camera_y);
                 draw_text(&bigFont_fontCharset, &bigFont_sheet, 110,   174,  DEBUG_TEXT_SCALE, 0, true, "- IntY: %.2f", state.camera_intended_y);
+                
+                struct mallinfo mi = mallinfo();
+                
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 110,   138 + 50,  DEBUG_TEXT_SCALE, 0, true, "Heap");
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 110,   150 + 50,  DEBUG_TEXT_SCALE, 0, true, "- Allocated: 0x%X bytes", mi.uordblks);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 110,   162 + 50,  DEBUG_TEXT_SCALE, 0, true, "- Free:        0x%X bytes",  envGetHeapSize() - mi.uordblks);
+                draw_text(&bigFont_fontCharset, &bigFont_sheet, 110,   174 + 50,  DEBUG_TEXT_SCALE, 0, true, "- Arena:      0x%X bytes",  envGetHeapSize());
             }
 
             if (state.noclip) {

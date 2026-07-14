@@ -247,9 +247,9 @@ void ui_destroy_tree(UIElement *e) {
         child = next;
     }
 
-    e->destroy(e);
-
     if (e->userdata && e->userdata_destroy) e->userdata_destroy(e->userdata);
+
+    e->destroy(e);
 }
 
 

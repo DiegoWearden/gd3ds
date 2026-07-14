@@ -1,4 +1,5 @@
 #include "object_particles.h"
+#include "particles/particles.h"
 #include "state.h"
 #include "main.h"
 #include "player/collision.h"
@@ -37,6 +38,14 @@ int load_object_particles(int id, const ParticleDefinition *cfg, bool stationary
         }
     }
     return -1;
+}
+
+void free_object_particles() {
+    for (size_t i = 0; i < MAX_OBJECT_PS; i++) {
+        if (object_particle[i].occupied) {
+            freeParticleData(&object_particle[i].ps.data);
+        }
+    }
 }
 
 static void remove_offscreen_object_particles() {

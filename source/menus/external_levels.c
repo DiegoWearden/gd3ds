@@ -49,6 +49,9 @@ static bool first_time_loaded = true;
 
 static bool in_external_popup = false;
 
+static bool reload_pending;
+static char reload_path[320];
+
 static UIScreen screen = {
     .isBottom = true
 };
@@ -202,7 +205,8 @@ static void open_folder(UIElement *e) {
     strncpy(current_path, tmp, sizeof(current_path) - 1);
     current_path[sizeof(current_path) - 1] = '\0';
 
-    load_level_folder(current_path);
+    reload_pending = true;
+    strcpy(reload_path, current_path);
 }
 
 #pragma GCC diagnostic pop
@@ -282,6 +286,11 @@ void external_levels_loop() {
         touch.touchPosition = touchPos;
         touch.did_something = false;
         touch.interacted = false;
+
+        if (reload_pending) {
+            load_level_folder(reload_path);
+            reload_pending = false;
+        }
 
         if (!in_external_popup) ui_screen_update(&screen, &touch);
 
