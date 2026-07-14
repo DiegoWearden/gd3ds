@@ -240,15 +240,15 @@ static void save_permanent_checkpoints() {
     fclose(f);
 }
 
-bool make_last_checkpoint_permanent() {
-    if (!state.practice_mode || checkpoint_count == 0) return false;
-    if (perm_checkpoint_count >= MAX_PERM_CHECKPOINTS) return false;
+PermCheckpointResult make_last_checkpoint_permanent() {
+    if (!state.practice_mode || checkpoint_count == 0) return PERM_CP_NO_CHECKPOINT;
+    if (perm_checkpoint_count >= MAX_PERM_CHECKPOINTS) return PERM_CP_FULL;
 
     CheckpointData *src = &checkpoints[checkpoint_pointer];
 
     // Ignore near-duplicates of an already saved position
     for (int i = 0; i < perm_checkpoint_count; i++) {
-        if (fabsf(perm_checkpoints[i].p1.x - src->p1.x) < 1.f) return false;
+        if (fabsf(perm_checkpoints[i].p1.x - src->p1.x) < 1.f) return PERM_CP_DUPLICATE;
     }
 
     // Keep the list ordered by level position so the switcher arrows walk
@@ -261,7 +261,7 @@ bool make_last_checkpoint_permanent() {
     perm_checkpoint_count++;
 
     save_permanent_checkpoints();
-    return true;
+    return PERM_CP_SAVED;
 }
 
 void delete_permanent_checkpoint(int idx) {

@@ -38,8 +38,15 @@
 
 bool game_paused = false;
 bool in_level_complete = false;
+bool startPosInfoShown = false;
 static bool in_disclaimer = false;
 static bool in_settings = false;
+
+// Transient feedback text for the Make Start Pos button
+#define PERM_TOAST_DURATION 1.5f
+static char perm_toast_text[48];
+static float perm_toast_timer = 0;
+static bool perm_toast_error = false;
 
 static UIImage *bg_gradient;
 static UIProgressBar *progress_bar;
@@ -241,8 +248,38 @@ bool cp_switcher_visible() {
            perm_checkpoint_count > 0 && !in_level_complete;
 }
 
+static void show_perm_toast(const char *text, bool error) {
+    snprintf(perm_toast_text, sizeof(perm_toast_text), "%s", text);
+    perm_toast_timer = PERM_TOAST_DURATION;
+    perm_toast_error = error;
+}
+
 static void action_save_perm(UIElement *e) {
-    make_last_checkpoint_permanent();
+    switch (make_last_checkpoint_permanent()) {
+        case PERM_CP_SAVED:
+            show_perm_toast("Start Pos saved!", false);
+            break;
+        case PERM_CP_NO_CHECKPOINT:
+            show_perm_toast("Place a checkpoint first!", true);
+            break;
+        case PERM_CP_FULL:
+            show_perm_toast("Start Pos limit reached!", true);
+            break;
+        case PERM_CP_DUPLICATE:
+            show_perm_toast("Already saved here!", true);
+            break;
+    }
+
+    // One-time explainer on first use; pause so the popup doesn't play over
+    // a running attempt (the toast waits for unpause)
+    if (!startPosInfoShown) {
+        startPosInfoShown = true;
+        cfg_save();
+        pause_game();
+        info_card_init();
+        set_info_content("Make Start Pos lets you restart from<p>your last checkpoint in normal mode.");
+        in_info_card = true;
+    }
 }
 
 static void switch_permanent_checkpoint(int dir) {
@@ -366,6 +403,8 @@ void gameplay_screen_init() {
 
     if (music_slider_bar) music_slider_bar->value = music_volume;
     if (sound_slider_bar) sound_slider_bar->value = sound_volume;
+
+    perm_toast_timer = 0;
 }
 
 int gameplay_screen_top_loop() { 
@@ -522,6 +561,18 @@ int gameplay_screen_bot_loop() {
     }
 
     ui_screen_draw(&default_screen);
+
+    // Feedback toast for the Make Start Pos button: sits above the practice
+    // buttons, then fades out
+    if (perm_toast_timer > 0 && !game_paused && !in_level_complete) {
+        float alpha = (perm_toast_timer < 0.5f ? perm_toast_timer / 0.5f : 1.f);
+
+        draw_text(fonts[2].charset, fonts[2].sheet, 160, 172, 0.45f, 0.45f, 0.5f, true,
+                  perm_toast_error ? "<255,110,110,%d>%s</>" : "<255,255,255,%d>%s</>",
+                  (int) (alpha * 255), perm_toast_text);
+
+        perm_toast_timer -= delta;
+    }
 
     if (in_settings) {
         int returned = settings_loop();

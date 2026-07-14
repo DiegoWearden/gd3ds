@@ -7,6 +7,8 @@
 #define PAUSE_COIN_FILLED_ID 418
 #define PAUSE_COIN_UNFILLED_ID 419
 
+extern bool startPosInfoShown;
+
 void reset_coins();
 void gameplay_screen_init();
 int gameplay_screen_top_loop();
