@@ -764,6 +764,22 @@ int convert_object(int id) {
             return 199;
         case 1892:
             return 393;
+
+        // Default slabs
+        case 1903:
+            return 40;
+
+        case 1904:
+            return 369;
+
+        case 1905:
+            return 370;
+
+        case 1910:
+            return 195;
+
+        case 1911:
+            return 196;
         
     }
     return id;

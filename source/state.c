@@ -301,8 +301,7 @@ void init_level_bounds() {
 void first_load_init_variables() {
     memset(&state.current_data, 0, sizeof(StateLevelData));
     
-    int rounded_last_obj_x = (int) (level_info.last_obj_x / 30) * 30 + 15;
-    level_info.wall_x = rounded_last_obj_x;
+    level_info.wall_x = roundf(level_info.last_obj_x / 30) * 30;
     level_info.wall_y = 0;
 
     state.background_x = 0;
