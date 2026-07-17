@@ -293,6 +293,10 @@ static void switch_permanent_checkpoint(int dir) {
         restore_permanent_checkpoint(perm_checkpoint_selected);
     } else if (song_loaded) {
         seek_mp3(level_info.song_offset);
+        // Same as restore_permanent_checkpoint: playback may be paused
+        // (e.g. switching during the death animation), and the pending
+        // respawn that would unpause it was cancelled by init_variables
+        unpause_playback_mp3();
     }
 }
 
