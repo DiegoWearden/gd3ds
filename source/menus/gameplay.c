@@ -38,7 +38,6 @@
 
 bool game_paused = false;
 bool in_level_complete = false;
-bool startPosInfoShown = false;
 static bool in_disclaimer = false;
 static bool in_settings = false;
 
@@ -269,17 +268,14 @@ static void action_save_perm(UIElement *e) {
             show_perm_toast("Already saved here!", true);
             break;
     }
+}
 
-    // One-time explainer on first use; pause so the popup doesn't play over
-    // a running attempt (the toast waits for unpause)
-    if (!startPosInfoShown) {
-        startPosInfoShown = true;
-        cfg_save();
-        pause_game();
-        info_card_init();
-        set_info_content("Make Start Pos lets you restart from<p>your last checkpoint in normal mode.");
-        in_info_card = true;
-    }
+static void action_save_perm_info(UIElement *e) {
+    // Pause so the card doesn't play over a running attempt
+    pause_game();
+    info_card_init();
+    set_info_content("Saves your last checkpoint as a<p>Start Pos. In normal mode, use the<p>bottom arrows to play from it.");
+    in_info_card = true;
 }
 
 static void switch_permanent_checkpoint(int dir) {
@@ -334,6 +330,7 @@ static UIAction actions[] = {
     {"auto_checkpoint", action_auto_checkpoint },
     {"cbf", action_cbf },
     {"save_perm", action_save_perm },
+    {"save_perm_info", action_save_perm_info },
     {"cp_prev", action_cp_prev },
     {"cp_next", action_cp_next },
     {"delete_perm", action_delete_perm },
@@ -510,9 +507,11 @@ int gameplay_screen_bot_loop() {
     UIElement *add_checkpoint = ui_get_element_by_tag(&default_screen, "add_checkpoint");
     UIElement *remove_checkpoint = ui_get_element_by_tag(&default_screen, "remove_checkpoint");
     UIElement *save_perm_checkpoint = ui_get_element_by_tag(&default_screen, "save_perm_checkpoint");
+    UIElement *save_perm_info = ui_get_element_by_tag(&default_screen, "save_perm_info");
     add_checkpoint->y = complete_y_offset_practice;
     remove_checkpoint->y = complete_y_offset_practice;
     if (save_perm_checkpoint) save_perm_checkpoint->y = complete_y_offset_practice;
+    if (save_perm_info) save_perm_info->y = complete_y_offset_practice - 25.f;
 
     if (state.practice_mode) {
         ui_button_set_image((UIButton *) ui_get_element_by_tag(&default_screen, "practice_mode"), 124, 0);

@@ -202,18 +202,20 @@ void ui_update_tree(UIElement *e, UIInput *input, UITransform *parent) {
     if (!e->enabled) return;
 
     UITransform world = ui_transform_combine(parent, e);
-    
+
     // Let the element modify its own transform
     if (e->modify_transform)
         e->modify_transform(e, &world);
-    
-    e->update(e, input, &world);
 
+    // Children draw on top of the parent, so they get first claim on the
+    // touch before the parent can mask it
     if (!e->draws_children) {
         for (UIElement *child = e->first_child; child; child = child->next_sibling) {
             ui_update_tree(child, input, &world);
         }
     }
+
+    e->update(e, input, &world);
 }
 
 // Draws an element and its children

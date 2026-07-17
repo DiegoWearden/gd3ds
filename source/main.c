@@ -234,8 +234,8 @@ bool gameplay_touch_blocked(int px, int py) {
     // Pause button, top-right
     if (px > 320 - 30 && py < 30) return true;
 
-    // Practice checkpoint buttons (add / remove / save permanent)
-    if (state.practice_mode && px > 92 && px < 305 && py > 175 && py < 222) return true;
+    // Practice checkpoint buttons (add / remove / save permanent + info)
+    if (state.practice_mode && px > 36 && px < 285 && py > 162 && py < 228) return true;
 
     // Permanent checkpoint switcher arrows, bottom corners
     if (cp_switcher_visible() && py > 180 && (px < 55 || px > 265)) return true;
