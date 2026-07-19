@@ -56,10 +56,23 @@ jobs:
           body: |
             Latest nightly build from commit ${{ github.sha }}
           prerelease: true
+          # Keep versioned releases as the repo's "Latest"
+          make_latest: false
+          files: |
+            out/3dsx/rom/*
+            out/cia/rom/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create versioned release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v3
+        with:
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
           make_latest: true
           files: |
             out/3dsx/rom/*
             out/cia/rom/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            
+
