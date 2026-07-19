@@ -530,6 +530,10 @@ void game_loop() {
     if (returned) {
         printf("\x1b[9;1HFailed %d", returned);
 
+        // A failed load can leave color channels and partial object arrays
+        // allocated; the normal unload_level on level exit never runs
+        free_level_data();
+
         game_state = (state.custom_level ? STATE_EXTERNAL_LEVELS : STATE_LEVEL_SELECT);
         return;
     }

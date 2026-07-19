@@ -94,9 +94,17 @@ void audio_init() {
 
 void audio_exit() {
     ndspChnReset(MUSIC_CHANNEL);
-    linearFree(audioBuffer);
-    mpg123_close(mh);
-    mpg123_delete(mh);
+    // NULL after freeing: if the next play fails before audio_init runs,
+    // the following audio_exit must not free these again
+    if (audioBuffer) {
+        linearFree(audioBuffer);
+        audioBuffer = NULL;
+    }
+    if (mh) {
+        mpg123_close(mh);
+        mpg123_delete(mh);
+        mh = NULL;
+    }
     mpg123_exit();
 }
 
@@ -253,7 +261,12 @@ void audio_thread(void *const file) {
     skip = false;
     bool lastbuf = false;
 
-    if(!mp3_init(file)) return;
+    if(!mp3_init(file)) {
+        // Wake a play_mp3(_buf) caller blocked waiting for the initial seek,
+        // which will otherwise never be signaled
+        LightEvent_Signal(&seekEvent);
+        return;
+    }
 
     audio_init();
 
@@ -409,9 +422,14 @@ void fade_to_amplitude(float new_amplitude) {
     amplitude = calculate_amplitude(new_amplitude);
 }
 
-// Play an mp3 from a pre-loaded memory buffer
+// Play an mp3 from a pre-loaded memory buffer. Takes ownership of buf on
+// every path, including failure.
 int play_mp3_buf(void *buf, size_t sz, bool loop, float seek) {
-    if (!buf || sz == 0) return 0;
+    if (!buf) return 0;
+    if (sz == 0) {
+        free(buf);
+        return 0;
+    }
 
     stop_mp3();
 

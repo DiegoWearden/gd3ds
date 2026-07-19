@@ -92,13 +92,16 @@ int get_level_from_id(char **out_data, int id) {
         curl_easy_cleanup(curl);
 
         if (code) {
+            free(chunk.memory);
             return 1;
         }
 
         printf("(code %d) Response (%d): %s\n", code, chunk.size, chunk.memory);
 
         if (chunk.memory[0] == '-') {
-            return atoi(chunk.memory);
+            int server_error = atoi(chunk.memory);
+            free(chunk.memory);
+            return server_error;
         }
         
         *out_data = chunk.memory;

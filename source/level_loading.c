@@ -82,8 +82,11 @@ void assign_object_to_section(int obj) {
     int sy = (int)(objects.y[obj] / SECTION_SIZE);
     Section *sec = get_or_create_section(sx, sy);
     if (sec->object_count >= sec->object_capacity) {
-        sec->object_capacity *= 2;
-        sec->objects = realloc(sec->objects, sizeof(int) * sec->object_capacity);
+        int new_capacity = sec->object_capacity * 2;
+        int *grown = realloc(sec->objects, sizeof(int) * new_capacity);
+        if (!grown) return; // Drop the object rather than corrupt the section
+        sec->objects = grown;
+        sec->object_capacity = new_capacity;
     }
     sec->objects[sec->object_count++] = obj;
 }
@@ -316,8 +319,9 @@ char *decompress_level(char *data) {
     
     char *b64 = extract_gmd_key((const char *) data, "k4", "s");
     if (!b64) {
-        // Empty level
-        return data;
+        // Empty level: return a copy so the caller always owns a distinct
+        // buffer and can free both its input and the result
+        return strdup(data);
     }
 
     const char *semicolon = strchr(b64, ';');
@@ -326,6 +330,10 @@ char *decompress_level(char *data) {
     fix_base64_url(b64);
 
     unsigned char *decoded = malloc(strlen(b64));
+    if (!decoded) {
+        free(b64);
+        return NULL;
+    }
     int decoded_len = base64_decode(b64, decoded);
     if (decoded_len <= 0) {
         output_log("Failed to decode base64\n");
@@ -349,6 +357,8 @@ char *decompress_level(char *data) {
     return decompressed;
 }
 
+void free_string_array(char **arr, int count);
+
 char **split_string(const char *str, char delimiter, int *outCount) {
     char **result = NULL;
     int count = 0;
@@ -363,7 +373,14 @@ char **split_string(const char *str, char delimiter, int *outCount) {
                 strncpy(token, start, len);
                 token[len] = '\0';
 
-                result = (char **)realloc(result, sizeof(char*) * (count + 1));
+                char **grown = (char **)realloc(result, sizeof(char*) * (count + 1));
+                if (!grown) {
+                    free(token);
+                    free_string_array(result, count);
+                    *outCount = 0;
+                    return NULL;
+                }
+                result = grown;
                 result[count++] = token;
             }
             start = ptr + 1;
@@ -375,7 +392,14 @@ char **split_string(const char *str, char delimiter, int *outCount) {
         char *token = (char *)malloc(len + 1);
         strncpy(token, start, len);
         token[len] = '\0';
-        result = (char **)realloc(result, sizeof(char*) * (count + 1));
+        char **grown = (char **)realloc(result, sizeof(char*) * (count + 1));
+        if (!grown) {
+            free(token);
+            free_string_array(result, count);
+            *outCount = 0;
+            return NULL;
+        }
+        result = grown;
         result[count++] = token;
     }
 
@@ -414,8 +438,19 @@ void parse_color_channel(GDColorChannel *channels, int i, char *channel_string) 
     free_string_array(kvs, kvCount);
 }
 
+// atoi() a get_metadata_value() result and release it; missing keys read as 0
+static int metadata_atoi_free(char *value) {
+    if (!value) return 0;
+    int result = atoi(value);
+    free(value);
+    return result;
+}
+
+// Most channels either format can produce: BG, GROUND, LINE, OBJ, col1-4, 3DL
+#define OLD_CHANNELS_MAX 9
+
 int parse_old_channels(char *level_string, GDColorChannel **outArray) {
-    GDColorChannel *channels = malloc(sizeof(GDColorChannel) * 2);
+    GDColorChannel *channels = malloc(sizeof(GDColorChannel) * OLD_CHANNELS_MAX);
     if (!channels) {
         output_log("Couldn't alloc initial pre 2.0 color channels\n");
         return 0;
@@ -429,75 +464,46 @@ int parse_old_channels(char *level_string, GDColorChannel **outArray) {
         parse_color_channel(channels, i, v19_bg);
         channels[i].channelID = CHANNEL_BG;
         i++;
+        free(v19_bg);
 
-        parse_color_channel(channels, i, get_metadata_value(level_string, "kS30"));
+        char *ground = get_metadata_value(level_string, "kS30");
+        if (ground) {
+            parse_color_channel(channels, i, ground);
+            free(ground);
+        } else {
+            memset(&channels[i], 0, sizeof(channels[i]));
+        }
         channels[i].channelID = CHANNEL_GROUND;
         i++;
 
-        char *line = get_metadata_value(level_string, "kS31");
-        if (line) {
-            channels = realloc(channels, sizeof(GDColorChannel) * (i + 1));
-            parse_color_channel(channels, i, line);
-            channels[i].channelID = CHANNEL_LINE;
+        // Optional channels, ordered as (key, channelID) pairs
+        static const struct { const char *key; int channelID; } optional_channels[] = {
+            { "kS31", CHANNEL_LINE },
+            { "kS32", CHANNEL_OBJ },
+            { "kS33", 1 },
+            { "kS34", 2 },
+            { "kS35", 3 },
+            { "kS36", 4 },
+            { "kS37", CHANNEL_3DL },
+        };
+
+        for (unsigned int c = 0; c < sizeof(optional_channels) / sizeof(optional_channels[0]); c++) {
+            char *value = get_metadata_value(level_string, optional_channels[c].key);
+            if (!value) continue;
+            parse_color_channel(channels, i, value);
+            channels[i].channelID = optional_channels[c].channelID;
             i++;
-        }
-        
-        char *obj = get_metadata_value(level_string, "kS32");
-        if (obj) {
-            channels = realloc(channels, sizeof(GDColorChannel) * (i + 1));
-            parse_color_channel(channels, i, obj);
-            channels[i].channelID = CHANNEL_OBJ;
-            i++;
+            free(value);
         }
 
-        char *col1 = get_metadata_value(level_string, "kS33");
-        if (col1) {
-            channels = realloc(channels, sizeof(GDColorChannel) * (i + 1));
-            parse_color_channel(channels, i, col1);
-            channels[i].channelID = 1;
-            i++;
-        }
-
-        char *col2 = get_metadata_value(level_string, "kS34");
-        if (col2) {
-            channels = realloc(channels, sizeof(GDColorChannel) * (i + 1));
-            parse_color_channel(channels, i, col2);
-            channels[i].channelID = 2;
-            i++;
-        }
-
-        char *col3 = get_metadata_value(level_string, "kS35");
-        if (col3) {
-            channels = realloc(channels, sizeof(GDColorChannel) * (i + 1));
-            parse_color_channel(channels, i, col3);
-            channels[i].channelID = 3;
-            i++;
-        }
-
-        char *col4 = get_metadata_value(level_string, "kS36");
-        if (col4) {
-            channels = realloc(channels, sizeof(GDColorChannel) * (i + 1));
-            parse_color_channel(channels, i, col4);
-            channels[i].channelID = 4;
-            i++;
-        }
-
-        char *dl3 = get_metadata_value(level_string, "kS37");
-        if (dl3) {
-            channels = realloc(channels, sizeof(GDColorChannel) * (i + 1));
-            parse_color_channel(channels, i, dl3);
-            channels[i].channelID = CHANNEL_3DL;
-            i++;
-        }
-        
         *outArray = channels;
         return i;
     }
 
     // Pre 1.9
-    int bg_r = atoi(get_metadata_value(level_string, "kS1"));
-    int bg_g = atoi(get_metadata_value(level_string, "kS2"));
-    int bg_b = atoi(get_metadata_value(level_string, "kS3"));
+    int bg_r = metadata_atoi_free(get_metadata_value(level_string, "kS1"));
+    int bg_g = metadata_atoi_free(get_metadata_value(level_string, "kS2"));
+    int bg_b = metadata_atoi_free(get_metadata_value(level_string, "kS3"));
 
     GDColorChannel bg_channel = {0};
     bg_channel.channelID = CHANNEL_BG;
@@ -508,15 +514,16 @@ int parse_old_channels(char *level_string, GDColorChannel **outArray) {
     char *bg_player_color = get_metadata_value(level_string, "kS16");
     if (bg_player_color) {
        bg_channel.playerColor = atoi(bg_player_color);
+       free(bg_player_color);
     }
 
     channels[i] = bg_channel;
 
     i++;
 
-    int g_r = atoi(get_metadata_value(level_string, "kS4"));
-    int g_g = atoi(get_metadata_value(level_string, "kS5"));
-    int g_b = atoi(get_metadata_value(level_string, "kS6"));
+    int g_r = metadata_atoi_free(get_metadata_value(level_string, "kS4"));
+    int g_g = metadata_atoi_free(get_metadata_value(level_string, "kS5"));
+    int g_b = metadata_atoi_free(get_metadata_value(level_string, "kS6"));
 
     GDColorChannel g_channel = {0};
     g_channel.channelID = CHANNEL_GROUND;
@@ -527,8 +534,9 @@ int parse_old_channels(char *level_string, GDColorChannel **outArray) {
     char *g_player_color = get_metadata_value(level_string, "kS17");
     if (g_player_color) {
         g_channel.playerColor = atoi(g_player_color);
+        free(g_player_color);
     }
-    
+
     channels[i] = g_channel;
     i++;
 
@@ -542,16 +550,19 @@ int parse_old_channels(char *level_string, GDColorChannel **outArray) {
         line_channel.fromRed = atoi(line_r);
         line_channel.fromGreen = atoi(line_g);
         line_channel.fromBlue = atoi(line_b);
-        
+
         char *line_player_color = get_metadata_value(level_string, "kS18");
         if (line_player_color) {
             line_channel.playerColor = atoi(line_player_color);
+            free(line_player_color);
         }
 
-        channels = realloc(channels, sizeof(GDColorChannel) * (i + 1));
         channels[i] = line_channel;
         i++;
     }
+    free(line_r);
+    free(line_g);
+    free(line_b);
 
     char *obj_r = get_metadata_value(level_string, "kS10");
     char *obj_g = get_metadata_value(level_string, "kS11");
@@ -567,12 +578,15 @@ int parse_old_channels(char *level_string, GDColorChannel **outArray) {
         char *obj_player_color = get_metadata_value(level_string, "kS19");
         if (obj_player_color) {
             obj_channel.playerColor = atoi(obj_player_color);
+            free(obj_player_color);
         }
-        
-        channels = realloc(channels, sizeof(GDColorChannel) * (i + 1));
+
         channels[i] = obj_channel;
         i++;
     }
+    free(obj_r);
+    free(obj_g);
+    free(obj_b);
 
     char *obj_2_r = get_metadata_value(level_string, "kS13");
     char *obj_2_g = get_metadata_value(level_string, "kS14");
@@ -584,21 +598,25 @@ int parse_old_channels(char *level_string, GDColorChannel **outArray) {
         obj_2_channel.fromRed = atoi(obj_2_r);
         obj_2_channel.fromGreen = atoi(obj_2_g);
         obj_2_channel.fromBlue = atoi(obj_2_b);
-        
+
         char *obj_2_player_color = get_metadata_value(level_string, "kS20");
         if (obj_2_player_color) {
             obj_2_channel.playerColor = atoi(obj_2_player_color);
+            free(obj_2_player_color);
         }
 
         char *obj_2_blending = get_metadata_value(level_string, "kA5");
         if (obj_2_blending) {
             obj_2_channel.blending = atoi(obj_2_blending) != 0;
+            free(obj_2_blending);
         }
 
-        channels = realloc(channels, sizeof(GDColorChannel) * (i + 1));
         channels[i] = obj_2_channel;
         i++;
     }
+    free(obj_2_r);
+    free(obj_2_g);
+    free(obj_2_b);
 
     *outArray = channels;
 
@@ -1169,6 +1187,7 @@ int parse_string(const char *levelString) {
     
     if (!init_arrays(objectCount)) {
         output_log("Failed to allocate object array\n");
+        free_string_array(sections, sectionCount);
         return 4;
     }
 
@@ -1348,7 +1367,10 @@ int load_level(char *path) {
     if (!level) return 1;
 
     char *data = decompress_level(level);
-    if (!data) return 2;
+    if (!data) {
+        free(level);
+        return 2;
+    }
 
     // Get level starting colors
     char *metaStr = get_metadata_value(data, "kS38");
@@ -1368,10 +1390,9 @@ int load_level(char *path) {
 
     free(data);
     free(metaStr);
+    free(level);
 
     if (returned) return returned;
-    
-    free(level);
 
     init_col_channels();
     set_color_channels();
@@ -1405,16 +1426,22 @@ void reload_level() {
     set_color_channels();
 }
 
-void unload_level() {
+// Free everything a (possibly partial) load_level allocated. Safe to call
+// after a failed load: the individual frees are NULL-safe and idempotent.
+void free_level_data() {
     free_arrays();
     free_sections();
-    free_object_particles();
-    
+
     channelCount = 0;
     if (colorChannels) {
         free(colorChannels);
         colorChannels = NULL;
     }
+}
+
+void unload_level() {
+    free_level_data();
+    free_object_particles();
 
     stop_mp3();
 }

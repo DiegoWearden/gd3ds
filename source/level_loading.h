@@ -117,6 +117,7 @@ char *decompress_level(char *data);
 int load_level(char *path);
 void reload_level();
 void unload_level();
+void free_level_data();
 
 void fix_base64_url(char *b64);
 int base64_decode(const char *in, unsigned char *out);
