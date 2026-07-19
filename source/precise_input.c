@@ -50,8 +50,6 @@ static bool step_btn_held, step_touch_held;
 static KeyInput last_applied;
 
 static bool ready;
-static float pad_interval_ms;
-static int events_consumed, events_consumed_frame;
 
 static u64 read_tick(vu32 *mem)
 {
@@ -115,8 +113,6 @@ static void drain_ring(int base, u64 *pass_tick, int *last_idx, sample_cb cb)
     if (cur == 0 || cur <= prev) return;
 
     u64 interval = (cur - prev) / RING_SIZE;
-    if (base == PAD_BASE)
-        pad_interval_ms = (float)interval / (float)CPU_TICKS_PER_MSEC;
 
     // Previous pass: entries newest+1..7 (timestamps relative to prev),
     // then current pass: entries 0..newest (relative to cur)
@@ -176,7 +172,6 @@ void precise_input_reset(void)
     step_btn_held = step_touch_held = false;
     last_applied = state.input;
     ready = false;
-    events_consumed = events_consumed_frame = 0;
 
     // Consume the whole ring so stale menu inputs never replay into gameplay;
     // held state settles to the real current state (holding at level start
@@ -204,9 +199,6 @@ void precise_input_poll(PreciseInputPollMode mode)
 
     drain_ring(PAD_BASE, &pad_pass_tick, &pad_last_idx, pad_sample);
     drain_ring(TOUCH_BASE, &touch_pass_tick, &touch_last_idx, touch_sample);
-
-    events_consumed_frame = events_consumed;
-    events_consumed = 0;
 
     if (mode == PRECISE_POLL_NORMAL) {
         ready = true;
@@ -246,7 +238,6 @@ void precise_input_step(u64 window_end_tick)
 
         queue_head = (queue_head + 1) % EVENT_QUEUE_SIZE;
         queue_len--;
-        events_consumed++;
     }
 
     KeyInput in;
@@ -258,12 +249,3 @@ void precise_input_step(u64 window_end_tick)
     last_applied = in;
 }
 
-float precise_input_sample_ms(void)
-{
-    return pad_interval_ms;
-}
-
-int precise_input_event_count(void)
-{
-    return events_consumed_frame;
-}

@@ -422,7 +422,7 @@ void level_complete_init() {
             text = tmp;
         }
 
-        if (attempt_from_perm_cp) {
+        if (attempt_from_perm_cp && !state.practice_mode) {
             text = startpos_completion_text;
         }
 

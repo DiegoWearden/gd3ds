@@ -40,7 +40,3 @@ bool precise_input_ready(void);
 // window_end_tick (system ticks). Sets state.input and state.old_input.
 void precise_input_step(u64 window_end_tick);
 
-// Measured HID pad sampling interval in ms (debug).
-float precise_input_sample_ms(void);
-// Events consumed by physics steps last frame (debug).
-int precise_input_event_count(void);

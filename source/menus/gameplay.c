@@ -62,6 +62,10 @@ static UISlider *sound_slider_bar;
 static UICheckBox *auto_checkpoint_toggle;
 static UICheckBox *cbf_toggle;
 static UILabel *cp_switcher_label;
+static UIButton *cp_prev_btn;
+static UIButton *cp_next_btn;
+static u32 cp_prev_binds;
+static u32 cp_next_binds;
 
 static UIImage *coin_1;
 static UIImage *coin_2;
@@ -120,6 +124,30 @@ void reset_coins(){
     }
 }
 
+// Conditional pause-menu rows: practice options only in practice mode, the
+// delete row only with a start pos selected. Runs every frame while paused
+// and from pause_game() itself, so the rows are already correct on the frame
+// the menu opens instead of flickering in for one frame
+static void update_pause_menu_elements() {
+    if (game_paused && state.practice_mode) {
+        ui_run_func_on_tag(&default_screen, "practice_options", ui_enable_element);
+        if (auto_checkpoint_toggle && auto_checkpoint_toggle->checked != autoCheckpoints) set_checkbox_enabled(auto_checkpoint_toggle, autoCheckpoints);
+    } else {
+        ui_run_func_on_tag(&default_screen, "practice_options", ui_disable_element);
+    }
+
+    if (game_paused && perm_checkpoint_selected >= 0) {
+        ui_run_func_on_tag(&default_screen, "delete_perm_cp", ui_enable_element);
+        // The practice pause menu shows Auto checkpoints in the usual delete
+        // slot, so move the delete row up a line there
+        float delete_y = state.practice_mode ? 115 : 133;
+        ui_set_pos_on_tag(&default_screen, 64, delete_y, "delete_perm_btn");
+        ui_set_pos_on_tag(&default_screen, 88, delete_y, "delete_perm_label");
+    } else {
+        ui_run_func_on_tag(&default_screen, "delete_perm_cp", ui_disable_element);
+    }
+}
+
 void pause_game() {
     if (state.end_wall_anim_playing) return;
 
@@ -141,6 +169,7 @@ void pause_game() {
     ui_run_func_on_tag(&default_screen_top, "pause_menu", ui_enable_element);
     ui_run_func_on_tag(&default_screen, "paused", ui_enable_element);
     ui_run_func_on_tag(&default_screen, "not_paused", ui_disable_element);
+    update_pause_menu_elements();
     in_settings = false;
 }
 
@@ -164,9 +193,14 @@ void unpause_game() {
     ui_run_func_on_tag(&default_screen_top, "pause_menu", ui_disable_element);
     ui_run_func_on_tag(&default_screen, "paused", ui_disable_element);
     ui_run_func_on_tag(&default_screen, "not_paused", ui_enable_element);
-    
+
     if (!state.practice_mode) {
         ui_run_func_on_tag(&default_screen, "practice_buttons", ui_disable_element);
+    }
+    // Same one-frame flicker guard as the pause rows: "not_paused" just
+    // enabled the switcher arrows even when they shouldn't show
+    if (!cp_switcher_visible()) {
+        ui_run_func_on_tag(&default_screen, "cp_switcher", ui_disable_element);
     }
     in_settings = false;
 }
@@ -182,13 +216,13 @@ static void exit_level() {
 static void restart_level() {
     init_variables();
     reload_level();
-    if (state.practice_mode) {
-        if (checkpoint_count > 0) {
-            restore_checkpoint();
-        }
+    if (state.practice_mode && checkpoint_count > 0) {
+        restore_checkpoint();
     } else if (perm_checkpoint_selected >= 0) {
         restore_permanent_checkpoint(perm_checkpoint_selected);
-    } else if (song_loaded) seek_mp3(level_info.song_offset);
+    } else if (!state.practice_mode && song_loaded) {
+        seek_mp3(level_info.song_offset);
+    }
 
     reset_coins();
 
@@ -243,7 +277,7 @@ static void action_auto_checkpoint(UIElement *e) {
 }
 
 bool cp_switcher_visible() {
-    return cpSwitcherEnabled && !game_paused && !state.practice_mode &&
+    return cpSwitcherEnabled && !game_paused &&
            perm_checkpoint_count > 0 && !in_level_complete;
 }
 
@@ -285,13 +319,17 @@ static void switch_permanent_checkpoint(int dir) {
     if (perm_checkpoint_selected >= perm_checkpoint_count) perm_checkpoint_selected = -1;
     else if (perm_checkpoint_selected < -1) perm_checkpoint_selected = perm_checkpoint_count - 1;
 
+    // Switching mid-practice restarts the practice run from the new start
+    // pos, so placed checkpoints no longer apply
+    if (state.practice_mode) clear_practice_checkpoints();
+
     init_variables();
     reload_level();
     reset_coins();
 
     if (perm_checkpoint_selected >= 0) {
         restore_permanent_checkpoint(perm_checkpoint_selected);
-    } else if (song_loaded) {
+    } else if (song_loaded && (!state.practice_mode || practiceMusicSync)) {
         seek_mp3(level_info.song_offset);
         // Same as restore_permanent_checkpoint: playback may be paused
         // (e.g. switching during the death animation), and the pending
@@ -309,7 +347,7 @@ static void action_cp_next(UIElement *e) {
 }
 
 static void action_delete_perm(UIElement *e) {
-    if (state.practice_mode || perm_checkpoint_selected < 0) return;
+    if (perm_checkpoint_selected < 0) return;
     delete_permanent_checkpoint(perm_checkpoint_selected);
 }
 
@@ -400,6 +438,10 @@ void gameplay_screen_init() {
     auto_checkpoint_toggle = (UICheckBox*) ui_get_element_by_tag(&default_screen, "auto_checkpoint_toggle");
     cbf_toggle = (UICheckBox*) ui_get_element_by_tag(&default_screen, "cbf_toggle");
     cp_switcher_label = (UILabel*) ui_get_element_by_tag(&default_screen, "cp_label");
+    cp_prev_btn = (UIButton*) ui_get_element_by_tag(&default_screen, "cp_prev_btn");
+    cp_next_btn = (UIButton*) ui_get_element_by_tag(&default_screen, "cp_next_btn");
+    if (cp_prev_btn) cp_prev_binds = cp_prev_btn->keyBinds;
+    if (cp_next_btn) cp_next_binds = cp_next_btn->keyBinds;
     ui_run_func_on_tag(&default_screen, "cp_switcher", ui_disable_element);
 
     if (music_slider_bar) music_slider_bar->value = music_volume;
@@ -524,21 +566,14 @@ int gameplay_screen_bot_loop() {
         ui_button_set_image((UIButton *) ui_get_element_by_tag(&default_screen, "practice_mode"), 146, 0);
     }
 
-    if (game_paused && state.practice_mode) {
-        ui_run_func_on_tag(&default_screen, "practice_options", ui_enable_element);
-        if (auto_checkpoint_toggle && auto_checkpoint_toggle->checked != autoCheckpoints) set_checkbox_enabled(auto_checkpoint_toggle, autoCheckpoints);
-    } else {
-        ui_run_func_on_tag(&default_screen, "practice_options", ui_disable_element);
-    }
+    update_pause_menu_elements();
 
-    // Delete button for the selected permanent checkpoint (normal-mode pause)
-    if (game_paused && !state.practice_mode && perm_checkpoint_selected >= 0) {
-        ui_run_func_on_tag(&default_screen, "delete_perm_cp", ui_enable_element);
-    } else {
-        ui_run_func_on_tag(&default_screen, "delete_perm_cp", ui_disable_element);
-    }
+    // In practice mode D-pad LEFT/RIGHT place/remove checkpoints, so the
+    // switcher arrows are touch-only there
+    if (cp_prev_btn) cp_prev_btn->keyBinds = state.practice_mode ? 0 : cp_prev_binds;
+    if (cp_next_btn) cp_next_btn->keyBinds = state.practice_mode ? 0 : cp_next_binds;
 
-    // Permanent checkpoint switcher (normal mode only, toggleable in settings)
+    // Permanent checkpoint switcher (toggleable in settings)
     if (cp_switcher_visible()) {
         ui_run_func_on_tag(&default_screen, "cp_switcher", ui_enable_element);
         if (cp_switcher_label) {

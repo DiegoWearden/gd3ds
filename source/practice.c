@@ -291,7 +291,9 @@ void restore_permanent_checkpoint(int idx) {
 
     restore_checkpoint_data(&perm_checkpoints[idx]);
 
-    if (song_loaded) {
+    // In practice mode without music sync the practice song is playing and
+    // shouldn't be seeked to the level song's offset
+    if (song_loaded && (!state.practice_mode || practiceMusicSync)) {
         seek_mp3(perm_checkpoints[idx].song_offset);
         // Playback may be paused (e.g. switching during the death
         // animation), and no respawn will run to unpause it
@@ -320,18 +322,20 @@ void delete_last_checkpoint() {
     reset_auto_checkpoint_timer();
 }
 
-void clear_practice_mode() {
+void clear_practice_checkpoints() {
     checkpoint_count = 0;
     checkpoint_pointer = 0;
-    state.practice_mode = false;
     reset_auto_checkpoint_timer();
 }
 
+void clear_practice_mode() {
+    clear_practice_checkpoints();
+    state.practice_mode = false;
+}
+
 void start_practice_mode() {
-    checkpoint_count = 0;
-    checkpoint_pointer = 0;
+    clear_practice_checkpoints();
     state.practice_mode = true;
-    reset_auto_checkpoint_timer();
 
     if (!practiceMusicSync) {
         stop_mp3();
@@ -344,11 +348,21 @@ void exit_practice_mode() {
     init_variables();
     reload_level();
 
+    // Return to the selected start pos rather than the level start
+    float song_offset = level_info.song_offset;
+    if (perm_checkpoint_selected >= 0 && perm_checkpoint_selected < perm_checkpoint_count) {
+        song_offset = perm_checkpoints[perm_checkpoint_selected].song_offset;
+    }
+
     if (practiceMusicSync) {
-        seek_mp3(level_info.song_offset);
+        seek_mp3(song_offset);
     } else {
         stop_mp3();
-        play_level_song(level_info.song_offset);
+        play_level_song(song_offset);
+    }
+
+    if (perm_checkpoint_selected >= 0) {
+        restore_permanent_checkpoint(perm_checkpoint_selected);
     }
 }
 

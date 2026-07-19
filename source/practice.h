@@ -32,3 +32,4 @@ void delete_last_checkpoint();
 void handle_practice_mode();
 void draw_checkpoints();
 void clear_practice_mode();
+void clear_practice_checkpoints();

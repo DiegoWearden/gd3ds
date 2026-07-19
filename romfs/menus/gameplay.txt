@@ -17,8 +17,8 @@ button x=151 y=200 id=154 tag="practice_buttons,remove_checkpoint,not_paused" ac
 windowbutton x=231 y=200 style=5 text="Make Start Pos" w=88px h=32px font=2 textScale=0.36 tag="practice_buttons,save_perm_checkpoint,not_paused" action="save_perm" keyBinds="DOWN"
 button x=191 y=175 id=90 sheet=0 scale=0.7 tag="practice_buttons,save_perm_info,not_paused" action="save_perm_info"
 
-button x=25 y=210 id=376 sx=-1.0 scale=0.85 tag="cp_switcher,not_paused" action="cp_prev" keyBinds="LEFT"
-button x=295 y=210 id=376 scale=0.85 tag="cp_switcher,not_paused" action="cp_next" keyBinds="RIGHT"
+button x=25 y=210 id=376 sx=-1.0 scale=0.85 tag="cp_switcher,cp_prev_btn,not_paused" action="cp_prev" keyBinds="LEFT"
+button x=295 y=210 id=376 scale=0.85 tag="cp_switcher,cp_next_btn,not_paused" action="cp_next" keyBinds="RIGHT"
 label x=160 y=228 text="Start" scale=0.4 align=CENTER tag="cp_switcher,cp_label,not_paused"
 
 darken opacity=0.5 tag="paused" darkenTime=0.0
@@ -40,5 +40,5 @@ label x=82 y=135 text="Auto checkpoints" scale=0.38 tag="paused,practice_options
 checkbox x=64 y=224 tag="paused,cbf_toggle" scale=0.6 action="cbf"
 label x=82 y=224 text="CBF input" scale=0.38 tag="paused"
 
-button x=64 y=133 id=199 scale=0.7 tag="paused,delete_perm_cp" action="delete_perm" keyBinds="DOWN"
-label x=88 y=133 text="Delete checkpoint" scale=0.38 tag="paused,delete_perm_cp"
+button x=64 y=133 id=199 scale=0.7 tag="paused,delete_perm_cp,delete_perm_btn" action="delete_perm" keyBinds="DOWN"
+label x=88 y=133 text="Delete start pos" scale=0.38 tag="paused,delete_perm_cp,delete_perm_label"
