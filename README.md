@@ -1,5 +1,5 @@
 # (WARNING!!) THIS FORK'S MODS ARE VIBECODED AND MAY HAVE BUGS THAT AFFECT YOUR 3DS IN UNEXPECTED WAYS.
-I strongly discourage public use of this fork. I have not thoroughly reviewed or tested the code and it was only made so I could play Bloodbath. I also have not used it on the old 3ds, so I dont know how it would work with that hardware.
+I strongly discourage public use of this fork. I have not thoroughly reviewed or tested the code and it was only made so I could play Bloodbath. I also have not used it on the old 3ds, so I dont know how it would work with that hardware. Many people have asked me for the fork, so I decided to make it public. Please be aware of the risks.
 # Geometry Dash for the 3DS
 
 This is a demake of the popular mobile game Geometry Dash by RobTop for the Nintendo 3DS.
